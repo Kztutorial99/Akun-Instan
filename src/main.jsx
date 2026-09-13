@@ -108,7 +108,7 @@ export const CATALOG_AGES = [
 ];
 export const LOGIN_TYPES = ["Google", "Facebook", "Email/password", "Apple", "Microsoft", "Lainnya"];
 /* Template produk siap pakai: admin cukup ganti harga, email & password. */
-const BASE_PRODUCT_TEMPLATES = [
+export const PRODUCT_TEMPLATES = [
   {
     key: "google",
     label: "Google / Gmail",
@@ -239,82 +239,6 @@ const BASE_PRODUCT_TEMPLATES = [
   },
 ];
 
-/* Helper template: bikin deskripsi & panduan standar untuk tiap brand supaya
-   admin cukup memilih, lalu mengganti harga, email, dan password. */
-function buildTemplate({ key, label, icon, loginType = "Email/password", title, kind = "Akun", about, specs = [], perks = [], notes = [], secure = [], site = "" }) {
-  return {
-    key,
-    label,
-    icon,
-    data: {
-      title,
-      loginType,
-      description: [
-        "Tentang Produk:",
-        about,
-        "",
-        "Spesifikasi:",
-        ...["- Status: aktif dan siap login", `- Format kiriman: ${loginType === "Google" ? "email + password" : "email/username + password"} untuk setiap akun`, ...specs].map(String),
-        "",
-        "Yang Didapat:",
-        ...(perks.length ? perks : ["- Akses penuh ke akun sesuai keterangan judul produk", "- Panduan pengamanan akun langkah demi langkah"]),
-        "",
-        "Catatan penting:",
-        ...(notes.length ? notes : ["- Wajib ganti password segera setelah pembelian."]),
-        "- Garansi login 1x24 jam sejak pembelian.",
-      ].join("\n"),
-      deliveryDetails: [
-        `CARA MENGAMANKAN ${kind.toUpperCase()} (lakukan segera setelah beli):`,
-        ...(secure.length ? secure : [
-          `1. Login${site ? ` di ${site}` : ""} memakai data di atas.`,
-          "2. Buka Pengaturan > Keamanan, lalu ganti password jadi milikmu sendiri.",
-          "3. Aktifkan verifikasi 2 langkah (2FA) dengan nomor HP / aplikasi authenticator.",
-          "4. Ganti email & nomor pemulihan ke milikmu.",
-          "5. Keluarkan semua perangkat asing dari daftar sesi aktif.",
-        ]),
-        "",
-        "CATATAN:",
-        "- Jangan bagikan data login ke siapa pun, termasuk yang mengaku admin.",
-        "- Hindari login di banyak perangkat sekaligus pada 24 jam pertama.",
-        "- Kendala login? hubungi admin lewat menu Bantuan / Asisten maksimal 1x24 jam.",
-      ].join("\n"),
-      status: "available",
-    },
-  };
-}
-
-export const EXTRA_PRODUCT_TEMPLATES = [
-  buildTemplate({ key: "tiktok", label: "TikTok", icon: "tiktok", title: "Akun TikTok Aktif — Siap Pakai", about: "Akun TikTok aktif siap dipakai untuk konten, live, maupun promosi. Jumlah akun sesuai jumlah yang kamu beli.", specs: ["- Tipe: No-PVA, nomor bisa kamu pasang sendiri", "- Umur & jumlah follower sesuai keterangan judul produk"], perks: ["- Akses penuh ke For You, upload video, dan pesan", "- Panduan pengamanan akun"], notes: ["- Ganti password lewat aplikasi resmi TikTok.", "- Jangan ganti username & foto profil di 24 jam pertama."], site: "aplikasi TikTok" }),
-  buildTemplate({ key: "instagram", label: "Instagram", icon: "instagram", title: "Akun Instagram Aktif — Siap Pakai", about: "Akun Instagram aktif siap pakai untuk konten pribadi maupun jualan. Jumlah akun sesuai jumlah yang kamu beli.", specs: ["- Tipe: No-PVA, email & nomor bisa kamu ganti sendiri", "- Umur akun sesuai keterangan judul produk"], notes: ["- Login pertama disarankan lewat aplikasi resmi, bukan aplikasi pihak ketiga.", "- Jangan ganti username, nama, dan foto profil sekaligus di hari pertama."], site: "instagram.com" }),
-  buildTemplate({ key: "facebook-ads", label: "Facebook Ads", icon: "facebook", loginType: "Facebook", title: "Akun Facebook + Akses Ads Manager", about: "Akun Facebook yang siap dipakai untuk beriklan lewat Ads Manager. Jumlah akun sesuai jumlah yang kamu beli.", specs: ["- Business Manager: sesuai keterangan judul produk", "- Metode pembayaran iklan dipasang sendiri oleh pembeli"], notes: ["- Pemanasan akun disarankan sebelum pasang budget besar.", "- Kami tidak menjamin akun bebas pembatasan iklan setelah dipakai."], site: "facebook.com" }),
-  buildTemplate({ key: "twitter", label: "X / Twitter", icon: "twitter", title: "Akun X (Twitter) Aktif — Siap Pakai", about: "Akun X/Twitter aktif siap pakai untuk posting, promosi, maupun kebutuhan verifikasi layanan lain.", site: "x.com" }),
-  buildTemplate({ key: "telegram", label: "Telegram", icon: "telegram", loginType: "Lainnya", title: "Akun Telegram Siap Pakai", about: "Akun Telegram aktif lengkap dengan sesi login. Jumlah akun sesuai jumlah yang kamu beli.", specs: ["- Format kiriman: nomor + kode/sesi sesuai keterangan produk"], notes: ["- Segera aktifkan sandi dua langkah (Two-Step Verification).", "- Jangan logout sesi utama sebelum sandi dua langkah aktif."], secure: ["1. Buka Telegram > Settings > Privacy and Security.", "2. Aktifkan Two-Step Verification dan pasang email milikmu.", "3. Cek Active Sessions, lalu keluarkan semua perangkat lain.", "4. Atur ulang nomor/username bila diperlukan."] }),
-  buildTemplate({ key: "whatsapp", label: "WhatsApp", icon: "whatsapp", loginType: "Lainnya", title: "Akun WhatsApp Siap Pakai", about: "Akun WhatsApp aktif dengan nomor siap dipakai untuk chat maupun kebutuhan bisnis.", specs: ["- Format kiriman: nomor + kode verifikasi sesuai keterangan produk"], notes: ["- Segera aktifkan verifikasi dua langkah setelah login.", "- Jangan pakai untuk pesan massal agar nomor tidak diblokir."], secure: ["1. Login memakai nomor dan kode yang dikirim.", "2. Buka Setelan > Akun > Verifikasi dua langkah, aktifkan PIN milikmu.", "3. Tambahkan email pemulihan milikmu sendiri.", "4. Jangan bagikan kode OTP ke siapa pun."] }),
-  buildTemplate({ key: "discord", label: "Discord", icon: "discord", title: "Akun Discord Aktif — Siap Pakai", about: "Akun Discord aktif siap dipakai untuk join server, komunitas, maupun bot.", site: "discord.com" }),
-  buildTemplate({ key: "freefire", label: "Free Fire", icon: "freefire", kind: "Akun Game", title: "Akun Free Fire — Siap Main", about: "Akun Free Fire siap main dengan koleksi item sesuai keterangan judul produk.", specs: ["- Level, rank & skin: sesuai keterangan judul produk", "- Binding: sesuai keterangan (Facebook / Google / VK / email)", "- Region: sesuai keterangan judul produk"], perks: ["- Akses penuh ke akun beserta seluruh item di dalamnya", "- Panduan ganti binding akun"], notes: ["- Segera lepas binding lama dan pasang binding milikmu sendiri.", "- Jangan bagikan akun ke orang lain setelah dibeli."], secure: ["1. Login lewat metode binding yang dikirim admin.", "2. Ganti password email/akun binding jadi milikmu sendiri.", "3. Aktifkan verifikasi 2 langkah pada akun binding.", "4. Di dalam game, buka Pengaturan > Akun untuk menambah binding milikmu.", "5. Lepas binding lama setelah binding barumu aktif."] }),
-  buildTemplate({ key: "mobilelegends", label: "Mobile Legends", icon: "mobilelegends", kind: "Akun Game", title: "Akun Mobile Legends — Siap Main", about: "Akun Mobile Legends (MLBB) siap main dengan hero dan skin sesuai keterangan judul produk.", specs: ["- Rank, hero & skin: sesuai keterangan judul produk", "- Binding: Moonton / email sesuai keterangan", "- Region & ID akun: sesuai keterangan judul produk"], notes: ["- Segera ganti email Moonton ke milikmu sendiri.", "- Hindari login akun di dua perangkat sekaligus."], secure: ["1. Login lewat metode binding yang dikirim admin.", "2. Buka Profil > Pengaturan Akun > Akun Moonton, ganti email & password ke milikmu.", "3. Aktifkan verifikasi email pada akun Moonton.", "4. Cek riwayat login dan keluarkan perangkat lain."] }),
-  buildTemplate({ key: "pubg", label: "PUBG Mobile", icon: "pubg", kind: "Akun Game", title: "Akun PUBG Mobile — Siap Main", about: "Akun PUBG Mobile siap main dengan tier, outfit, dan senjata sesuai keterangan judul produk.", specs: ["- Tier, UC & skin: sesuai keterangan judul produk", "- Binding: Facebook / Twitter / Google sesuai keterangan"], notes: ["- Ganti binding akun ke milikmu segera setelah pembelian.", "- Jangan gunakan aplikasi pihak ketiga/cheat agar akun tidak dibanned."], secure: ["1. Login lewat binding yang dikirim admin.", "2. Ganti password akun binding jadi milikmu sendiri.", "3. Aktifkan 2FA di akun binding.", "4. Tambahkan binding baru milikmu di menu Akun dalam game."] }),
-  buildTemplate({ key: "codm", label: "Call of Duty Mobile", icon: "codm", kind: "Akun Game", title: "Akun Call of Duty Mobile — Siap Main", about: "Akun CODM siap main dengan rank, senjata, dan skin sesuai keterangan judul produk.", specs: ["- Rank & koleksi item: sesuai keterangan judul produk", "- Binding: Activision / Facebook / Google sesuai keterangan"], notes: ["- Segera ganti email & password akun Activision ke milikmu.", "- Jangan pakai cheat agar akun aman dari banned."], secure: ["1. Login lewat binding yang dikirim admin.", "2. Buka profile.callofduty.com, ganti email & password jadi milikmu.", "3. Aktifkan verifikasi dua langkah.", "4. Keluarkan sesi perangkat lain."] }),
-  buildTemplate({ key: "genshin", label: "Genshin Impact", icon: "genshin", kind: "Akun Game", title: "Akun Genshin Impact — Siap Main", about: "Akun Genshin Impact (HoYoverse) siap main dengan karakter dan AR sesuai keterangan judul produk.", specs: ["- AR, karakter & senjata: sesuai keterangan judul produk", "- Server: Asia/Amerika/Eropa sesuai keterangan"], notes: ["- Ganti email & password HoYoverse setelah pembelian."], site: "account.hoyoverse.com" }),
-  buildTemplate({ key: "roblox", label: "Roblox", icon: "roblox", kind: "Akun Game", title: "Akun Roblox — Siap Main", about: "Akun Roblox siap pakai dengan item/Robux sesuai keterangan judul produk.", site: "roblox.com" }),
-  buildTemplate({ key: "valorant", label: "Valorant / Riot", icon: "valorant", kind: "Akun Game", title: "Akun Valorant (Riot) — Siap Main", about: "Akun Valorant siap main dengan rank dan skin sesuai keterangan judul produk.", specs: ["- Rank & skin: sesuai keterangan judul produk", "- Region: sesuai keterangan judul produk"], site: "account.riotgames.com" }),
-  buildTemplate({ key: "steam", label: "Steam", icon: "steam", kind: "Akun Game", title: "Akun Steam — Siap Pakai", about: "Akun Steam berisi game sesuai keterangan judul produk.", notes: ["- Jangan ubah email akun sebelum konfirmasi admin.", "- Steam Guard akan aktif beberapa hari setelah ganti perangkat."], site: "store.steampowered.com" }),
-  buildTemplate({ key: "netflix", label: "Netflix", icon: "netflix", kind: "Akun Streaming", title: "Akun Netflix Premium — Siap Pakai", about: "Akses Netflix premium sesuai durasi pada judul produk. Profil dan kualitas sesuai paket.", specs: ["- Masa aktif: sesuai judul produk", "- Jumlah profil: sesuai judul produk"], notes: ["- Jangan ganti email, password, atau PIN profil lain.", "- Pakai profil yang ditentukan admin saja."], site: "netflix.com" }),
-  buildTemplate({ key: "spotify", label: "Spotify", icon: "spotify", kind: "Akun Streaming", title: "Akun Spotify Premium — Siap Pakai", about: "Akses Spotify Premium sesuai durasi pada judul produk.", notes: ["- Jangan ganti email akun tanpa konfirmasi admin."], site: "spotify.com" }),
-  buildTemplate({ key: "youtube", label: "YouTube Premium", icon: "youtube", loginType: "Google", kind: "Akun Streaming", title: "YouTube Premium — Siap Pakai", about: "Akses YouTube Premium (bebas iklan + musik) sesuai durasi pada judul produk.", notes: ["- Jangan keluarkan perangkat lain dari akun bila memakai paket keluarga."], site: "youtube.com" }),
-  buildTemplate({ key: "disney", label: "Disney+ Hotstar", icon: "disney", kind: "Akun Streaming", title: "Akun Disney+ Hotstar — Siap Pakai", about: "Akses Disney+ Hotstar sesuai durasi pada judul produk.", site: "hotstar.com" }),
-  buildTemplate({ key: "vidio", label: "Vidio / WeTV / Viu", icon: "vidio", kind: "Akun Streaming", title: "Akun Streaming Lokal Premium — Siap Pakai", about: "Akses layanan streaming lokal premium sesuai keterangan judul produk.", site: "aplikasi resmi layanan" }),
-  buildTemplate({ key: "canva", label: "Canva Pro", icon: "canva", kind: "Akun Tools", title: "Canva Pro — Siap Pakai", about: "Akses Canva Pro untuk desain tanpa batas sesuai durasi pada judul produk.", notes: ["- Jangan keluarkan anggota lain dari tim Canva.", "- Jangan ganti email tim."], site: "canva.com" }),
-  buildTemplate({ key: "chatgpt", label: "ChatGPT Plus", icon: "chatgpt", kind: "Akun AI", title: "Akun ChatGPT Plus — Siap Pakai", about: "Akses ChatGPT Plus sesuai durasi pada judul produk.", notes: ["- Jangan ganti email dan metode pembayaran akun.", "- Hindari login dari banyak lokasi berbeda dalam waktu singkat."], site: "chat.openai.com" }),
-  buildTemplate({ key: "capcut", label: "CapCut Pro", icon: "capcut", kind: "Akun Tools", title: "Akun CapCut Pro — Siap Pakai", about: "Akses CapCut Pro untuk edit video tanpa watermark sesuai durasi pada judul produk.", site: "aplikasi CapCut" }),
-  buildTemplate({ key: "microsoft", label: "Microsoft / Outlook", icon: "Microsoft", loginType: "Microsoft", title: "Akun Microsoft (Outlook) — Siap Pakai", about: "Akun Microsoft/Outlook fresh siap dipakai untuk email, Office online, dan login layanan lain.", site: "account.microsoft.com" }),
-  buildTemplate({ key: "apple", label: "Apple ID", icon: "Apple", loginType: "Apple", title: "Apple ID — Siap Pakai", about: "Apple ID siap dipakai untuk App Store dan layanan Apple lainnya.", notes: ["- Jangan aktifkan Find My sebelum mengganti data pemulihan.", "- Ganti pertanyaan keamanan sesuai panduan admin."], site: "appleid.apple.com" }),
-  buildTemplate({ key: "shopee", label: "Marketplace (Shopee/Tokopedia)", icon: "shopee", kind: "Akun Marketplace", title: "Akun Marketplace Siap Pakai", about: "Akun marketplace aktif siap dipakai untuk belanja maupun berjualan sesuai keterangan judul produk.", notes: ["- Ganti nomor HP dan email ke milikmu sebelum transaksi.", "- Jangan hubungkan rekening sebelum akun aman."], site: "aplikasi resmi marketplace" }),
-  buildTemplate({ key: "lainnya", label: "Lainnya (kosong)", icon: "lainnya", loginType: "Lainnya", title: "Akun Digital — Siap Pakai", about: "Akun digital siap pakai. Sesuaikan judul, harga, dan keterangan produk di bawah ini." }),
-];
-
-export const PRODUCT_TEMPLATES = [...BASE_PRODUCT_TEMPLATES, ...EXTRA_PRODUCT_TEMPLATES];
-
 export const emptyListing = { title: "", description: "", loginType: "Google", price: "", status: "available", agedPricing: true, accounts: [{ email: "", password: "", price: "", createdAt: "" }], deliveryDetails: "" };
 const accountPriceOf = (account, product) => {
   const n = Number(account && account.price);
@@ -335,29 +259,6 @@ const PROVIDER_ICONS = {
   "apple": "https://img.icons8.com/ios-filled/50/mac-os.png",
   "microsoft": "https://img.icons8.com/color/48/microsoft.png",
   "lainnya": "https://img.icons8.com/color/48/key-security.png",
-  "tiktok": "https://img.icons8.com/color/48/tiktok.png",
-  "instagram": "https://img.icons8.com/color/48/instagram-new.png",
-  "twitter": "https://img.icons8.com/color/48/twitterx.png",
-  "telegram": "https://img.icons8.com/color/48/telegram-app.png",
-  "whatsapp": "https://img.icons8.com/color/48/whatsapp.png",
-  "discord": "https://img.icons8.com/color/48/discord-logo.png",
-  "freefire": "https://img.icons8.com/color/48/fire-element.png",
-  "mobilelegends": "https://img.icons8.com/color/48/sword.png",
-  "pubg": "https://img.icons8.com/color/48/pubg.png",
-  "codm": "https://img.icons8.com/color/48/battle.png",
-  "genshin": "https://img.icons8.com/color/48/anime.png",
-  "roblox": "https://img.icons8.com/color/48/roblox.png",
-  "valorant": "https://img.icons8.com/color/48/crosshair.png",
-  "steam": "https://img.icons8.com/color/48/steam.png",
-  "netflix": "https://img.icons8.com/color/48/netflix-desktop-app.png",
-  "spotify": "https://img.icons8.com/color/48/spotify.png",
-  "youtube": "https://img.icons8.com/color/48/youtube-play.png",
-  "disney": "https://img.icons8.com/color/48/disney-plus.png",
-  "vidio": "https://img.icons8.com/color/48/tv-show.png",
-  "canva": "https://img.icons8.com/color/48/canva-app.png",
-  "chatgpt": "https://img.icons8.com/color/48/chatgpt.png",
-  "capcut": "https://img.icons8.com/color/48/video-editing.png",
-  "shopee": "https://img.icons8.com/color/48/shopping-cart-promotion.png",
 };
 const providerIconUrl = (t) =>
   PROVIDER_ICONS[String(t || "").trim().toLowerCase()] || PROVIDER_ICONS["lainnya"];
@@ -1424,10 +1325,7 @@ function App() {
     else if (sortBy === "price-desc") list = [...list].sort((a, b) => priceOf(b) - priceOf(a));
     else if (sortBy === "stock-desc") list = [...list].sort((a, b) => stockOf(b) - stockOf(a));
     else if (sortBy === "name-asc") list = [...list].sort((a, b) => String(a.title).localeCompare(String(b.title), "id"));
-    /* Produk habis tetap tampil di katalog, tapi selalu diletakkan paling bawah. */
-    const ready = list.filter((p) => stockOf(p) > 0 && p.status !== "sold");
-    const empty = list.filter((p) => !(stockOf(p) > 0 && p.status !== "sold"));
-    return [...ready, ...empty];
+    return list;
   }, [data.products, search, sortBy, ageFilter, platFilter]);
 
   // Pindah halaman selalu mulai dari paling atas (window + container scroll).
@@ -2236,7 +2134,7 @@ function App() {
         {!data.loading && !data.error && products.length === 0 && (
           <div className="cx-empty">
             <Package size={28} />
-            <h3>Belum ada produk yang cocok</h3>
+            <h3>Belum ada akun tersedia</h3>
             <p>{search ? "Tidak ada produk yang cocok dengan pencarian." : "Belum ada listing nyata di database. Panel tidak menampilkan akun contoh."}</p>
           </div>
         )}
@@ -3934,21 +3832,6 @@ const ratingOf = (product) => Number(product && product.ratingAvg) || 0;
 const ratingCountOf = (product) => Number(product && product.ratingCount) || 0;
 const soldOf = (product) => Number(product && product.soldCount) || 0;
 
-/* Label status stok: listing tidak pernah hilang dari katalog, hanya diberi
-   label yang sesuai supaya katalog tidak terlihat kosong. */
-export function stockInfo(product) {
-  const p = product || {};
-  const accounts = Array.isArray(p.accounts) ? p.accounts : [];
-  const stock = Number(p.stock) || accounts.length;
-  if (stock > 0 && p.status !== "sold") {
-    return { ready: true, stock, tone: "ready", badge: `${stock} stok tersedia`, note: "Siap pakai" };
-  }
-  if (soldOf(p) > 0 || p.status === "sold") {
-    return { ready: false, stock: 0, tone: "out", badge: "Stok habis", note: "Stok habis — restock menyusul" };
-  }
-  return { ready: false, stock: 0, tone: "soon", badge: "Segera tersedia", note: "Belum tersedia — segera restock" };
-}
-
 function StarRow({ value, size = 13 }) {
   return (
     <span className="cx-stars" aria-hidden="true">
@@ -3999,24 +3882,14 @@ function ProductRating({ product, canRate, onRate }) {
   const myComment = product.myComment || "";
   const [draftStars, setDraftStars] = useState(mine);
   const [draft, setDraft] = useState(myComment);
-  const [page, setPage] = useState(0);
-  const [slideDir, setSlideDir] = useState(1);
-  useEffect(() => { setDraftStars(mine); setDraft(myComment); setPage(0); }, [product.id, mine, myComment]);
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setDraftStars(mine); setDraft(myComment); setShowAll(false); }, [product.id, mine, myComment]);
 
   const avg = ratingOf(product);
   const count = ratingCountOf(product);
   const sold = soldOf(product);
   const reviews = Array.isArray(product.reviews) ? product.reviews : [];
-  const PER_PAGE = 4;
-  const pageCount = Math.max(1, Math.ceil(reviews.length / PER_PAGE));
-  const safePage = Math.min(page, pageCount - 1);
-  const visible = reviews.slice(safePage * PER_PAGE, safePage * PER_PAGE + PER_PAGE);
-  const goPage = (next) => {
-    const target = (next + pageCount) % pageCount;
-    if (target === safePage) return;
-    setSlideDir(next > safePage ? 1 : -1);
-    setPage(target);
-  };
+  const visible = showAll ? reviews : reviews.slice(0, 3);
   const active = hover || draftStars;
   const MAX = 600;
 
@@ -4043,45 +3916,24 @@ function ProductRating({ product, canRate, onRate }) {
       </div>
 
       {reviews.length > 0 && (
-        <div className="cx-reviews-wrap">
-          <div
-            className={`cx-reviews cx-reviews-slide ${slideDir > 0 ? "from-right" : "from-left"}`}
-            key={safePage}
-          >
-            {visible.map((review) => (
-              <article key={review.id} className="cx-review">
-                <div className="cx-review-top">
-                  <span className="cx-review-avatar" aria-hidden="true">{(review.author || "?").charAt(0).toUpperCase()}</span>
-                  <span className="cx-review-who">
-                    <strong>{review.author}</strong>
-                    <small>{reviewDate(review.createdAt)}</small>
-                  </span>
-                  <StarRow value={review.rating} size={11} />
-                </div>
-                <p className="cx-review-text">{review.comment}</p>
-              </article>
-            ))}
-          </div>
-          {pageCount > 1 && (
-            <div className="cx-review-nav">
-              <button
-                type="button"
-                className="cx-review-nav-btn"
-                aria-label="Ulasan sebelumnya"
-                onClick={() => goPage(safePage - 1)}
-              >
-                ‹
-              </button>
-              <span className="cx-review-nav-info">{safePage + 1} / {pageCount}</span>
-              <button
-                type="button"
-                className="cx-review-nav-btn"
-                aria-label="Ulasan berikutnya"
-                onClick={() => goPage(safePage + 1)}
-              >
-                ›
-              </button>
-            </div>
+        <div className="cx-reviews">
+          {visible.map((review) => (
+            <article key={review.id} className="cx-review">
+              <div className="cx-review-top">
+                <span className="cx-review-avatar" aria-hidden="true">{(review.author || "?").charAt(0).toUpperCase()}</span>
+                <span className="cx-review-who">
+                  <strong>{review.author}</strong>
+                  <small>{reviewDate(review.createdAt)}</small>
+                </span>
+                <StarRow value={review.rating} size={11} />
+              </div>
+              <p className="cx-review-text">{review.comment}</p>
+            </article>
+          ))}
+          {reviews.length > 3 && (
+            <button type="button" className="cx-review-more" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "Tampilkan lebih sedikit" : `Lihat semua ${reviews.length} ulasan`}
+            </button>
           )}
         </div>
       )}
@@ -4141,17 +3993,14 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
   const hasRange = maxPrice > minPrice;
   const avg = ratingOf(product);
   const count = ratingCountOf(product);
-  const info = stockInfo(product);
   return (
-    <article className={`cx-pc cx-pc-v3${info.ready ? "" : " is-empty"}`}>
+    <article className="cx-pc cx-pc-v3">
       <div className="cx-pc-head">
         <span className="cx-pc-plat" style={{ color }}>
           <ProviderIcon type={product.loginType} size={14} />
           {product.loginType}
         </span>
-        {info.ready
-          ? (age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>)
-          : <span className={`cx-stock-badge is-${info.tone}`}>{info.badge}</span>}
+        {age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
       </div>
 
       <h3 className="cx-pc-title">
@@ -4160,7 +4009,7 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
         ) : product.title}
       </h3>
 
-      <p className="cx-pc-cond">{info.ready ? (age.label ? `${age.label} — Siap pakai` : "Siap pakai") : info.note}</p>
+      <p className="cx-pc-cond">{age.label ? `${age.label} — Siap pakai` : "Siap pakai"}</p>
 
       <div className="cx-pc-meta">
         <span className="cx-pc-rate">
@@ -4168,8 +4017,8 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           {count > 0 ? <><strong>{avg.toFixed(1)}</strong> <small>· {count} ulasan</small></> : <small>Belum ada ulasan</small>}
         </span>
         <span className="cx-pc-sep">·</span>
-        <span className={`cx-pc-stockline${info.ready ? "" : " is-out"}`}>
-          {info.ready ? `${stock} stok tersedia` : info.badge}
+        <span className={`cx-pc-stockline${stock > 0 ? "" : " is-out"}`}>
+          {stock > 0 ? `${stock} stok tersedia` : "Stok habis"}
         </span>
       </div>
 
@@ -4182,11 +4031,11 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
         </div>
         <button
           type="button"
-          className={`cx-pc-cta ${info.ready ? "is-ready" : "is-empty"}`}
+          className="cx-pc-cta is-ready"
           onClick={() => onOpen && onOpen()}
           aria-label={`Lihat ${product.title}`}
         >
-          <span>{info.ready ? "Pilih akun" : "Lihat detail"}</span>
+          <span>Pilih akun</span>
           <ArrowRight size={15} />
         </button>
       </div>
@@ -4228,7 +4077,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
 
   const accounts = Array.isArray(product.accounts) ? product.accounts : [];
   const stock = Number(product.stock) || accounts.length;
-  const pageStock = stockInfo(product);
   const total = sumSelected(product, selected);
   const toggle = (index) =>
     setSelected((prev) => (prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]));
@@ -4244,12 +4092,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
       </nav>
 
       <header className="cx-prodpage-head">
-        {!pageStock.ready && (
-          <div className={`cx-stock-note is-${pageStock.tone}`} role="status">
-            <Package size={13} />
-            <span><strong>{pageStock.badge}.</strong> {pageStock.note}. Produk tetap kami tampilkan, cek lagi nanti ya.</span>
-          </div>
-        )}
         <span className="cx-prodpage-plat">
           <ProviderIcon type={product.loginType} size={16} />
           {product.loginType}
@@ -4273,25 +4115,11 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
         <dl className="cx-spec">
           <div className="cx-spec-row"><dt>Login</dt><dd>{product.loginType}</dd></div>
           <div className="cx-spec-row"><dt>Status</dt><dd>{productAgeInfo(product).label || "Siap pakai"}</dd></div>
-          <div className="cx-spec-row"><dt>Stok</dt><dd>{pageStock.ready ? `${stock} tersedia` : pageStock.badge}</dd></div>
+          <div className="cx-spec-row"><dt>Stok</dt><dd>{stock > 0 ? `${stock} tersedia` : "Kosong"}</dd></div>
           <div className="cx-spec-row"><dt>Pengiriman</dt><dd>Otomatis setelah bayar</dd></div>
           <div className="cx-spec-row"><dt>Garansi</dt><dd>Sesuai ketentuan</dd></div>
         </dl>
       </section>
-
-      {accounts.length === 0 && (
-        <section className="cx-prodpage-card">
-          <h2>Pilih akun</h2>
-          <div className="cx-stock-empty">
-            <Package size={20} />
-            <strong>{pageStock.badge}</strong>
-            <p>Stok baru biasanya masuk beberapa jam sekali. Simpan halaman ini atau cek katalog lain dulu.</p>
-            <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => navigate("katalog")}>
-              <ShoppingBag size={13} /> Lihat katalog lain
-            </button>
-          </div>
-        </section>
-      )}
 
       {accounts.length > 0 && (
         <section className="cx-prodpage-card">
@@ -4304,7 +4132,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
         </section>
       )}
 
-      {accounts.length > 0 && (
       <div className="cx-prodpage-buy is-sticky">
         <div className="cx-prodpage-total">
           <small>{selected.length ? `${selected.length} akun dipilih` : "Belum ada akun dipilih"}</small>
@@ -4314,7 +4141,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
           <ShoppingBag size={14} /> Tambah ke keranjang
         </button>
       </div>
-      )}
 
       {onRate && <ProductRating product={product} canRate={canRate} onRate={onRate} />}
 
