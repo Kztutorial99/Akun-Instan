@@ -1615,25 +1615,27 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   .cx-cat-divider{ margin:18px 0 10px; padding-top:12px; }
 }
 
-/* Katalog v4: nama produk jadi judul utama, tipe login pindah di bawahnya */
-.cx-pc-v3 .cx-pc-head { align-items: flex-start; gap: 9px; margin-bottom: 4px; }
+/* Katalog v4: nama produk jadi judul utama, tipe login di bawahnya */
+.cx-pc-v3 .cx-pc-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.cx-pc-headmain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cx-pc-v3 .cx-pc-head .cx-pc-title {
-  flex: 1 1 auto; min-width: 0;
-  font-size: 17px; line-height: 1.25; margin: 0;
-  overflow-wrap: anywhere;
+  margin: 0; font-size: 16.5px; line-height: 1.3; overflow-wrap: anywhere;
 }
 .cx-pc-brandicon {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 9px;
+  width: 34px; height: 34px; border-radius: 10px;
   background: color-mix(in srgb, currentColor 14%, transparent);
   border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
 }
 .cx-pc-brandicon svg, .cx-pc-brandicon img { display: block; }
 .cx-pc-v3 .cx-pc-plat-sub {
-  display: inline-flex; margin: 0 0 6px 39px;
-  font-size: 11px; letter-spacing: .05em; opacity: .95;
+  display: inline-flex; align-items: center; margin: 0;
+  font: 600 11px Inter, system-ui, sans-serif;
+  letter-spacing: .02em; text-transform: none; opacity: .9;
 }
+.cx-pc-v3 .cx-age-badge { flex: none; margin-top: 2px; }
+.cx-pc-v3 .cx-pc-cond { margin: 0 0 6px; }
 @media (max-width: 480px) {
-  .cx-pc-v3 .cx-pc-head .cx-pc-title { font-size: 15.5px; }
-  .cx-pc-v3 .cx-pc-plat-sub { margin-left: 39px; font-size: 10.5px; }
+  .cx-pc-v3 .cx-pc-head .cx-pc-title { font-size: 15px; }
+  .cx-pc-brandicon { width: 30px; height: 30px; }
 }
