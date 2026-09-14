@@ -4072,20 +4072,22 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
   return (
     <article className={`cx-pc cx-pc-v3${soldOut ? " is-out" : ""}`}>
       <div className="cx-pc-head">
-        <span className="cx-pc-plat" style={{ color }}>
-          <ProductTypeIcon product={product} size={14} />
-          {product.loginType}
+        <span className="cx-pc-brandicon" style={{ color }}>
+          <ProductTypeIcon product={product} size={18} />
         </span>
+        <h3 className="cx-pc-title">
+          {onOpen ? (
+            <button type="button" className="cx-pc-title-link" onClick={onOpen}>{product.title}</button>
+          ) : product.title}
+        </h3>
         {soldOut
           ? <span className="cx-age-badge is-out">Stok habis</span>
           : age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
       </div>
 
-      <h3 className="cx-pc-title">
-        {onOpen ? (
-          <button type="button" className="cx-pc-title-link" onClick={onOpen}>{product.title}</button>
-        ) : product.title}
-      </h3>
+      {product.loginType && (
+        <span className="cx-pc-plat cx-pc-plat-sub" style={{ color }}>{product.loginType}</span>
+      )}
 
       <p className="cx-pc-cond">{age.label ? `${age.label} — Siap pakai` : "Siap pakai"}</p>
 
