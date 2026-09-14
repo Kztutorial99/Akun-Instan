@@ -112,48 +112,116 @@ function view(row, agedCfg) {
 const DEMO_PREFIX = "etl-";
 const LEGACY_DEMO_PREFIX = "demo-";
 const DEMO_TEMPLATES = [
-  {
-    key: "gmail", label: "Gmail", platform: "Gmail", loginType: "Google",
-    min: 7000, max: 22000,
+  /* ── Email ── */
+  { key: "gmail", group: "Email", label: "Gmail", loginType: "Google", min: 7000, max: 22000,
     titles: ["Gmail Fresh Verified", "Gmail Aged 2019", "Gmail Aged 2021", "Gmail Recovery Aktif", "Gmail Siap Pakai"],
-    notes: ["Recovery email aktif", "Sudah verifikasi nomor", "Belum pernah dipakai login", "Aman untuk pendaftaran layanan"],
-  },
-  {
-    key: "facebook", label: "Facebook", platform: "Facebook", loginType: "Facebook",
-    min: 11000, max: 42000,
-    titles: ["Facebook Aged 2018", "Facebook Verified Email", "Facebook Marketplace Aktif", "Facebook Full Akses"],
-    notes: ["Email login diserahkan penuh", "Belum pernah kena batasan", "Profil sudah terisi lengkap"],
-  },
-  {
-    key: "outlook", label: "Outlook / Hotmail", platform: "Outlook", loginType: "Microsoft",
-    min: 5000, max: 16000,
+    notes: ["Recovery email aktif", "Sudah verifikasi nomor", "Belum pernah dipakai login", "Aman untuk pendaftaran layanan"] },
+  { key: "outlook", group: "Email", label: "Outlook / Hotmail", loginType: "Microsoft", min: 5000, max: 16000,
     titles: ["Outlook Fresh Verified", "Hotmail Aged 2017", "Outlook Siap Pakai", "Outlook Recovery Aktif"],
-    notes: ["Bisa dipakai untuk Office", "Recovery email diserahkan", "Aman untuk verifikasi layanan"],
-  },
-  {
-    key: "game", label: "Akun Game", platform: "Game", loginType: "Email/password",
-    min: 18000, max: 120000,
-    titles: ["Akun Game Starter", "Akun Game Rank Tinggi", "Akun Game Full Skin", "Akun Game Level Tinggi"],
-    notes: ["Email login diserahkan penuh", "Bisa ganti data sendiri", "Progress aman"],
-  },
-  {
-    key: "streaming", label: "Streaming", platform: "Streaming", loginType: "Email/password",
-    min: 13000, max: 55000,
-    titles: ["Akun Streaming Private", "Akun Streaming 1 Profil", "Akun Streaming Garansi", "Akun Streaming Full HD"],
-    notes: ["Login stabil", "Tidak perlu ganti perangkat", "Siap tonton"],
-  },
-  {
-    key: "socmed", label: "Media Sosial", platform: "Media Sosial", loginType: "Email/password",
-    min: 9000, max: 35000,
-    titles: ["Akun Instagram Aged", "Akun TikTok Fresh", "Akun Twitter/X Aged", "Akun Telegram Siap Pakai"],
-    notes: ["Email login diserahkan", "Belum pernah kena batasan", "Aman untuk aktivitas harian"],
-  },
-  {
-    key: "custom-email", label: "Custom Email", platform: "Custom Email", loginType: "Email/password",
-    min: 6000, max: 20000,
+    notes: ["Bisa dipakai untuk Office", "Recovery email diserahkan", "Aman untuk verifikasi layanan"] },
+  { key: "yahoo", group: "Email", label: "Yahoo Mail", loginType: "Email/password", min: 5000, max: 15000,
+    titles: ["Yahoo Mail Aged", "Yahoo Mail Fresh", "Yahoo Mail Siap Pakai"],
+    notes: ["Login stabil", "Recovery diserahkan", "Aman untuk daftar layanan"] },
+  { key: "custom-email", group: "Email", label: "Custom Email", loginType: "Email/password", min: 6000, max: 20000,
     titles: ["Custom Email Domain Pribadi", "Custom Email Bisnis", "Custom Email Siap Pakai"],
-    notes: ["Nama email bisa dipilih", "Bisa dipakai untuk verifikasi", "Login lewat webmail"],
-  },
+    notes: ["Nama email bisa dipilih", "Bisa dipakai untuk verifikasi", "Login lewat webmail"] },
+
+  /* ── Media sosial ── */
+  { key: "facebook", group: "Media Sosial", label: "Facebook", loginType: "Facebook", min: 11000, max: 42000,
+    titles: ["Facebook Aged 2018", "Facebook Verified Email", "Facebook Marketplace Aktif", "Facebook Full Akses"],
+    notes: ["Email login diserahkan penuh", "Belum pernah kena batasan", "Profil sudah terisi lengkap"] },
+  { key: "instagram", group: "Media Sosial", label: "Instagram", loginType: "Email/password", min: 10000, max: 45000,
+    titles: ["Instagram Aged 2019", "Instagram Fresh Verified", "Instagram Username Bersih", "Instagram Siap Branding"],
+    notes: ["Email login diserahkan", "Belum pernah kena batasan", "Bisa ganti username sendiri"] },
+  { key: "tiktok", group: "Media Sosial", label: "TikTok", loginType: "Email/password", min: 9000, max: 48000,
+    titles: ["TikTok Fresh Verified", "TikTok Aged Aman", "TikTok Username Bersih", "TikTok Siap Konten"],
+    notes: ["Email login diserahkan", "Belum pernah kena batasan", "Bisa ganti data sendiri"] },
+  { key: "twitter", group: "Media Sosial", label: "Twitter / X", loginType: "Email/password", min: 9000, max: 38000,
+    titles: ["Twitter/X Aged 2016", "Twitter/X Fresh Verified", "Twitter/X Siap Pakai"],
+    notes: ["Email login diserahkan", "Aman untuk aktivitas harian", "Belum pernah kena limit"] },
+  { key: "telegram", group: "Media Sosial", label: "Telegram", loginType: "Nomor/OTP", min: 8000, max: 30000,
+    titles: ["Telegram Siap Pakai", "Telegram Aged Aman", "Telegram Full Akses"],
+    notes: ["Login stabil", "Bisa pasang 2FA sendiri", "Aman untuk grup dan channel"] },
+  { key: "whatsapp", group: "Media Sosial", label: "WhatsApp", loginType: "Nomor/OTP", min: 12000, max: 40000,
+    titles: ["WhatsApp Siap Pakai", "WhatsApp Nomor Aktif", "WhatsApp Full Akses"],
+    notes: ["Nomor aktif diserahkan", "Bisa pasang PIN sendiri", "Login stabil"] },
+  { key: "discord", group: "Media Sosial", label: "Discord", loginType: "Email/password", min: 7000, max: 25000,
+    titles: ["Discord Aged Aman", "Discord Fresh Verified", "Discord Siap Pakai"],
+    notes: ["Email login diserahkan", "Belum pernah kena batasan", "Aman untuk join server"] },
+  { key: "youtube", group: "Media Sosial", label: "YouTube Channel", loginType: "Google", min: 20000, max: 90000,
+    titles: ["Channel YouTube Bersih", "Channel YouTube Aged", "Channel YouTube Siap Upload"],
+    notes: ["Tanpa teguran hak cipta", "Email login diserahkan", "Bisa ganti nama channel"] },
+
+  /* ── Game ── */
+  { key: "freefire", group: "Akun Game", label: "Free Fire", loginType: "Email/password", min: 15000, max: 150000,
+    titles: ["Free Fire Starter Aman", "Free Fire Banyak Skin", "Free Fire Level Tinggi", "Free Fire Bundle Lama"],
+    notes: ["Login lewat email, bisa ganti sendiri", "Data lengkap diserahkan", "Progress aman"] },
+  { key: "pubg", group: "Akun Game", label: "PUBG Mobile", loginType: "Email/password", min: 20000, max: 200000,
+    titles: ["PUBG Mobile Rank Tinggi", "PUBG Mobile Banyak Skin", "PUBG Mobile Starter", "PUBG Mobile Set Lengkap"],
+    notes: ["Login lewat email, bisa ganti sendiri", "Data lengkap diserahkan", "Progress aman"] },
+  { key: "cod", group: "Akun Game", label: "Call of Duty Mobile", loginType: "Email/password", min: 20000, max: 180000,
+    titles: ["COD Mobile Rank Tinggi", "COD Mobile Banyak Senjata", "COD Mobile Starter", "COD Mobile Skin Legendary"],
+    notes: ["Login lewat email, bisa ganti sendiri", "Data lengkap diserahkan", "Progress aman"] },
+  { key: "mobile-legends", group: "Akun Game", label: "Mobile Legends", loginType: "Email/password", min: 25000, max: 250000,
+    titles: ["Mobile Legends Mythic", "Mobile Legends Banyak Skin", "Mobile Legends Starter", "Mobile Legends Hero Lengkap"],
+    notes: ["Login lewat email/Moonton, bisa ganti sendiri", "Data lengkap diserahkan", "Progress aman"] },
+  { key: "genshin", group: "Akun Game", label: "Genshin Impact", loginType: "Email/password", min: 35000, max: 300000,
+    titles: ["Genshin Impact AR Tinggi", "Genshin Impact Karakter Bintang 5", "Genshin Impact Starter"],
+    notes: ["Email login diserahkan penuh", "Bisa ganti data sendiri", "Progress aman"] },
+  { key: "valorant", group: "Akun Game", label: "Valorant", loginType: "Email/password", min: 40000, max: 320000,
+    titles: ["Valorant Skin Lengkap", "Valorant Rank Aman", "Valorant Starter"],
+    notes: ["Email login diserahkan penuh", "Bisa ganti data sendiri", "Progress aman"] },
+  { key: "roblox", group: "Akun Game", label: "Roblox", loginType: "Email/password", min: 12000, max: 120000,
+    titles: ["Roblox Siap Pakai", "Roblox Item Lengkap", "Roblox Aged Aman"],
+    notes: ["Email login diserahkan", "Bisa ganti data sendiri", "Progress aman"] },
+  { key: "steam", group: "Akun Game", label: "Steam", loginType: "Email/password", min: 30000, max: 280000,
+    titles: ["Steam Siap Pakai", "Steam Game Lengkap", "Steam Aged Aman"],
+    notes: ["Email login diserahkan penuh", "Bisa pasang Steam Guard sendiri", "Progress aman"] },
+  { key: "game-lain", group: "Akun Game", label: "Akun Game Lainnya", loginType: "Email/password", min: 18000, max: 120000,
+    titles: ["Akun Game Starter", "Akun Game Rank Tinggi", "Akun Game Full Skin", "Akun Game Level Tinggi"],
+    notes: ["Email login diserahkan penuh", "Bisa ganti data sendiri", "Progress aman"] },
+
+  /* ── Streaming & hiburan ── */
+  { key: "netflix", group: "Streaming", label: "Netflix", loginType: "Email/password", min: 20000, max: 70000,
+    titles: ["Netflix Private 1 Profil", "Netflix Sharing Garansi", "Netflix Siap Tonton"],
+    notes: ["Login stabil", "Tidak perlu ganti perangkat", "Siap tonton"] },
+  { key: "spotify", group: "Streaming", label: "Spotify", loginType: "Email/password", min: 12000, max: 40000,
+    titles: ["Spotify Premium Individu", "Spotify Premium Garansi", "Spotify Siap Pakai"],
+    notes: ["Login stabil", "Bisa dipakai di HP dan laptop", "Siap dengar"] },
+  { key: "youtube-premium", group: "Streaming", label: "YouTube Premium", loginType: "Google", min: 12000, max: 45000,
+    titles: ["YouTube Premium Individu", "YouTube Premium Garansi", "YouTube Premium Siap Pakai"],
+    notes: ["Login stabil", "Bebas iklan", "Siap tonton"] },
+  { key: "disney", group: "Streaming", label: "Disney+ Hotstar", loginType: "Email/password", min: 12000, max: 45000,
+    titles: ["Disney+ Hotstar Private", "Disney+ Hotstar Garansi", "Disney+ Hotstar Siap Tonton"],
+    notes: ["Login stabil", "Tidak perlu ganti perangkat", "Siap tonton"] },
+  { key: "vidio-wetv", group: "Streaming", label: "Vidio / WeTV / Viu", loginType: "Email/password", min: 8000, max: 30000,
+    titles: ["Vidio Platinum Siap Pakai", "WeTV VIP Siap Pakai", "Viu Premium Siap Pakai"],
+    notes: ["Login stabil", "Siap tonton", "Bisa dipakai di HP"] },
+  { key: "streaming-lain", group: "Streaming", label: "Streaming Lainnya", loginType: "Email/password", min: 13000, max: 55000,
+    titles: ["Akun Streaming Private", "Akun Streaming 1 Profil", "Akun Streaming Garansi", "Akun Streaming Full HD"],
+    notes: ["Login stabil", "Tidak perlu ganti perangkat", "Siap tonton"] },
+
+  /* ── Produktivitas & AI ── */
+  { key: "canva", group: "Produktivitas", label: "Canva Pro", loginType: "Email/password", min: 8000, max: 30000,
+    titles: ["Canva Pro Siap Pakai", "Canva Pro Garansi", "Canva Pro Akun Pribadi"],
+    notes: ["Login stabil", "Semua fitur pro terbuka", "Aman untuk kerja desain"] },
+  { key: "chatgpt", group: "Produktivitas", label: "ChatGPT Plus", loginType: "Email/password", min: 35000, max: 150000,
+    titles: ["ChatGPT Plus Siap Pakai", "ChatGPT Plus Garansi", "ChatGPT Akun Pribadi"],
+    notes: ["Email login diserahkan", "Login stabil", "Siap dipakai harian"] },
+  { key: "capcut", group: "Produktivitas", label: "CapCut Pro", loginType: "Email/password", min: 8000, max: 30000,
+    titles: ["CapCut Pro Siap Pakai", "CapCut Pro Garansi", "CapCut Pro Akun Pribadi"],
+    notes: ["Semua fitur pro terbuka", "Login stabil", "Aman untuk edit konten"] },
+  { key: "microsoft-office", group: "Produktivitas", label: "Microsoft 365", loginType: "Microsoft", min: 15000, max: 60000,
+    titles: ["Microsoft 365 Siap Pakai", "Microsoft 365 Garansi", "Office 365 Akun Pribadi"],
+    notes: ["Bisa dipakai untuk Office", "Login stabil", "Termasuk penyimpanan awan"] },
+
+  /* ── E-commerce & lainnya ── */
+  { key: "shopee-tokopedia", group: "Lainnya", label: "Shopee / Tokopedia", loginType: "Nomor/OTP", min: 10000, max: 50000,
+    titles: ["Akun Shopee Siap Pakai", "Akun Tokopedia Siap Pakai", "Akun Marketplace Aged"],
+    notes: ["Data login diserahkan", "Belum pernah kena batasan", "Aman untuk belanja"] },
+  { key: "vpn", group: "Lainnya", label: "VPN Premium", loginType: "Email/password", min: 8000, max: 35000,
+    titles: ["VPN Premium Siap Pakai", "VPN Premium Garansi", "VPN Premium Akun Pribadi"],
+    notes: ["Login stabil", "Bisa dipakai beberapa perangkat", "Siap pakai"] },
 ];
 const DEMO_TEMPLATE_MAP = new Map(DEMO_TEMPLATES.map((t) => [t.key, t]));
 function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
@@ -183,7 +251,7 @@ async function handleDemoProducts(sql, request, response, agedCfg) {
       WHERE id LIKE ${DEMO_PREFIX + "%"} OR id LIKE ${LEGACY_DEMO_PREFIX + "%"}`;
     return row ? row.n : 0;
   };
-  const templates = DEMO_TEMPLATES.map((t) => ({ key: t.key, label: t.label, min: t.min, max: t.max }));
+  const templates = DEMO_TEMPLATES.map((t) => ({ key: t.key, label: t.label, group: t.group || "Lainnya", min: t.min, max: t.max }));
   if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo(), templates });
   if (request.method === "POST") {
     const body = bodyOf(request);
