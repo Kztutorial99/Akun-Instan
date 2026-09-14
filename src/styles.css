@@ -262,6 +262,9 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 .cx-status-ok { color: var(--green); }
 .cx-status-low { color: var(--amber); }
 .cx-status-out { color: var(--red); }
+.cx-status-demo { color: var(--amber); background: rgba(212,165,116,.12); border: 1px solid rgba(212,165,116,.28); border-radius: 999px; padding: 3px 9px; gap: 4px; }
+.cx-status-demo::before { display: none; }
+.cx-demo-note { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 11px; color: var(--ink2); background: rgba(212,165,116,.09); border: 1px solid rgba(212,165,116,.22); }
 
 /* ── ROW ACTIONS ────────────────────────────── */
 .cx-row-actions { display: flex; gap: 4px; justify-content: flex-end; }

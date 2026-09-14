@@ -556,7 +556,9 @@ function AdminPage({ onBack, onNotice }) {
 
   const logout = async () => { await jsonRequest("/api/admin/login", { method: "DELETE" }); setAuthenticated(false); setListings([]); };
 
-  const openForm = (listing = null) => {
+  const isDemoListing = (l) => Boolean(l && (l.demo === true || /^(etl-|demo-)/.test(String(l.id || ""))));
+
+  const openForm = (listing = null, opts = {}) => {
     setApiError(""); setRevealed(false);
     setForm(listing
       ? {
@@ -567,8 +569,9 @@ function AdminPage({ onBack, onNotice }) {
             ? listing.accounts.map((a) => ({ email: a.email || a.username || "", password: a.password || "", price: String(a.price ?? listing.price ?? ""), createdAt: (a.createdAt || "").slice(0, 10) }))
             : [{ email: "", password: "", price: String(listing.price ?? ""), createdAt: "" }],
           agedPricing: listing.agedPricing !== false,
+          demo: isDemoListing(listing),
         }
-      : { ...emptyListing, accounts: [{ email: "", password: "", price: "", createdAt: "" }] });
+      : { ...emptyListing, accounts: [{ email: "", password: "", price: "", createdAt: "" }], demo: Boolean(opts.demo) });
   };
 
   const updateForm = (key, val) => setForm((f) => ({ ...f, [key]: val }));
@@ -595,7 +598,9 @@ function AdminPage({ onBack, onNotice }) {
         .map((a) => ({ email: (a.email || "").trim(), password: (a.password || "").trim(), price: Number(a.price) > 0 ? Number(a.price) : basePrice, createdAt: (a.createdAt || "").slice(0, 10) }))
         .filter((a) => a.email || a.password);
       const price = accounts.length ? Math.min(...accounts.map((a) => a.price)) : basePrice;
-      const body = { ...form, accounts, price, stock: accounts.length, agedPricing: form.agedPricing !== false };
+      const body = form.demo
+        ? { ...form, demo: true, accounts: [], price: basePrice, stock: 0, status: "sold", agedPricing: false }
+        : { ...form, accounts, price, stock: accounts.length, agedPricing: form.agedPricing !== false };
       if (form.id) await jsonRequest("/api/admin/products", { method: "PATCH", body: JSON.stringify(body) });
       else await jsonRequest("/api/admin/products", { method: "POST", body: JSON.stringify(body) });
       setForm(null); loadListings(); onNotice(form.id ? "Produk diperbarui" : "Produk ditambahkan");
@@ -1285,6 +1290,7 @@ function AdminPage({ onBack, onNotice }) {
                 <h3>Produk</h3>
                 <span className="cx-panel-sub">{filtered.length} dari {listings.length} listing</span>
                 <div className="cx-panel-actions">
+                  <button className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => openForm(null, { demo: true })}><Sparkles size={11} /> Produk Demo</button>
                   <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={() => openForm()}><Plus size={11} /> Tambah Produk</button>
                 </div>
               </div>
@@ -1307,9 +1313,13 @@ function AdminPage({ onBack, onNotice }) {
                                 <strong title={l.title}>{l.title}</strong>
                                 <small>{l.loginType}</small>
                               </div>
-                              <span className={`cx-status ${l.status === "available" ? "cx-status-ok" : stock <= 3 ? "cx-status-low" : "cx-status-out"}`}>
-                                {l.status === "available" ? "Aktif" : "Habis"}
-                              </span>
+                              {isDemoListing(l)
+                                ? <span className="cx-status cx-status-demo"><Sparkles size={10} /> Demo</span>
+                                : (
+                                  <span className={`cx-status ${l.status === "available" ? "cx-status-ok" : stock <= 3 ? "cx-status-low" : "cx-status-out"}`}>
+                                    {l.status === "available" ? "Aktif" : "Habis"}
+                                  </span>
+                                )}
                             </header>
                             <div className="cx-admin-product-meta">
                               <div>
@@ -2160,7 +2170,10 @@ function AdminPage({ onBack, onNotice }) {
 
           <div className="cx-modal" onClick={(e) => e.stopPropagation()}>
             <div className="cx-modal-header">
-              <h2>{form.id ? "Edit Produk" : "Tambah Produk Baru"}</h2>
+              <h2>
+                {form.demo ? (form.id ? "Edit Produk Demo" : "Produk Demo Baru") : (form.id ? "Edit Produk" : "Tambah Produk Baru")}
+                {form.demo && <span className="cx-status cx-status-demo" style={{ marginLeft: 8 }}><Sparkles size={10} /> Demo</span>}
+              </h2>
               <button className="cx-icon-btn" onClick={() => setForm(null)}><X size={14} /></button>
             </div>
             <div className="cx-modal-body">
@@ -2207,8 +2220,9 @@ function AdminPage({ onBack, onNotice }) {
                   <InputWrap><input type="number" value={form.price} onChange={(e) => updateForm("price", e.target.value)} placeholder="35000" /></InputWrap>
                 </Field>
                 <Field label="Stok (otomatis dari jumlah akun)">
-                  <InputWrap><input value={(form.accounts || []).filter((a) => a.email || a.password).length} readOnly /></InputWrap>
+                  <InputWrap><input value={form.demo ? 0 : (form.accounts || []).filter((a) => a.email || a.password).length} readOnly /></InputWrap>
                 </Field>
+                {!form.demo && (
                 <Field label="Harga aged otomatis" hint="Harga naik sendiri sesuai umur akun (tanggal buat akun)">
                   <InputWrap>
                     <select value={form.agedPricing === false ? "off" : "on"} onChange={(e) => updateForm("agedPricing", e.target.value === "on")}>
@@ -2217,6 +2231,8 @@ function AdminPage({ onBack, onNotice }) {
                     </select>
                   </InputWrap>
                 </Field>
+                )}
+                {!form.demo && (
                 <Field label="Status">
                   <InputWrap>
                     <select value={form.status} onChange={(e) => updateForm("status", e.target.value)}>
@@ -2225,7 +2241,15 @@ function AdminPage({ onBack, onNotice }) {
                     </select>
                   </InputWrap>
                 </Field>
+                )}
               </div>
+              {form.demo ? (
+                <div className="cx-demo-note">
+                  <Sparkles size={12} />
+                  <span>Produk demo hanya tampilan etalase — tidak perlu email/password. Stok otomatis 0 dan tidak bisa dibeli.</span>
+                </div>
+              ) : (
+              <>
               <div className="cx-form-divider">DATA AKUN <small>1 baris = 1 stok · harga dasar + tanggal buat akun (harga aged otomatis)</small></div>
               <div className="cx-account-editor">
                 {(form.accounts || []).map((account, index) => (
@@ -2293,6 +2317,8 @@ function AdminPage({ onBack, onNotice }) {
                   <Plus size={11} /> Tambah data akun
                 </button>
               </div>
+              </>
+              )}
               <div className="cx-form-grid" style={{ marginTop: 12 }}>
                 <div className="cx-full-span">
                   <Field label="Detail Pengiriman">
