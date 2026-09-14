@@ -261,11 +261,13 @@ export const ACCENT_COLORS = ["#e36d78", "#7bc48b", "#6c83da", "#a983de", "#67b6
 
 /* ─── Ikon produk lokal ─── */
 const PRODUCT_ICON_KEYS = new Set(PRODUCT_TEMPLATES.map((item) => item.icon));
+const PRODUCT_APP_ICON_KEYS = new Set(["cod", "discord", "freefire", "genshin", "mobile-legends", "pubg", "vidio-wetv", "vpn"]);
 export function ProductIcon({ icon, label, size = 18, className = "" }) {
   const key = PRODUCT_ICON_KEYS.has(icon) ? icon : "email";
+  const extension = PRODUCT_APP_ICON_KEYS.has(key) ? "webp" : "svg";
   return (
     <span className={`cx-product-icon ${className}`.trim()} style={{ width: size, height: size }}>
-      <img src={`/product-icons/${key}.svg`} alt="" aria-hidden="true" width={size} height={size} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      <img src={`/product-icons/${key}.${extension}`} alt="" aria-hidden="true" width={size} height={size} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
       <span className="cx-product-icon-fallback" aria-hidden="true">{String(label || "A").slice(0, 1).toUpperCase()}</span>
     </span>
   );
