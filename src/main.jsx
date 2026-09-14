@@ -106,6 +106,14 @@ export const CATALOG_AGES = [
   { key: "fresh", label: "Fresh" },
   { key: "aged", label: "Aged" },
 ];
+export const CATALOG_CATEGORIES = [
+  { key: "all", label: "Semua kategori" },
+  { key: "social", label: "Social" },
+  { key: "game", label: "Game" },
+  { key: "email", label: "Email" },
+  { key: "streaming", label: "Streaming" },
+  { key: "other", label: "Lainnya" },
+];
 export const LOGIN_TYPES = ["Google", "Facebook", "Email/password", "Apple", "Microsoft", "Lainnya"];
 /* Template produk siap pakai: admin cukup ganti harga, email & password. */
 export const PRODUCT_TEMPLATES = [
@@ -329,6 +337,21 @@ export function productIconKey(product) {
 }
 export function ProductTypeIcon({ product, size = 16, className = "" }) {
   return <ProductIcon icon={productIconKey(product)} label={product?.title || product?.loginType || "Produk"} size={size} className={className} />;
+}
+
+const CATEGORY_MATCHERS = [
+  ["social", ["tiktok", "instagram", "facebook", "twitter", "telegram", "whatsapp", "discord", "social"]],
+  ["game", ["free fire", "freefire", "pubg", "call of duty", "codm", "mobile legend", "mlbb", "genshin", "valorant", "roblox", "steam", "game", "gaming"]],
+  ["email", ["gmail", "google", "outlook", "hotmail", "yahoo", "email"]],
+  ["streaming", ["netflix", "spotify", "disney", "hotstar", "vidio", "wetv", "viu", "iqiyi", "youtube", "streaming", "premium tv"]],
+];
+export function productCategoryKey(product) {
+  const explicit = String(product?.category || "").trim().toLowerCase();
+  const known = CATALOG_CATEGORIES.find((item) => item.key !== "all" && (item.key === explicit || item.label.toLowerCase() === explicit));
+  if (known) return known.key;
+  const text = `${product?.title || ""} ${product?.name || ""} ${explicit}`.toLowerCase();
+  for (const [category, words] of CATEGORY_MATCHERS) if (words.some((word) => text.includes(word))) return category;
+  return "other";
 }
 
 export async function jsonRequest(url, opts = {}) {
@@ -1140,10 +1163,10 @@ const readVerifyPending = () => {
 function App() {
   const [activePage, setActivePage] = useState(() => pageFromPath(window.location.pathname));
   const [search, setSearch]   = useState("");
-  // Filter katalog: urutan harga/stok/nama, umur akun (Fresh/Aged), platform.
+  // Filter katalog: urutan harga/stok/nama, umur akun (Fresh/Aged), dan kategori.
   const [sortBy, setSortBy]   = useState("default");
   const [ageFilter, setAgeFilter] = useState("all");
-  const [platFilter, setPlatFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [notice, setNotice]   = useState("");
   // Isi keranjang disimpan di perangkat agar tidak hilang saat halaman di-refresh.
   const [cart, setCart]       = useState(() => {
@@ -1356,12 +1379,6 @@ function App() {
     return () => window.removeEventListener("popstate", pop);
   }, []);
 
-  const platformOptions = useMemo(() => {
-    const seen = [];
-    for (const p of data.products) if (p.loginType && !seen.includes(p.loginType)) seen.push(p.loginType);
-    return seen;
-  }, [data.products]);
-
   const products = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = data.products.map((p) => ({ ...p, ageInfo: productAgeInfo(p) }));
@@ -1371,7 +1388,7 @@ function App() {
       );
     }
     if (ageFilter !== "all") list = list.filter((p) => p.ageInfo.kind === ageFilter);
-    if (platFilter !== "all") list = list.filter((p) => p.loginType === platFilter);
+    if (categoryFilter !== "all") list = list.filter((p) => productCategoryKey(p) === categoryFilter);
     const priceOf = (p) => Number(p.price) || 0;
     const stockOf = (p) => Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0);
     if (sortBy === "price-asc") list = [...list].sort((a, b) => priceOf(a) - priceOf(b));
@@ -1385,7 +1402,7 @@ function App() {
     for (const p of list) (stockOf(p) > 0 && p.status !== "sold" ? ready : out).push(p);
     return [...ready, ...out];
 
-  }, [data.products, search, sortBy, ageFilter, platFilter]);
+  }, [data.products, search, sortBy, ageFilter, categoryFilter]);
 
   // Pindah halaman selalu mulai dari paling atas (window + container scroll).
   const scrollTop = () => {
@@ -2123,7 +2140,7 @@ function App() {
           </div>
         </div>
 
-        {/* Filter katalog: urutan harga/stok/nama + umur akun + platform */}
+        {/* Filter katalog: status akun, urutan, dan kategori */}
         <div className="cx-filterbar">
           <div className="cx-filter-chips" role="group" aria-label="Filter umur akun">
             {CATALOG_AGES.map((a) => (
@@ -2145,17 +2162,16 @@ function App() {
               </select>
             </label>
             <label className="cx-filter-select">
-              <span className="cx-filter-label">Platform</span>
-              <select aria-label="Filter platform" value={platFilter} onChange={(e) => setPlatFilter(e.target.value)}>
-                <option value="all">Semua platform</option>
-                {platformOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+              <span className="cx-filter-label">Kategori</span>
+              <select aria-label="Filter kategori" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                {CATALOG_CATEGORIES.map((category) => <option key={category.key} value={category.key}>{category.label}</option>)}
               </select>
             </label>
-            {(ageFilter !== "all" || platFilter !== "all" || sortBy !== "default" || search) && (
+            {(ageFilter !== "all" || categoryFilter !== "all" || sortBy !== "default" || search) && (
               <button
                 type="button"
                 className="cx-filter-reset"
-                onClick={() => { setAgeFilter("all"); setPlatFilter("all"); setSortBy("default"); setSearch(""); }}
+                onClick={() => { setAgeFilter("all"); setCategoryFilter("all"); setSortBy("default"); setSearch(""); }}
               >
                 Reset filter
               </button>
@@ -2213,11 +2229,16 @@ function App() {
           );
           return (
             <>
-              {ready.length > 0 && <div className="cx-grid">{ready.map(card)}</div>}
+              {ready.length > 0 && (
+                <>
+                  <div className="cx-cat-count">Tersedia · {ready.length} produk</div>
+                  <div className="cx-grid">{ready.map(card)}</div>
+                </>
+              )}
               {out.length > 0 && (
                 <>
                   <div className="cx-cat-divider">
-                    <span>Stok habis</span>
+                    <span>Stok habis · {out.length} produk</span>
                   </div>
                   <div className="cx-grid cx-grid-out">{out.map(card)}</div>
                 </>
@@ -4091,8 +4112,6 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           : age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
       </div>
 
-      <p className="cx-pc-cond">Siap pakai</p>
-
       <div className="cx-pc-meta">
         <span className="cx-pc-rate">
           <Star size={12} className={count > 0 ? "is-on" : ""} />
@@ -4113,11 +4132,7 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           </span>
           {soldOf(product) > 0 && <small>Terjual {soldOf(product)}</small>}
         </div>
-        {soldOut ? (
-          <button type="button" className="cx-pc-cta is-out" disabled aria-label={`${product.title} stok habis`}>
-            <span>Stok habis</span>
-          </button>
-        ) : (
+        {!soldOut && (
           <button
             type="button"
             className="cx-pc-cta is-ready"

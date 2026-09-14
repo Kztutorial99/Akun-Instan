@@ -1639,3 +1639,30 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   .cx-pc-v3 .cx-pc-head .cx-pc-title { font-size: 15px; }
   .cx-pc-brandicon { width: 30px; height: 30px; }
 }
+
+/* Katalog v5: hierarchy marketplace mobile yang lebih ringkas */
+.cx-catv2 .cx-filterbar{padding:10px;gap:10px;background:color-mix(in srgb,var(--s1) 86%,transparent)}
+.cx-catv2 .cx-filter-selects{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.cx-catv2 .cx-filter-select>select{width:100%;height:38px;padding-inline:11px 28px}
+.cx-catv2 .cx-filter-reset{grid-column:1 / -1;min-height:32px;padding:5px 10px}
+.cx-cat-count{margin:0 0 10px;font:700 12px Inter,system-ui,sans-serif;color:var(--ink2)}
+.cx-pc-v3{gap:0;padding:14px}
+.cx-pc-v3 .cx-pc-head{margin-bottom:10px}
+.cx-pc-v3 .cx-pc-meta{min-height:18px}
+.cx-pc-v3 .cx-pc-foot{margin-top:10px;padding-top:10px}
+.cx-pc-v3 .cx-pc-cta{height:36px;padding:0 13px}
+.cx-grid-out .cx-pc-v3{padding:12px 14px;gap:0}
+.cx-grid-out .cx-pc-v3 .cx-pc-head{margin-bottom:8px}
+.cx-grid-out .cx-pc-v3 .cx-pc-foot{margin-top:8px;padding-top:8px}
+.cx-grid-out .cx-pc-v3 .cx-pc-amount{font-size:16px}
+.cx-grid-out .cx-pc-v3 .cx-pc-price small{font-size:10.5px}
+.cx-grid-out .cx-pc-brandicon{width:28px;height:28px}
+.cx-grid-out .cx-pc-title{font-size:14px!important}
+.cx-catv2 .cx-cat-main{min-height:calc(100dvh - 170px);padding-bottom:calc(var(--tab-h,62px) + 34px)!important}
+@media(max-width:520px){
+  .cx-catv2 .cx-filterbar{gap:10px;margin-top:10px;margin-bottom:14px}
+  .cx-catv2 .cx-filter-chips{width:100%}
+  .cx-catv2 .cx-filter-chip{height:32px;min-height:32px;padding-inline:10px}
+  .cx-catv2 .cx-grid{gap:10px}
+  .cx-cat-divider{margin:18px 0 10px;padding-top:12px}
+}
