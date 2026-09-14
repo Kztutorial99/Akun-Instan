@@ -4099,10 +4099,12 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           <Star size={12} className={count > 0 ? "is-on" : ""} />
           {count > 0 ? <><strong>{avg.toFixed(1)}</strong> <small>· {count} ulasan</small></> : <small>Belum ada ulasan</small>}
         </span>
-        <span className="cx-pc-sep">·</span>
-        <span className={`cx-pc-stockline${stock > 0 ? "" : " is-out"}`}>
-          {stock > 0 ? `${stock} stok tersedia` : "Stok habis"}
-        </span>
+        {stock > 0 && (
+          <>
+            <span className="cx-pc-sep">·</span>
+            <span className="cx-pc-stockline">{stock} stok tersedia</span>
+          </>
+        )}
       </div>
 
       <div className="cx-pc-foot">
