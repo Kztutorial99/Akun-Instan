@@ -110,9 +110,12 @@ module.exports = async function handler(request, response) {
 
   /* ── Callback OAuth: dibuka di browser, bukan fetch ── */
   if (resource === "callback") {
-    if (!isAdmin(request)) return html(response, 401, "Sesi admin tidak valid", "Masuk ke admin panel dulu lalu ulangi proses hubungkan akun.");
     const error = url.searchParams.get("error");
     if (error) return html(response, 400, "Gagal menghubungkan", `Google menolak izin: ${error}`);
+    // Google membuka callback sebagai navigasi lintas situs. Cookie admin memakai
+    // SameSite=Strict sehingga sengaja tidak ikut pada request ini. Keamanan
+    // callback dijaga oleh state HMAC yang hanya dapat dibuat setelah endpoint
+    // connect lolos isAdmin(), bukan dengan mewajibkan cookie pada callback.
     if (!verifyState(url.searchParams.get("state"))) {
       return html(response, 400, "Permintaan tidak sah", "State OAuth tidak cocok atau sudah kedaluwarsa. Ulangi dari admin panel.");
     }
