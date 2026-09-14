@@ -137,6 +137,21 @@
         ]
       }
     </script>
+    <script>
+      // Pulihkan otomatis jika file tampilan/skrip versi lama gagal dimuat (cache basi).
+      window.addEventListener('error', function (e) {
+        var el = e.target;
+        if (!el || !el.tagName) return;
+        var tag = el.tagName.toLowerCase();
+        if (tag !== 'link' && tag !== 'script') return;
+        if (sessionStorage.getItem('ai_cache_reload')) return;
+        sessionStorage.setItem('ai_cache_reload', '1');
+        location.reload(true);
+      }, true);
+      window.addEventListener('load', function () {
+        setTimeout(function () { sessionStorage.removeItem('ai_cache_reload'); }, 3000);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
