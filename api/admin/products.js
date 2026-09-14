@@ -105,15 +105,76 @@ function view(row, agedCfg) {
   const credentials = withAccounts(row.credentials, row.price, agedCfg);
   return { id: row.id, title: row.title, description: row.description, loginType: row.loginType, price: Number(row.price), stock: credentials.accounts.length, status: row.status, agedPricing: credentials.agedPricing !== false, accounts: credentials.accounts, deliveryDetails: credentials.deliveryDetails || "", createdAt: row.createdAt, updatedAt: row.updatedAt };
 }
+/* ── Produk demo (etalase) ──────────────────────────────────────────────
+   Listing hasil inject selalu berstatus "sold" supaya tampil sebagai
+   "stok habis" di katalog dan tidak pernah bisa dibeli pembeli. */
+const DEMO_PREFIX = "demo-";
+const DEMO_TEMPLATES = [
+  { platform: "Gmail",      loginType: "Google",         min: 8000,  max: 25000,  titles: ["Akun Gmail Fresh", "Akun Gmail Aged 2019", "Akun Gmail Bulk Ready"] },
+  { platform: "Facebook",   loginType: "Facebook",       min: 12000, max: 45000,  titles: ["Akun Facebook Aged", "Akun Facebook Fresh Verified", "Akun Facebook Marketplace"] },
+  { platform: "Outlook",    loginType: "Microsoft",      min: 6000,  max: 18000,  titles: ["Akun Outlook Fresh", "Akun Hotmail Aged"] },
+  { platform: "Game",       loginType: "Email/password", min: 20000, max: 150000, titles: ["Akun Game Starter", "Akun Game Sultan", "Akun Game Rank Tinggi"] },
+  { platform: "Streaming",  loginType: "Email/password", min: 15000, max: 60000,  titles: ["Akun Streaming Private", "Akun Streaming Sharing"] },
+];
+function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
+function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+function buildDemoListing() {
+  const tpl = pick(DEMO_TEMPLATES);
+  const title = `${pick(tpl.titles)} #${randInt(100, 999)}`;
+  const price = Math.round(randInt(tpl.min, tpl.max) / 500) * 500;
+  const id = DEMO_PREFIX + crypto.randomUUID();
+  const credentials = {
+    accounts: [{ email: `demo+${randInt(1000, 9999)}@akuninstan.id`, password: "demo-only", price, createdAt: "" }],
+    agedPricing: false,
+    deliveryDetails: "Produk demo etalase. Tidak dijual.",
+  };
+  return {
+    id, title,
+    description: `Contoh listing ${tpl.platform} untuk etalase katalog. Stok sudah habis.`,
+    loginType: tpl.loginType, price, credentials,
+  };
+}
+async function handleDemoProducts(sql, request, response, agedCfg) {
+  const countDemo = async () => {
+    const [row] = await sql`SELECT COUNT(*)::int AS n FROM codexa_account_listings WHERE id LIKE ${DEMO_PREFIX + "%"}`;
+    return row ? row.n : 0;
+  };
+  if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo() });
+  if (request.method === "POST") {
+    const body = bodyOf(request);
+    const count = Math.min(50, Math.max(1, Number(body.count) || 5));
+    const created = [];
+    for (let i = 0; i < count; i += 1) {
+      const item = buildDemoListing();
+      const [row] = await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob)
+        VALUES (${item.id},${item.title},${item.description},${item.loginType},${item.price},${1},${"sold"},${encryptCredentials(item.credentials)})
+        RETURNING id,title,description,login_type AS "loginType",price,stock,status,created_at AS "createdAt",updated_at AS "updatedAt"`;
+      created.push(view({ ...row, credentials: item.credentials }, agedCfg));
+    }
+    return response.status(201).json({ inserted: created.length, demoCount: await countDemo(), products: created });
+  }
+  if (request.method === "DELETE") {
+    const rows = await sql`DELETE FROM codexa_account_listings WHERE id LIKE ${DEMO_PREFIX + "%"} RETURNING id`;
+    return response.status(200).json({ deleted: rows.length, demoCount: 0 });
+  }
+  response.setHeader("Allow", "GET, POST, DELETE");
+  return response.status(405).json({ error: "Method not allowed" });
+}
+
 module.exports = async function handler(request, response) {
   if (!isAdmin(request)) return response.status(401).json({ error: "Admin login diperlukan" }); if (!process.env.DATABASE_URL) return response.status(500).json({ error: "DATABASE_URL is not configured" });
   try {
     const sql = neon(process.env.DATABASE_URL); await ensureTable(sql);
     /* Sub-resource ulasan & rating dipegang di file yang sama supaya jumlah
        serverless function Vercel tidak bertambah. */
-    if (((request.query && request.query.resource) || "") === "reviews") {
+    const resource = (request.query && request.query.resource) || "";
+    if (resource === "reviews") {
       return await handleReviewRequest(sql, request, response);
     }
+    if (resource === "demo") {
+      return await handleDemoProducts(sql, request, response, await readAgedConfig(sql));
+    }
+
     const agedCfg = await readAgedConfig(sql);
     if (request.method === "GET") { const rows = await sql`SELECT id, title, description, login_type AS "loginType", price, stock, status, credential_blob AS "credentialBlob", created_at AS "createdAt", updated_at AS "updatedAt" FROM codexa_account_listings ORDER BY created_at DESC`; return response.status(200).json({ products: rows.map((row) => view({ ...row, credentials: decryptCredentials(row.credentialBlob) }, agedCfg)) }); }
     if (request.method === "DELETE") { const id = text(bodyOf(request).id, 160) || text((request.query && request.query.id) || "", 160); if (!id) return response.status(400).json({ error: "id listing wajib diisi" }); const [row] = await sql`DELETE FROM codexa_account_listings WHERE id=${id} RETURNING id`; if (!row) return response.status(404).json({ error: "Listing tidak ditemukan" }); return response.status(200).json({ deleted: row }); }

@@ -50,6 +50,9 @@ function AdminPage({ onBack, onNotice }) {
   const [injectForm, setInjectForm]       = useState({ listingId: "all", count: 8, minRating: 4, maxRating: 5, spreadDays: 60 });
   const [sales, setSales]                 = useState([]);
   const [soldForm, setSoldForm]           = useState({ listingId: "all", soldMode: "add", soldMin: 10, soldMax: 40 });
+  const [demoForm, setDemoForm]           = useState({ count: 6 });
+  const [demoCount, setDemoCount]         = useState(0);
+
   const [orders, setOrders]               = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [refreshing, setRefreshing]       = useState(false);
@@ -76,6 +79,8 @@ function AdminPage({ onBack, onNotice }) {
     setNavOpen(false);
     if (label === "Pengguna") setUserQuery("");
     if (label === "Ulasan & Rating" || label === "Inject Data") loadReviews();
+    if (label === "Inject Data") loadDemoCount();
+
   };
 
   /* ── Ulasan & rating: dibaca dari sub-resource /api/admin/products?resource=reviews ── */
@@ -105,6 +110,43 @@ function AdminPage({ onBack, onNotice }) {
       } catch (e) { setApiError(e.message); }
     });
   };
+
+  /* ── Inject produk demo (etalase, selalu stok habis) ── */
+  const DEMO_API = "/api/admin/products?resource=demo";
+
+  const loadDemoCount = () =>
+    jsonRequest(DEMO_API, { method: "GET" })
+      .then((p) => setDemoCount(p.demoCount || 0))
+      .catch(() => {});
+
+  const injectDemoProducts = async () => {
+    await runAction("demo-inject", async () => {
+      try {
+        const p = await jsonRequest(DEMO_API, { method: "POST", body: JSON.stringify(demoForm) });
+        setDemoCount(p.demoCount || 0);
+        loadListings();
+        onNotice(`${p.inserted} produk demo ditambahkan ke katalog`);
+      } catch (e) { setApiError(e.message); }
+    });
+  };
+
+  const clearDemoProducts = async () => {
+    const ok = await confirm({
+      title: "Hapus semua produk demo?",
+      description: "Hanya produk hasil inject yang dihapus. Produk asli tetap aman.",
+      confirmText: "Ya, hapus", danger: true,
+    });
+    if (!ok) return;
+    await runAction("demo-clear", async () => {
+      try {
+        const p = await jsonRequest(DEMO_API, { method: "DELETE" });
+        setDemoCount(0);
+        loadListings();
+        onNotice(`${p.deleted} produk demo dihapus`);
+      } catch (e) { setApiError(e.message); }
+    });
+  };
+
 
   /* ── Inject jumlah terjual per produk ── */
   const injectSold = async () => {
@@ -1636,6 +1678,40 @@ function AdminPage({ onBack, onNotice }) {
                   <span className="cx-review-hint">Angka diacak antara minimum dan maksimum untuk tiap produk.</span>
                 </div>
               </div>
+
+              {/* ── Inject produk demo ── */}
+              <div className="cx-panel cx-review-inject">
+                <div className="cx-panel-header">
+                  <h3>Inject produk demo</h3>
+                  <span className="cx-panel-sub">
+                    {demoCount} produk demo aktif · selalu tampil sebagai stok habis dan tidak bisa dibeli
+                  </span>
+                  <div className="cx-panel-actions">
+                    <ActionBtn className="cx-btn cx-btn-ghost cx-btn-sm" onClick={loadDemoCount} busyLabel="Memuat...">
+                      <RefreshCw size={11} /> Muat ulang
+                    </ActionBtn>
+                  </div>
+                </div>
+                <div className="cx-review-form">
+                  <Field label="Jumlah produk">
+                    <InputWrap>
+                      <input type="number" min="1" max="50" value={demoForm.count}
+                        onChange={(e) => setDemoForm({ count: e.target.value })} />
+                    </InputWrap>
+                  </Field>
+                </div>
+                <div className="cx-review-form-actions">
+                  <ActionBtn className="cx-btn cx-btn-primary cx-btn-sm" onClick={injectDemoProducts} busy={isPending("demo-inject")} busyLabel="Menambahkan...">
+                    <Plus size={11} /> Inject produk demo
+                  </ActionBtn>
+                  <ActionBtn className="cx-btn cx-btn-ghost cx-btn-sm" onClick={clearDemoProducts} busy={isPending("demo-clear")} busyLabel="Menghapus..."
+                    disabled={demoCount === 0}>
+                    <Trash2 size={11} /> Hapus produk demo
+                  </ActionBtn>
+                  <span className="cx-review-hint">Nama, harga, dan jenis akun diacak agar katalog terlihat ramai.</span>
+                </div>
+              </div>
+
             </>
           )}
 
