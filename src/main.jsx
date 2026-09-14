@@ -2210,7 +2210,7 @@ function App() {
           <div className="cx-empty">
             <Package size={28} />
             <h3>Belum ada akun tersedia</h3>
-            <p>{search ? "Tidak ada produk yang cocok dengan pencarian." : "Belum ada listing nyata di database. Panel tidak menampilkan akun contoh."}</p>
+            <p>{search ? "Tidak ada produk yang cocok dengan pencarian." : "Belum ada listing nyata di database."}</p>
           </div>
         )}
 
