@@ -261,7 +261,11 @@ export const ACCENT_COLORS = ["#e36d78", "#7bc48b", "#6c83da", "#a983de", "#67b6
 
 /* ─── Ikon produk lokal ─── */
 const PRODUCT_ICON_KEYS = new Set(PRODUCT_TEMPLATES.map((item) => item.icon));
-const PRODUCT_APP_ICON_KEYS = new Set(["cod", "discord", "freefire", "genshin", "mobile-legends", "pubg", "vidio-wetv", "vpn"]);
+const PRODUCT_APP_ICON_KEYS = new Set([
+  "capcut", "canva", "cod", "discord", "disney", "freefire", "genshin", "google",
+  "mobile-legends", "outlook", "pubg", "roblox", "shopee-tokopedia", "spotify",
+  "streaming-lain", "tiktok", "twitter", "valorant", "vidio-wetv", "vpn", "yahoo",
+]);
 export function ProductIcon({ icon, label, size = 18, className = "" }) {
   const key = PRODUCT_ICON_KEYS.has(icon) ? icon : "email";
   const extension = PRODUCT_APP_ICON_KEYS.has(key) ? "webp" : "svg";
