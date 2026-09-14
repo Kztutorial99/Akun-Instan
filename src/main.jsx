@@ -2218,7 +2218,6 @@ function App() {
                 <>
                   <div className="cx-cat-divider">
                     <span>Stok habis</span>
-                    <small>{out.length} akun</small>
                   </div>
                   <div className="cx-grid cx-grid-out">{out.map(card)}</div>
                 </>
