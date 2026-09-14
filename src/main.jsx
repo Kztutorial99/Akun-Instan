@@ -110,133 +110,141 @@ export const LOGIN_TYPES = ["Google", "Facebook", "Email/password", "Apple", "Mi
 /* Template produk siap pakai: admin cukup ganti harga, email & password. */
 export const PRODUCT_TEMPLATES = [
   {
-    key: "google",
-    label: "Google / Gmail",
-    icon: "Google",
-    data: {
-      title: "Akun Google (Gmail) Fresh — Siap Pakai",
-      loginType: "Google",
-      price: "6000",
-      description: [
-        "Tentang Produk:",
-        "Akun Google / Gmail fresh (baru dibuat, belum pernah dipakai) dan siap langsung login. Jumlah akun yang kamu terima sesuai jumlah yang kamu beli.",
-        "",
-        "Spesifikasi:",
-        "- Status: Fresh / New — belum terpakai di layanan apa pun",
-        "- Tipe: No-PVA (belum terhubung ke nomor HP), jadi kamu bebas memasang nomor sendiri",
-        "- Format kiriman: email + password untuk setiap akun",
-        "- Recovery mail: kosong / bisa kamu isi sendiri",
-        "- Region: campuran (random) kecuali disebutkan lain di judul produk",
-        "",
-        "Yang Didapat:",
-        "- Akses penuh ke Play Store, YouTube, Drive, Docs, Gmail, dan login pihak ketiga",
-        "- Panduan pengamanan akun langkah demi langkah",
-        "- Bantuan admin lewat menu Bantuan / Asisten",
-        "",
-        "Catatan penting:",
-        "- Wajib ganti password segera setelah pembelian.",
-        "- Login pertama disarankan lewat browser di HP/PC yang biasa kamu pakai.",
-        "- Jangan login lebih dari 2 perangkat sekaligus di 24 jam pertama.",
-        "- Karena No-PVA, akun bisa diminta verifikasi nomor bila dipakai kasar/spam.",
-        "- Garansi login 1x24 jam sejak pembelian.",
-      ].join("\n"),
-
-      deliveryDetails: [
-        "CARA MENGAMANKAN AKUN (lakukan segera setelah beli):",
-        "1. Buka myaccount.google.com lalu login dengan email & password di atas.",
-        "2. Keamanan > Sandi: ganti password jadi milikmu sendiri (min. 10 karakter, kombinasi huruf, angka, simbol).",
-        "3. Keamanan > Verifikasi 2 Langkah: aktifkan dengan nomor HP / Google Authenticator milikmu.",
-        "4. Keamanan > Email & nomor pemulihan: ganti ke email dan nomor HP kamu.",
-        "5. Keamanan > Perangkat kamu: klik 'Keluar' pada semua perangkat yang tidak kamu kenal.",
-        "6. Keamanan > Aplikasi pihak ketiga: cabut akses aplikasi yang tidak kamu pakai.",
-        "",
-        "CATATAN:",
-        "- Jangan bagikan password ke siapa pun, termasuk yang mengaku admin.",
-        "- Simpan password di tempat aman (password manager / catatan terkunci).",
-        "- Kalau ada kendala login, hubungi admin lewat menu Bantuan / Assisten maksimal 1x24 jam.",
-      ].join("\n"),
-      status: "available",
-    },
+    key: "google", group: "Email", label: "Google / Gmail", icon: "google",
+    data: { title: "Akun Google (Gmail) Fresh \u2014 Siap Pakai", loginType: "Google", price: "", description: "Tentang Produk:\nAkun Google (Gmail) Fresh \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
   },
   {
-    key: "facebook",
-    label: "Facebook",
-    icon: "Facebook",
-    data: {
-      title: "Akun Facebook Aktif — Siap Pakai",
-      loginType: "Facebook",
-      description: [
-        "Tentang Produk:",
-        "Akun Facebook aktif dan siap pakai. Jumlah akun yang kamu terima sesuai jumlah yang kamu beli.",
-        "",
-        "Spesifikasi:",
-        "- Status: aktif, sudah melewati masa pembuatan (bukan akun baru mentah)",
-        "- Tipe: No-PVA (belum terikat nomor HP), nomor bisa kamu pasang sendiri",
-        "- Format kiriman: email/nomor + password untuk setiap akun",
-        "- Region: campuran (random) kecuali disebutkan lain di judul produk",
-        "",
-        "Yang Didapat:",
-        "- Akses marketplace, grup, halaman, dan login pihak ketiga",
-        "- Panduan pengamanan akun langkah demi langkah",
-        "",
-        "Catatan penting:",
-        "- Wajib ganti password setelah pembelian.",
-        "- Hindari login dari banyak perangkat sekaligus di hari pertama.",
-        "- Jangan ganti nama/foto profil dalam 24 jam pertama.",
-        "- Garansi login 1x24 jam sejak pembelian.",
-      ].join("\n"),
-
-      deliveryDetails: [
-        "CARA MENGAMANKAN AKUN:",
-        "1. Login di facebook.com, buka Pengaturan & Privasi > Pusat Akun.",
-        "2. Ganti password jadi milikmu sendiri.",
-        "3. Aktifkan Autentikasi Dua Faktor (2FA) dengan nomor HP / aplikasi authenticator.",
-        "4. Ganti email & nomor pemulihan ke milikmu.",
-        "5. Cek 'Tempat Kamu Login' dan keluarkan perangkat asing.",
-        "",
-        "CATATAN: jangan langsung ganti nama/foto profil dalam 24 jam pertama agar akun tidak dicurigai sistem.",
-      ].join("\n"),
-      status: "available",
-    },
+    key: "outlook", group: "Email", label: "Outlook / Hotmail", icon: "outlook",
+    data: { title: "Akun Outlook / Hotmail \u2014 Siap Pakai", loginType: "Microsoft", price: "", description: "Tentang Produk:\nAkun Outlook / Hotmail \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
   },
   {
-    key: "email",
-    label: "Email / Password umum",
-    icon: "Email/password",
-    data: {
-      title: "Akun Premium — Login Email & Password",
-      loginType: "Email/password",
-      description: [
-        "Tentang Produk:",
-        "Akun premium siap pakai dengan login email & password. Jumlah akun yang kamu terima sesuai jumlah yang kamu beli.",
-        "",
-        "Spesifikasi:",
-        "- Status: aktif dan siap login",
-        "- Format kiriman: email + password untuk setiap akun",
-        "- Masa aktif: sesuai keterangan pada judul produk",
-        "",
-        "Yang Didapat:",
-        "- Akses penuh ke fitur layanan sesuai paket pada judul produk",
-        "- Panduan pengamanan akun langkah demi langkah",
-        "",
-        "Catatan penting:",
-        "- Jangan ganti email utama akun.",
-        "- Ganti password sendiri setelah login pertama.",
-        "- Garansi login 1x24 jam sejak pembelian.",
-      ].join("\n"),
-
-      deliveryDetails: [
-        "CARA MENGAMANKAN AKUN:",
-        "1. Login memakai email & password di atas.",
-        "2. Ganti password pada menu Pengaturan / Profil.",
-        "3. Aktifkan verifikasi 2 langkah bila layanan menyediakannya.",
-        "4. Keluarkan perangkat lain dari daftar sesi aktif.",
-        "",
-        "CATATAN: simpan kredensial dengan aman dan jangan dibagikan ke orang lain.",
-      ].join("\n"),
-      status: "available",
-    },
+    key: "yahoo", group: "Email", label: "Yahoo Mail", icon: "yahoo",
+    data: { title: "Akun Yahoo Mail \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Yahoo Mail \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
   },
+  {
+    key: "custom-email", group: "Email", label: "Custom Email", icon: "custom-email",
+    data: { title: "Custom Email \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nCustom Email \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "facebook", group: "Media Sosial", label: "Facebook", icon: "facebook",
+    data: { title: "Akun Facebook Aktif \u2014 Siap Pakai", loginType: "Facebook", price: "", description: "Tentang Produk:\nAkun Facebook Aktif \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "instagram", group: "Media Sosial", label: "Instagram", icon: "instagram",
+    data: { title: "Akun Instagram \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Instagram \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "tiktok", group: "Media Sosial", label: "TikTok", icon: "tiktok",
+    data: { title: "Akun TikTok \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun TikTok \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "twitter", group: "Media Sosial", label: "Twitter / X", icon: "twitter",
+    data: { title: "Akun Twitter / X \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Twitter / X \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "telegram", group: "Media Sosial", label: "Telegram", icon: "telegram",
+    data: { title: "Akun Telegram \u2014 Siap Pakai", loginType: "Lainnya", price: "", description: "Tentang Produk:\nAkun Telegram \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "whatsapp", group: "Media Sosial", label: "WhatsApp", icon: "whatsapp",
+    data: { title: "Akun WhatsApp \u2014 Siap Pakai", loginType: "Lainnya", price: "", description: "Tentang Produk:\nAkun WhatsApp \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "discord", group: "Media Sosial", label: "Discord", icon: "discord",
+    data: { title: "Akun Discord \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Discord \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "youtube", group: "Media Sosial", label: "YouTube Channel", icon: "youtube",
+    data: { title: "Channel YouTube \u2014 Siap Pakai", loginType: "Google", price: "", description: "Tentang Produk:\nChannel YouTube \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "freefire", group: "Akun Game", label: "Free Fire", icon: "freefire",
+    data: { title: "Akun Free Fire \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Free Fire \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "pubg", group: "Akun Game", label: "PUBG Mobile", icon: "pubg",
+    data: { title: "Akun PUBG Mobile \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun PUBG Mobile \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "cod", group: "Akun Game", label: "Call of Duty Mobile", icon: "cod",
+    data: { title: "Akun COD Mobile \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun COD Mobile \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "mobile-legends", group: "Akun Game", label: "Mobile Legends", icon: "mobile-legends",
+    data: { title: "Akun Mobile Legends \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Mobile Legends \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "genshin", group: "Akun Game", label: "Genshin Impact", icon: "genshin",
+    data: { title: "Akun Genshin Impact \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Genshin Impact \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "valorant", group: "Akun Game", label: "Valorant", icon: "valorant",
+    data: { title: "Akun Valorant \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Valorant \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "roblox", group: "Akun Game", label: "Roblox", icon: "roblox",
+    data: { title: "Akun Roblox \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Roblox \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "steam", group: "Akun Game", label: "Steam", icon: "steam",
+    data: { title: "Akun Steam \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Steam \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "game-lain", group: "Akun Game", label: "Game Lainnya", icon: "game-lain",
+    data: { title: "Akun Game \u2014 Siap Main", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Game \u2014 Siap Main. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "netflix", group: "Streaming", label: "Netflix", icon: "netflix",
+    data: { title: "Netflix Premium \u2014 Siap Tonton", loginType: "Email/password", price: "", description: "Tentang Produk:\nNetflix Premium \u2014 Siap Tonton. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "spotify", group: "Streaming", label: "Spotify Premium", icon: "spotify",
+    data: { title: "Spotify Premium \u2014 Siap Dengarkan", loginType: "Email/password", price: "", description: "Tentang Produk:\nSpotify Premium \u2014 Siap Dengarkan. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "youtube-premium", group: "Streaming", label: "YouTube Premium", icon: "youtube-premium",
+    data: { title: "YouTube Premium \u2014 Siap Tonton", loginType: "Google", price: "", description: "Tentang Produk:\nYouTube Premium \u2014 Siap Tonton. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "disney", group: "Streaming", label: "Disney+ Hotstar", icon: "disney",
+    data: { title: "Disney+ Hotstar \u2014 Siap Tonton", loginType: "Email/password", price: "", description: "Tentang Produk:\nDisney+ Hotstar \u2014 Siap Tonton. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "vidio-wetv", group: "Streaming", label: "Vidio / WeTV / Viu", icon: "vidio-wetv",
+    data: { title: "Akun Streaming Premium \u2014 Siap Tonton", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Streaming Premium \u2014 Siap Tonton. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "streaming-lain", group: "Streaming", label: "Streaming Lainnya", icon: "streaming-lain",
+    data: { title: "Akun Streaming \u2014 Siap Tonton", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Streaming \u2014 Siap Tonton. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "canva", group: "Produktivitas", label: "Canva Pro", icon: "canva",
+    data: { title: "Canva Pro \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nCanva Pro \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "chatgpt", group: "Produktivitas", label: "ChatGPT Plus", icon: "chatgpt",
+    data: { title: "ChatGPT Plus \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nChatGPT Plus \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "capcut", group: "Produktivitas", label: "CapCut Pro", icon: "capcut",
+    data: { title: "CapCut Pro \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nCapCut Pro \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "microsoft-office", group: "Produktivitas", label: "Microsoft 365", icon: "microsoft-office",
+    data: { title: "Microsoft 365 \u2014 Siap Pakai", loginType: "Microsoft", price: "", description: "Tentang Produk:\nMicrosoft 365 \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "shopee-tokopedia", group: "Lainnya", label: "Shopee / Tokopedia", icon: "shopee-tokopedia",
+    data: { title: "Akun Marketplace \u2014 Siap Pakai", loginType: "Lainnya", price: "", description: "Tentang Produk:\nAkun Marketplace \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "vpn", group: "Lainnya", label: "VPN Premium", icon: "vpn",
+    data: { title: "VPN Premium \u2014 Siap Pakai", loginType: "Email/password", price: "", description: "Tentang Produk:\nVPN Premium \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  },
+  {
+    key: "email", group: "Lainnya", label: "Email / Password umum", icon: "email",
+    data: { title: "Akun Premium \u2014 Login Email & Password", loginType: "Email/password", price: "", description: "Tentang Produk:\nAkun Premium \u2014 Login Email & Password. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.", deliveryDetails: "CARA MENGAMANKAN AKUN:\n1. Login memakai data yang diterima.\n2. Ganti password menjadi milikmu sendiri.\n3. Ganti email atau nomor pemulihan jika tersedia.\n4. Aktifkan verifikasi dua langkah.\n5. Keluarkan perangkat lain dari sesi aktif.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.", status: "available" },
+  }
 ];
 
 export const emptyListing = { title: "", description: "", loginType: "Google", price: "", status: "available", agedPricing: true, accounts: [{ email: "", password: "", price: "", createdAt: "" }], deliveryDetails: "" };
@@ -251,31 +259,22 @@ const sumSelected = (product, selected) =>
     .reduce((total, a) => total + accountPriceOf(a, product), 0);
 export const ACCENT_COLORS = ["#e36d78", "#7bc48b", "#6c83da", "#a983de", "#67b6a1", "#dba66a"];
 
-/* ─── provider icons (icons8) ─── */
-const PROVIDER_ICONS = {
-  "google": "https://img.icons8.com/color/48/google-logo.png",
-  "facebook": "https://img.icons8.com/color/48/facebook-new.png",
-  "email/password": "https://img.icons8.com/color/48/new-post.png",
-  "apple": "https://img.icons8.com/ios-filled/50/mac-os.png",
-  "microsoft": "https://img.icons8.com/color/48/microsoft.png",
-  "lainnya": "https://img.icons8.com/color/48/key-security.png",
-};
-const providerIconUrl = (t) =>
-  PROVIDER_ICONS[String(t || "").trim().toLowerCase()] || PROVIDER_ICONS["lainnya"];
-
-export function ProviderIcon({ type, size = 16, className = "" }) {
+/* ─── Ikon produk lokal ─── */
+const PRODUCT_ICON_KEYS = new Set(PRODUCT_TEMPLATES.map((item) => item.icon));
+export function ProductIcon({ icon, label, size = 18, className = "" }) {
+  const key = PRODUCT_ICON_KEYS.has(icon) ? icon : "email";
   return (
-    <img
-      src={providerIconUrl(type)}
-      alt={type || "Provider"}
-      title={type || "Provider"}
-      width={size}
-      height={size}
-      loading="lazy"
-      className={`cx-provider-icon ${className}`.trim()}
-      style={{ width: size, height: size }}
-    />
+    <span className={`cx-product-icon ${className}`.trim()} style={{ width: size, height: size }}>
+      <img src={`/product-icons/${key}.svg`} alt="" aria-hidden="true" width={size} height={size} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      <span className="cx-product-icon-fallback" aria-hidden="true">{String(label || "A").slice(0, 1).toUpperCase()}</span>
+    </span>
   );
+}
+
+const PROVIDER_ICON_KEYS = { google: "google", facebook: "facebook", "email/password": "email", apple: "email", microsoft: "microsoft-office", lainnya: "email" };
+export function ProviderIcon({ type, size = 16, className = "" }) {
+  const key = PROVIDER_ICON_KEYS[String(type || "").trim().toLowerCase()] || "email";
+  return <ProductIcon icon={key} label={type || "Provider"} size={size} className={className} />;
 }
 
 export async function jsonRequest(url, opts = {}) {

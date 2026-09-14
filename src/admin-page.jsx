@@ -3,7 +3,7 @@ import {
   ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star,
 } from "lucide-react";
 import {
-  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
+  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
 } from "./main.jsx";
 import "./admin-ui.css";
 
@@ -1700,9 +1700,14 @@ function AdminPage({ onBack, onNotice }) {
                 </div>
                 <div className="cx-review-form">
                   <Field label="Templat produk">
-                    <InputWrap>
-                      <select value={demoForm.template}
-                        onChange={(e) => setDemoForm((f) => ({ ...f, template: e.target.value }))}>
+                    <div className="cx-template-select-row">
+                      {demoForm.template !== "mixed" && (() => {
+                        const selected = demoTemplates.find((t) => t.key === demoForm.template);
+                        return selected ? <ProductIcon icon={selected.icon || selected.key} label={selected.label} size={22} /> : null;
+                      })()}
+                      <InputWrap>
+                        <select value={demoForm.template}
+                          onChange={(e) => setDemoForm((f) => ({ ...f, template: e.target.value }))}>
                         <option value="mixed">Campur semua templat</option>
                         {[...new Set(demoTemplates.map((t) => t.group || "Lainnya"))].map((g) => (
                           <optgroup key={g} label={g}>
@@ -1711,8 +1716,9 @@ function AdminPage({ onBack, onNotice }) {
                             ))}
                           </optgroup>
                         ))}
-                      </select>
-                    </InputWrap>
+                        </select>
+                      </InputWrap>
+                    </div>
                   </Field>
                   <Field label="Jumlah produk">
                     <InputWrap>
@@ -2163,17 +2169,19 @@ function AdminPage({ onBack, onNotice }) {
                   <strong><Sparkles size={12} /> Template produk</strong>
                   <small>Isi otomatis judul, deskripsi, catatan & cara mengamankan akun — harga/email/password tinggal diganti.</small>
                 </div>
-                <div className="cx-tpl-list">
-                  {PRODUCT_TEMPLATES.map((t) => (
-                    <button
-                      key={t.key}
-                      type="button"
-                      className="cx-tpl-btn"
-                      onClick={() => applyTemplate(t)}
-                    >
-                      <ProviderIcon type={t.icon} size={16} />
-                      <span>{t.label}</span>
-                    </button>
+                <div className="cx-tpl-groups">
+                  {[...new Set(PRODUCT_TEMPLATES.map((t) => t.group || "Lainnya"))].map((group) => (
+                    <section className="cx-tpl-group" key={group}>
+                      <h4>{group}</h4>
+                      <div className="cx-tpl-list">
+                        {PRODUCT_TEMPLATES.filter((t) => (t.group || "Lainnya") === group).map((t) => (
+                          <button key={t.key} type="button" className="cx-tpl-btn" onClick={() => applyTemplate(t)}>
+                            <ProductIcon icon={t.icon} label={t.label} size={20} />
+                            <span>{t.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </div>
               </div>

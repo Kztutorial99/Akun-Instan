@@ -4115,3 +4115,22 @@ html { scroll-behavior: smooth; }
   }
 }
 
+
+/* Daftar templat produk lengkap di panel admin */
+.cx-tpl-groups { display: grid; gap: 14px; margin-top: 12px; max-height: 370px; overflow-y: auto; padding-right: 5px; scrollbar-width: thin; }
+.cx-tpl-group { display: grid; gap: 7px; }
+.cx-tpl-group h4 { margin: 0; color: var(--muted); font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.cx-tpl-group .cx-tpl-list { margin-top: 0; }
+.cx-tpl-btn { min-height: 39px; text-align: left; }
+.cx-product-icon { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; overflow: hidden; border-radius: 5px; }
+.cx-product-icon img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; }
+.cx-product-icon-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink2); background: var(--bg2); font-size: 10px; font-weight: 800; }
+.cx-template-select-row { display: flex; align-items: center; gap: 9px; }
+.cx-template-select-row .cx-input-wrap { flex: 1; min-width: 0; }
+
+@media (max-width: 640px) {
+  .cx-tpl-groups { max-height: 320px; gap: 12px; }
+  .cx-tpl-group .cx-tpl-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .cx-tpl-btn { width: 100%; min-width: 0; padding: 7px 8px; justify-content: flex-start; }
+  .cx-tpl-btn span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

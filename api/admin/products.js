@@ -251,7 +251,7 @@ async function handleDemoProducts(sql, request, response, agedCfg) {
       WHERE id LIKE ${DEMO_PREFIX + "%"} OR id LIKE ${LEGACY_DEMO_PREFIX + "%"}`;
     return row ? row.n : 0;
   };
-  const templates = DEMO_TEMPLATES.map((t) => ({ key: t.key, label: t.label, group: t.group || "Lainnya", min: t.min, max: t.max }));
+  const templates = DEMO_TEMPLATES.map((t) => ({ key: t.key, label: t.label, icon: t.key, group: t.group || "Lainnya", min: t.min, max: t.max }));
   if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo(), templates });
   if (request.method === "POST") {
     const body = bodyOf(request);
