@@ -105,10 +105,11 @@ function view(row, agedCfg) {
   const credentials = withAccounts(row.credentials, row.price, agedCfg);
   return { id: row.id, title: row.title, description: row.description, loginType: row.loginType, price: Number(row.price), stock: credentials.accounts.length, status: row.status, agedPricing: credentials.agedPricing !== false, accounts: credentials.accounts, deliveryDetails: credentials.deliveryDetails || "", createdAt: row.createdAt, updatedAt: row.updatedAt };
 }
-/* ── Produk demo (etalase) ──────────────────────────────────────────────
-   Listing hasil inject selalu berstatus "sold" supaya tampil sebagai
-   "stok habis" di katalog dan tidak pernah bisa dibeli pembeli. */
-const DEMO_PREFIX = "demo-";
+/* ── Produk etalase (inject) ────────────────────────────────────────────
+   Listing hasil inject selalu berstatus "sold" tanpa akun sama sekali,
+   jadi selalu tampil sebagai stok habis dan tidak pernah bisa dibeli. */
+const DEMO_PREFIX = "etl-";
+const LEGACY_DEMO_PREFIX = "demo-";
 const DEMO_TEMPLATES = [
   { platform: "Gmail",      loginType: "Google",         min: 8000,  max: 25000,  titles: ["Akun Gmail Fresh", "Akun Gmail Aged 2019", "Akun Gmail Bulk Ready"] },
   { platform: "Facebook",   loginType: "Facebook",       min: 12000, max: 45000,  titles: ["Akun Facebook Aged", "Akun Facebook Fresh Verified", "Akun Facebook Marketplace"] },
@@ -120,23 +121,25 @@ function randInt(min, max) { return min + Math.floor(Math.random() * (max - min 
 function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 function buildDemoListing() {
   const tpl = pick(DEMO_TEMPLATES);
-  const title = `${pick(tpl.titles)} #${randInt(100, 999)}`;
+  const title = pick(tpl.titles);
   const price = Math.round(randInt(tpl.min, tpl.max) / 500) * 500;
   const id = DEMO_PREFIX + crypto.randomUUID();
   const credentials = {
-    accounts: [{ email: `demo+${randInt(1000, 9999)}@akuninstan.id`, password: "demo-only", price, createdAt: "" }],
+    accounts: [],
     agedPricing: false,
-    deliveryDetails: "Produk demo etalase. Tidak dijual.",
+    deliveryDetails: "",
   };
   return {
     id, title,
-    description: `Contoh listing ${tpl.platform} untuk etalase katalog. Stok sudah habis.`,
+    description: `Akun ${tpl.platform} siap pakai. Stok sedang habis, silakan cek akun lain yang tersedia.`,
     loginType: tpl.loginType, price, credentials,
   };
 }
+
 async function handleDemoProducts(sql, request, response, agedCfg) {
   const countDemo = async () => {
-    const [row] = await sql`SELECT COUNT(*)::int AS n FROM codexa_account_listings WHERE id LIKE ${DEMO_PREFIX + "%"}`;
+    const [row] = await sql`SELECT COUNT(*)::int AS n FROM codexa_account_listings
+      WHERE id LIKE ${DEMO_PREFIX + "%"} OR id LIKE ${LEGACY_DEMO_PREFIX + "%"}`;
     return row ? row.n : 0;
   };
   if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo() });
@@ -147,16 +150,18 @@ async function handleDemoProducts(sql, request, response, agedCfg) {
     for (let i = 0; i < count; i += 1) {
       const item = buildDemoListing();
       const [row] = await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob)
-        VALUES (${item.id},${item.title},${item.description},${item.loginType},${item.price},${1},${"sold"},${encryptCredentials(item.credentials)})
+        VALUES (${item.id},${item.title},${item.description},${item.loginType},${item.price},${0},${"sold"},${encryptCredentials(item.credentials)})
         RETURNING id,title,description,login_type AS "loginType",price,stock,status,created_at AS "createdAt",updated_at AS "updatedAt"`;
       created.push(view({ ...row, credentials: item.credentials }, agedCfg));
     }
     return response.status(201).json({ inserted: created.length, demoCount: await countDemo(), products: created });
   }
   if (request.method === "DELETE") {
-    const rows = await sql`DELETE FROM codexa_account_listings WHERE id LIKE ${DEMO_PREFIX + "%"} RETURNING id`;
+    const rows = await sql`DELETE FROM codexa_account_listings
+      WHERE id LIKE ${DEMO_PREFIX + "%"} OR id LIKE ${LEGACY_DEMO_PREFIX + "%"} RETURNING id`;
     return response.status(200).json({ deleted: rows.length, demoCount: 0 });
   }
+
   response.setHeader("Allow", "GET, POST, DELETE");
   return response.status(405).json({ error: "Method not allowed" });
 }
