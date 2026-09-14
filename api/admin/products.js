@@ -107,22 +107,62 @@ function view(row, agedCfg) {
 }
 /* ── Produk etalase (inject) ────────────────────────────────────────────
    Listing hasil inject selalu berstatus "sold" tanpa akun sama sekali,
-   jadi selalu tampil sebagai stok habis dan tidak pernah bisa dibeli. */
+   jadi selalu tampil sebagai stok habis dan tidak pernah bisa dibeli.
+   Judul, deskripsi, dan harga dibuat menyerupai listing asli. */
 const DEMO_PREFIX = "etl-";
 const LEGACY_DEMO_PREFIX = "demo-";
 const DEMO_TEMPLATES = [
-  { platform: "Gmail",      loginType: "Google",         min: 8000,  max: 25000,  titles: ["Akun Gmail Fresh", "Akun Gmail Aged 2019", "Akun Gmail Bulk Ready"] },
-  { platform: "Facebook",   loginType: "Facebook",       min: 12000, max: 45000,  titles: ["Akun Facebook Aged", "Akun Facebook Fresh Verified", "Akun Facebook Marketplace"] },
-  { platform: "Outlook",    loginType: "Microsoft",      min: 6000,  max: 18000,  titles: ["Akun Outlook Fresh", "Akun Hotmail Aged"] },
-  { platform: "Game",       loginType: "Email/password", min: 20000, max: 150000, titles: ["Akun Game Starter", "Akun Game Sultan", "Akun Game Rank Tinggi"] },
-  { platform: "Streaming",  loginType: "Email/password", min: 15000, max: 60000,  titles: ["Akun Streaming Private", "Akun Streaming Sharing"] },
+  {
+    key: "gmail", label: "Gmail", platform: "Gmail", loginType: "Google",
+    min: 7000, max: 22000,
+    titles: ["Gmail Fresh Verified", "Gmail Aged 2019", "Gmail Aged 2021", "Gmail Recovery Aktif", "Gmail Siap Pakai"],
+    notes: ["Recovery email aktif", "Sudah verifikasi nomor", "Belum pernah dipakai login", "Aman untuk pendaftaran layanan"],
+  },
+  {
+    key: "facebook", label: "Facebook", platform: "Facebook", loginType: "Facebook",
+    min: 11000, max: 42000,
+    titles: ["Facebook Aged 2018", "Facebook Verified Email", "Facebook Marketplace Aktif", "Facebook Full Akses"],
+    notes: ["Email login diserahkan penuh", "Belum pernah kena batasan", "Profil sudah terisi lengkap"],
+  },
+  {
+    key: "outlook", label: "Outlook / Hotmail", platform: "Outlook", loginType: "Microsoft",
+    min: 5000, max: 16000,
+    titles: ["Outlook Fresh Verified", "Hotmail Aged 2017", "Outlook Siap Pakai", "Outlook Recovery Aktif"],
+    notes: ["Bisa dipakai untuk Office", "Recovery email diserahkan", "Aman untuk verifikasi layanan"],
+  },
+  {
+    key: "game", label: "Akun Game", platform: "Game", loginType: "Email/password",
+    min: 18000, max: 120000,
+    titles: ["Akun Game Starter", "Akun Game Rank Tinggi", "Akun Game Full Skin", "Akun Game Level Tinggi"],
+    notes: ["Email login diserahkan penuh", "Bisa ganti data sendiri", "Progress aman"],
+  },
+  {
+    key: "streaming", label: "Streaming", platform: "Streaming", loginType: "Email/password",
+    min: 13000, max: 55000,
+    titles: ["Akun Streaming Private", "Akun Streaming 1 Profil", "Akun Streaming Garansi", "Akun Streaming Full HD"],
+    notes: ["Login stabil", "Tidak perlu ganti perangkat", "Siap tonton"],
+  },
+  {
+    key: "socmed", label: "Media Sosial", platform: "Media Sosial", loginType: "Email/password",
+    min: 9000, max: 35000,
+    titles: ["Akun Instagram Aged", "Akun TikTok Fresh", "Akun Twitter/X Aged", "Akun Telegram Siap Pakai"],
+    notes: ["Email login diserahkan", "Belum pernah kena batasan", "Aman untuk aktivitas harian"],
+  },
+  {
+    key: "custom-email", label: "Custom Email", platform: "Custom Email", loginType: "Email/password",
+    min: 6000, max: 20000,
+    titles: ["Custom Email Domain Pribadi", "Custom Email Bisnis", "Custom Email Siap Pakai"],
+    notes: ["Nama email bisa dipilih", "Bisa dipakai untuk verifikasi", "Login lewat webmail"],
+  },
 ];
+const DEMO_TEMPLATE_MAP = new Map(DEMO_TEMPLATES.map((t) => [t.key, t]));
 function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
 function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
-function buildDemoListing() {
-  const tpl = pick(DEMO_TEMPLATES);
+function buildDemoListing(templateKey) {
+  const tpl = DEMO_TEMPLATE_MAP.get(templateKey) || pick(DEMO_TEMPLATES);
   const title = pick(tpl.titles);
-  const price = Math.round(randInt(tpl.min, tpl.max) / 500) * 500;
+  const step = tpl.max > 60000 ? 1000 : 500;
+  const price = Math.round(randInt(tpl.min, tpl.max) / step) * step;
   const id = DEMO_PREFIX + crypto.randomUUID();
   const credentials = {
     accounts: [],
@@ -131,10 +171,11 @@ function buildDemoListing() {
   };
   return {
     id, title,
-    description: `Akun ${tpl.platform} siap pakai. Stok sedang habis, silakan cek akun lain yang tersedia.`,
+    description: `${pick(tpl.notes)}. Stok sedang habis, silakan cek akun lain yang tersedia.`,
     loginType: tpl.loginType, price, credentials,
   };
 }
+
 
 async function handleDemoProducts(sql, request, response, agedCfg) {
   const countDemo = async () => {
@@ -142,13 +183,19 @@ async function handleDemoProducts(sql, request, response, agedCfg) {
       WHERE id LIKE ${DEMO_PREFIX + "%"} OR id LIKE ${LEGACY_DEMO_PREFIX + "%"}`;
     return row ? row.n : 0;
   };
-  if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo() });
+  const templates = DEMO_TEMPLATES.map((t) => ({ key: t.key, label: t.label, min: t.min, max: t.max }));
+  if (request.method === "GET") return response.status(200).json({ demoCount: await countDemo(), templates });
   if (request.method === "POST") {
     const body = bodyOf(request);
     const count = Math.min(50, Math.max(1, Number(body.count) || 5));
+    const templateKey = text(body.template, 40);
+    if (templateKey && templateKey !== "mixed" && !DEMO_TEMPLATE_MAP.has(templateKey)) {
+      return response.status(400).json({ error: "Templat produk tidak dikenal" });
+    }
     const created = [];
     for (let i = 0; i < count; i += 1) {
-      const item = buildDemoListing();
+      const item = buildDemoListing(templateKey === "mixed" ? "" : templateKey);
+
       const [row] = await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob)
         VALUES (${item.id},${item.title},${item.description},${item.loginType},${item.price},${0},${"sold"},${encryptCredentials(item.credentials)})
         RETURNING id,title,description,login_type AS "loginType",price,stock,status,created_at AS "createdAt",updated_at AS "updatedAt"`;

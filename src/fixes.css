@@ -1590,3 +1590,27 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   border: 1px solid rgba(244,63,94,.3);
 }
 .cx-prodpage-out-actions { margin-top: 4px; }
+
+/* ── Katalog: pemisah bagian & kartu stok habis ── */
+.cx-cat-divider{
+  display:flex; align-items:center; gap:10px;
+  margin:22px 0 12px; padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.cx-cat-divider span{
+  font-size:12px; font-weight:700; letter-spacing:.02em;
+  color:rgba(255,255,255,.72);
+}
+.cx-cat-divider small{ font-size:11px; color:rgba(255,255,255,.42); }
+.cx-age-badge.is-out{
+  background:rgba(148,163,184,.12);
+  border-color:rgba(148,163,184,.28);
+  color:rgba(226,232,240,.72);
+}
+.cx-pc.is-out{ opacity:.62; }
+.cx-pc.is-out:hover{ opacity:.78; }
+.cx-pc.is-out .cx-pc-amount{ color:rgba(255,255,255,.62); }
+.cx-pc-v3 .cx-pc-cta.is-out{ cursor:not-allowed; }
+@media (max-width:430px){
+  .cx-cat-divider{ margin:18px 0 10px; padding-top:12px; }
+}

@@ -50,8 +50,10 @@ function AdminPage({ onBack, onNotice }) {
   const [injectForm, setInjectForm]       = useState({ listingId: "all", count: 8, minRating: 4, maxRating: 5, spreadDays: 60 });
   const [sales, setSales]                 = useState([]);
   const [soldForm, setSoldForm]           = useState({ listingId: "all", soldMode: "add", soldMin: 10, soldMax: 40 });
-  const [demoForm, setDemoForm]           = useState({ count: 6 });
+  const [demoForm, setDemoForm]           = useState({ count: 6, template: "mixed" });
+  const [demoTemplates, setDemoTemplates] = useState([]);
   const [demoCount, setDemoCount]         = useState(0);
+
 
   const [orders, setOrders]               = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -111,12 +113,15 @@ function AdminPage({ onBack, onNotice }) {
     });
   };
 
-  /* ── Inject produk demo (etalase, selalu stok habis) ── */
+  /* ── Inject produk etalase (selalu stok habis) ── */
   const DEMO_API = "/api/admin/products?resource=demo";
 
   const loadDemoCount = () =>
     jsonRequest(DEMO_API, { method: "GET" })
-      .then((p) => setDemoCount(p.demoCount || 0))
+      .then((p) => {
+        setDemoCount(p.demoCount || 0);
+        if (Array.isArray(p.templates)) setDemoTemplates(p.templates);
+      })
       .catch(() => {});
 
   const injectDemoProducts = async () => {
@@ -125,14 +130,15 @@ function AdminPage({ onBack, onNotice }) {
         const p = await jsonRequest(DEMO_API, { method: "POST", body: JSON.stringify(demoForm) });
         setDemoCount(p.demoCount || 0);
         loadListings();
-        onNotice(`${p.inserted} produk demo ditambahkan ke katalog`);
+        onNotice(`${p.inserted} produk etalase ditambahkan ke katalog`);
       } catch (e) { setApiError(e.message); }
+
     });
   };
 
   const clearDemoProducts = async () => {
     const ok = await confirm({
-      title: "Hapus semua produk demo?",
+      title: "Hapus semua produk etalase?",
       description: "Hanya produk hasil inject yang dihapus. Produk asli tetap aman.",
       confirmText: "Ya, hapus", danger: true,
     });
@@ -142,7 +148,7 @@ function AdminPage({ onBack, onNotice }) {
         const p = await jsonRequest(DEMO_API, { method: "DELETE" });
         setDemoCount(0);
         loadListings();
-        onNotice(`${p.deleted} produk demo dihapus`);
+        onNotice(`${p.deleted} produk etalase dihapus`);
       } catch (e) { setApiError(e.message); }
     });
   };
@@ -1679,12 +1685,12 @@ function AdminPage({ onBack, onNotice }) {
                 </div>
               </div>
 
-              {/* ── Inject produk demo ── */}
+              {/* ── Inject produk etalase ── */}
               <div className="cx-panel cx-review-inject">
                 <div className="cx-panel-header">
-                  <h3>Inject produk demo</h3>
+                  <h3>Inject produk etalase</h3>
                   <span className="cx-panel-sub">
-                    {demoCount} produk demo aktif · selalu tampil sebagai stok habis dan tidak bisa dibeli
+                    {demoCount} produk etalase aktif · selalu tampil sebagai stok habis dan tidak bisa dibeli
                   </span>
                   <div className="cx-panel-actions">
                     <ActionBtn className="cx-btn cx-btn-ghost cx-btn-sm" onClick={loadDemoCount} busyLabel="Memuat...">
@@ -1693,24 +1699,36 @@ function AdminPage({ onBack, onNotice }) {
                   </div>
                 </div>
                 <div className="cx-review-form">
+                  <Field label="Templat produk">
+                    <InputWrap>
+                      <select value={demoForm.template}
+                        onChange={(e) => setDemoForm((f) => ({ ...f, template: e.target.value }))}>
+                        <option value="mixed">Campur semua templat</option>
+                        {demoTemplates.map((t) => (
+                          <option key={t.key} value={t.key}>{t.label}</option>
+                        ))}
+                      </select>
+                    </InputWrap>
+                  </Field>
                   <Field label="Jumlah produk">
                     <InputWrap>
                       <input type="number" min="1" max="50" value={demoForm.count}
-                        onChange={(e) => setDemoForm({ count: e.target.value })} />
+                        onChange={(e) => setDemoForm((f) => ({ ...f, count: e.target.value }))} />
                     </InputWrap>
                   </Field>
                 </div>
                 <div className="cx-review-form-actions">
                   <ActionBtn className="cx-btn cx-btn-primary cx-btn-sm" onClick={injectDemoProducts} busy={isPending("demo-inject")} busyLabel="Menambahkan...">
-                    <Plus size={11} /> Inject produk demo
+                    <Plus size={11} /> Inject produk etalase
                   </ActionBtn>
                   <ActionBtn className="cx-btn cx-btn-ghost cx-btn-sm" onClick={clearDemoProducts} busy={isPending("demo-clear")} busyLabel="Menghapus..."
                     disabled={demoCount === 0}>
-                    <Trash2 size={11} /> Hapus produk demo
+                    <Trash2 size={11} /> Hapus produk etalase
                   </ActionBtn>
-                  <span className="cx-review-hint">Nama, harga, dan jenis akun diacak agar katalog terlihat ramai.</span>
+                  <span className="cx-review-hint">Nama dan harga mengikuti templat yang dipilih, diacak agar terlihat wajar.</span>
                 </div>
               </div>
+
 
             </>
           )}

@@ -1325,7 +1325,13 @@ function App() {
     else if (sortBy === "price-desc") list = [...list].sort((a, b) => priceOf(b) - priceOf(a));
     else if (sortBy === "stock-desc") list = [...list].sort((a, b) => stockOf(b) - stockOf(a));
     else if (sortBy === "name-asc") list = [...list].sort((a, b) => String(a.title).localeCompare(String(b.title), "id"));
-    return list;
+    /* Produk yang masih ada stoknya selalu di atas; yang habis turun ke bawah
+       tanpa mengubah urutan relatif hasil sortir di atas. */
+    const ready = [];
+    const out = [];
+    for (const p of list) (stockOf(p) > 0 && p.status !== "sold" ? ready : out).push(p);
+    return [...ready, ...out];
+
   }, [data.products, search, sortBy, ageFilter, platFilter]);
 
   // Pindah halaman selalu mulai dari paling atas (window + container scroll).
@@ -2139,19 +2145,35 @@ function App() {
           </div>
         )}
 
-        {!data.loading && products.length > 0 && (
-          <div className="cx-grid">
-            {products.map((p, i) => (
-              <ProductCard
-                key={p.id || i}
-                product={p}
-                colorIdx={i}
-                onOpen={() => navigate(productPagePath(p, data.products))}
-                onBuy={(sel) => { setBuyItem(p); setBuySel(Array.isArray(sel) ? sel : []); }}
-              />
-            ))}
-          </div>
-        )}
+        {!data.loading && products.length > 0 && (() => {
+          const isOut = (p) => !((Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold");
+          const ready = products.filter((p) => !isOut(p));
+          const out = products.filter(isOut);
+          const card = (p, i) => (
+            <ProductCard
+              key={p.id || i}
+              product={p}
+              colorIdx={i}
+              onOpen={() => navigate(productPagePath(p, data.products))}
+              onBuy={(sel) => { setBuyItem(p); setBuySel(Array.isArray(sel) ? sel : []); }}
+            />
+          );
+          return (
+            <>
+              {ready.length > 0 && <div className="cx-grid">{ready.map(card)}</div>}
+              {out.length > 0 && (
+                <>
+                  <div className="cx-cat-divider">
+                    <span>Stok habis</span>
+                    <small>{out.length} akun</small>
+                  </div>
+                  <div className="cx-grid cx-grid-out">{out.map(card)}</div>
+                </>
+              )}
+            </>
+          );
+        })()}
+
       </main>
       <StoreFooter navigate={navigate} guest={guest} />
       {tabbar}
@@ -3993,14 +4015,17 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
   const hasRange = maxPrice > minPrice;
   const avg = ratingOf(product);
   const count = ratingCountOf(product);
+  const soldOut = !(stock > 0 && product.status !== "sold");
   return (
-    <article className="cx-pc cx-pc-v3">
+    <article className={`cx-pc cx-pc-v3${soldOut ? " is-out" : ""}`}>
       <div className="cx-pc-head">
         <span className="cx-pc-plat" style={{ color }}>
           <ProviderIcon type={product.loginType} size={14} />
           {product.loginType}
         </span>
-        {age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
+        {soldOut
+          ? <span className="cx-age-badge is-out">Stok habis</span>
+          : age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
       </div>
 
       <h3 className="cx-pc-title">
@@ -4029,16 +4054,23 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           </span>
           {soldOf(product) > 0 && <small>Terjual {soldOf(product)}</small>}
         </div>
-        <button
-          type="button"
-          className="cx-pc-cta is-ready"
-          onClick={() => onOpen && onOpen()}
-          aria-label={`Lihat ${product.title}`}
-        >
-          <span>Pilih akun</span>
-          <ArrowRight size={15} />
-        </button>
+        {soldOut ? (
+          <button type="button" className="cx-pc-cta is-out" disabled aria-label={`${product.title} stok habis`}>
+            <span>Stok habis</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="cx-pc-cta is-ready"
+            onClick={() => onOpen && onOpen()}
+            aria-label={`Lihat ${product.title}`}
+          >
+            <span>Pilih akun</span>
+            <ArrowRight size={15} />
+          </button>
+        )}
       </div>
+
     </article>
   );
 }
