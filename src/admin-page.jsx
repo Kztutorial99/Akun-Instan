@@ -3,7 +3,7 @@ import {
   ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star,
 } from "lucide-react";
 import {
-  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
+  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProductTypeIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
 } from "./main.jsx";
 import "./admin-ui.css";
 
@@ -1302,7 +1302,7 @@ function AdminPage({ onBack, onNotice }) {
                         return (
                           <article key={l.id} className="cx-admin-product-card">
                             <header>
-                              <span className="cx-admin-product-icon"><ProviderIcon type={l.loginType} size={18} /></span>
+                              <span className="cx-admin-product-icon"><ProductTypeIcon product={l} size={18} /></span>
                               <div className="cx-admin-product-title">
                                 <strong title={l.title}>{l.title}</strong>
                                 <small>{l.loginType}</small>
@@ -1394,7 +1394,7 @@ function AdminPage({ onBack, onNotice }) {
                             <div className="cx-order-items">
                               {(o.items || []).map((it, i) => (
                                 <div key={i} className="cx-order-item">
-                                  <ProviderIcon type={it.loginType} size={13} />
+                                  <ProductTypeIcon product={it} size={13} />
                                   <span className="cx-order-item-title">{it.title}</span>
                                   <span className="cx-order-item-sub">{(it.accounts || []).length} akun · {(it.accounts || []).map((a) => a.email).join(", ")}</span>
                                 </div>

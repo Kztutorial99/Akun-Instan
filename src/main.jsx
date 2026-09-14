@@ -277,6 +277,54 @@ export function ProviderIcon({ type, size = 16, className = "" }) {
   return <ProductIcon icon={key} label={type || "Provider"} size={size} className={className} />;
 }
 
+/* Ikon berdasarkan jenis produk (dicocokkan dari judul/kategori produk). */
+const PRODUCT_ICON_MATCHERS = [
+  ["youtube-premium", ["youtube premium", "yt premium"]],
+  ["youtube", ["youtube", "yt channel"]],
+  ["tiktok", ["tiktok", "tik tok"]],
+  ["instagram", ["instagram", " ig "]],
+  ["facebook", ["facebook", " fb "]],
+  ["twitter", ["twitter", " x / ", "akun x "]],
+  ["telegram", ["telegram"]],
+  ["whatsapp", ["whatsapp", " wa "]],
+  ["discord", ["discord"]],
+  ["freefire", ["free fire", "freefire", " ff "]],
+  ["pubg", ["pubg"]],
+  ["cod", ["call of duty", "codm", " cod "]],
+  ["mobile-legends", ["mobile legend", "mlbb", " ml "]],
+  ["genshin", ["genshin"]],
+  ["valorant", ["valorant", "valo "]],
+  ["roblox", ["roblox"]],
+  ["steam", ["steam"]],
+  ["netflix", ["netflix"]],
+  ["spotify", ["spotify"]],
+  ["disney", ["disney", "hotstar"]],
+  ["vidio-wetv", ["vidio", "wetv", "viu", "iqiyi"]],
+  ["canva", ["canva"]],
+  ["chatgpt", ["chatgpt", "openai", "gpt plus"]],
+  ["capcut", ["capcut", "cap cut"]],
+  ["microsoft-office", ["microsoft 365", "office 365", "microsoft office"]],
+  ["shopee-tokopedia", ["shopee", "tokopedia"]],
+  ["vpn", ["vpn"]],
+  ["canva", ["canva"]],
+  ["outlook", ["outlook", "hotmail"]],
+  ["yahoo", ["yahoo"]],
+  ["google", ["gmail", "google"]],
+  ["game-lain", ["game", "gaming", "mmorpg"]],
+  ["streaming-lain", ["streaming", "premium tv"]],
+  ["custom-email", ["custom email"]],
+];
+export function productIconKey(product) {
+  const text = ` ${[product?.title, product?.category, product?.name].filter(Boolean).join(" ").toLowerCase()} `;
+  for (const [icon, words] of PRODUCT_ICON_MATCHERS) {
+    if (words.some((w) => text.includes(w))) return icon;
+  }
+  return PROVIDER_ICON_KEYS[String(product?.loginType || "").trim().toLowerCase()] || "email";
+}
+export function ProductTypeIcon({ product, size = 16, className = "" }) {
+  return <ProductIcon icon={productIconKey(product)} label={product?.title || product?.loginType || "Produk"} size={size} className={className} />;
+}
+
 export async function jsonRequest(url, opts = {}) {
   const r = await fetch(url, { credentials: "same-origin", ...opts, headers: { "Content-Type": "application/json", ...(opts.headers || {}) } });
   const p = await r.json().catch(() => ({}));
@@ -1717,7 +1765,7 @@ function App() {
             <div className="cx-buy-visual" style={{ background: `${ACCENT_COLORS[products.indexOf(buyItem) % ACCENT_COLORS.length]}11` }}>
               <div className="cx-buy-visual-mono">DIGITAL ACCOUNT · {buyItem.loginType}</div>
               <div className="cx-buy-symbol">
-                <ProviderIcon type={buyItem.loginType} size={64} />
+                <ProductTypeIcon product={buyItem} size={64} />
               </div>
               <div className="cx-buy-visual-mono">{buyItem.stock} STOK TERSEDIA</div>
             </div>
@@ -1726,7 +1774,7 @@ function App() {
                 <button className="cx-icon-btn" onClick={() => setBuyItem(null)}><X size={14} /></button>
               </div>
               <p style={{ color: "var(--faint)", fontSize: 10, fontFamily: "ui-monospace,monospace", letterSpacing: ".1em", textTransform: "uppercase", margin: "4px 0 6px", display: "flex", alignItems: "center", gap: 6 }}>
-                <ProviderIcon type={buyItem.loginType} size={14} />
+                <ProductTypeIcon product={buyItem} size={14} />
                 {buyItem.loginType}
               </p>
               <h2 style={{ margin: "0 0 8px", font: "600 20px Inter", letterSpacing: "-.03em" }}>{buyItem.title}</h2>
@@ -1788,7 +1836,7 @@ function App() {
                   {cart.map((item, i) => (
                     <div key={i} className="cx-cart-item">
                       <div className="cx-cart-thumb cx-cart-thumb-icon">
-                        <ProviderIcon type={item.loginType} size={20} />
+                        <ProductTypeIcon product={item} size={20} />
                       </div>
                       <div className="cx-cart-item-copy">
                         <strong>{item.title}</strong>
@@ -2388,7 +2436,7 @@ function OrderItems({ items, onNotice, orderId }) {
       {items.map((item, i) => (
         <div key={`${item.listingId}-${i}`} className="cx-order-item">
           <div className="cx-order-item-head">
-            <ProviderIcon type={item.loginType} size={16} />
+            <ProductTypeIcon product={item} size={16} />
             <strong>{item.title}</strong>
           </div>
           {(item.accounts || []).map((account, k) => (
@@ -3794,7 +3842,7 @@ function ProductDetailModal({ product, color, open, onClose }) {
         <div className="cx-pd-body">
           <div className="cx-pd-head">
             <span className="cx-pd-plat" style={{ color }}>
-              <ProviderIcon type={product.loginType} size={18} />
+              <ProductTypeIcon product={product} size={18} />
               {product.loginType}
             </span>
             <span className={`cx-pd-stock${stock > 0 ? "" : " is-out"}`}>
@@ -4019,7 +4067,7 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
     <article className={`cx-pc cx-pc-v3${soldOut ? " is-out" : ""}`}>
       <div className="cx-pc-head">
         <span className="cx-pc-plat" style={{ color }}>
-          <ProviderIcon type={product.loginType} size={14} />
+          <ProductTypeIcon product={product} size={14} />
           {product.loginType}
         </span>
         {soldOut
@@ -4124,7 +4172,7 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
 
       <header className="cx-prodpage-head">
         <span className="cx-prodpage-plat">
-          <ProviderIcon type={product.loginType} size={16} />
+          <ProductTypeIcon product={product} size={16} />
           {product.loginType}
           {productAgeInfo(product).kind && (
             <span className={`cx-age-badge is-${productAgeInfo(product).kind}`}>{productAgeInfo(product).label}</span>
