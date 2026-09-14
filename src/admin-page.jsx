@@ -1704,8 +1704,12 @@ function AdminPage({ onBack, onNotice }) {
                       <select value={demoForm.template}
                         onChange={(e) => setDemoForm((f) => ({ ...f, template: e.target.value }))}>
                         <option value="mixed">Campur semua templat</option>
-                        {demoTemplates.map((t) => (
-                          <option key={t.key} value={t.key}>{t.label}</option>
+                        {[...new Set(demoTemplates.map((t) => t.group || "Lainnya"))].map((g) => (
+                          <optgroup key={g} label={g}>
+                            {demoTemplates.filter((t) => (t.group || "Lainnya") === g).map((t) => (
+                              <option key={t.key} value={t.key}>{t.label}</option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </InputWrap>
