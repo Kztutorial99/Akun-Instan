@@ -1614,3 +1614,26 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 @media (max-width:430px){
   .cx-cat-divider{ margin:18px 0 10px; padding-top:12px; }
 }
+
+/* Katalog v4: nama produk jadi judul utama, tipe login pindah di bawahnya */
+.cx-pc-v3 .cx-pc-head { align-items: flex-start; gap: 9px; margin-bottom: 4px; }
+.cx-pc-v3 .cx-pc-head .cx-pc-title {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 17px; line-height: 1.25; margin: 0;
+  overflow-wrap: anywhere;
+}
+.cx-pc-brandicon {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+}
+.cx-pc-brandicon svg, .cx-pc-brandicon img { display: block; }
+.cx-pc-v3 .cx-pc-plat-sub {
+  display: inline-flex; margin: 0 0 6px 39px;
+  font-size: 11px; letter-spacing: .05em; opacity: .95;
+}
+@media (max-width: 480px) {
+  .cx-pc-v3 .cx-pc-head .cx-pc-title { font-size: 15.5px; }
+  .cx-pc-v3 .cx-pc-plat-sub { margin-left: 39px; font-size: 10.5px; }
+}
