@@ -12,6 +12,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/youtube/callback",
+      "destination": "/api/admin/youtube?resource=callback"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/data?resource=sitemap"
     },

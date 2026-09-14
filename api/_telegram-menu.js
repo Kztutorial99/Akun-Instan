@@ -4,8 +4,8 @@
  * webhook cukup memanggil satu fungsi.
  */
 
-const { db, ensureTables } = require("../_users");
-const { escapeHtml, rupiah, waktuWib, reviewKeyboard } = require("../_telegram");
+const { db, ensureTables } = require("./_users");
+const { escapeHtml, rupiah, waktuWib, reviewKeyboard } = require("./_telegram");
 
 const STATUS_ICON = { pending: "⏳", approved: "✅", rejected: "❌" };
 

@@ -10,7 +10,7 @@
 const crypto = require("crypto");
 const { db, ensureTables, bodyOf } = require("../_users");
 const { callTelegram, adminChatId, topupMessage } = require("../_telegram");
-const { renderMenu, commandToMenu, mainMenuKeyboard } = require("./menu");
+const { renderMenu, commandToMenu, mainMenuKeyboard } = require("../_telegram-menu");
 
 function safeEqual(a, b) {
   const left = Buffer.from(String(a || ""));

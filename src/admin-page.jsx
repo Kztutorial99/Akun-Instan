@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star,
+  ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star, MonitorPlay,
 } from "lucide-react";
 import {
   ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProductTypeIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
 } from "./main.jsx";
+import YoutubePromo from "./youtube-promo.jsx";
 import "./admin-ui.css";
 
 function AdminPage({ onBack, onNotice }) {
@@ -773,6 +774,7 @@ function AdminPage({ onBack, onNotice }) {
     { label: "Assisten",    shortcut: "⌘I", icon: Sparkles,       dot: !(aiCfg && aiCfg.enabled && aiCfg.hasKey) },
     { label: "Ulasan & Rating", shortcut: "⌘R", icon: Star },
     { label: "Inject Data",  shortcut: "⌘J", icon: Plus },
+    { label: "YouTube Promo", shortcut: "⌘Y", icon: MonitorPlay },
     { label: "Pengaturan",  shortcut: "⌘,", icon: Settings },
   ];
 
@@ -918,7 +920,9 @@ function AdminPage({ onBack, onNotice }) {
 
         {/* Content */}
         <div className="cx-admin-content" ref={contentRef}>
-          {activeNav === "Harga Aged" ? (
+          {activeNav === "YouTube Promo" ? (
+            <YoutubePromo onNotice={onNotice} />
+          ) : activeNav === "Harga Aged" ? (
             <>
               <div className="cx-admin-top">
                 <div>
