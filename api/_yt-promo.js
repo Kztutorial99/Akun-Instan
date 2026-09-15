@@ -423,41 +423,85 @@ async function guardLimits(sql, settings) {
 
 /* ═══════════════════ DRAFT AI ═══════════════════ */
 
+/* Variasi gaya supaya tiap komentar terasa diketik orang berbeda. */
 const STYLE_HINTS = [
-  "buka dengan apresiasi singkat pada isi video",
-  "mulai dengan satu insight praktis dari topik video",
-  "sebutkan satu manfaat konkret bagi penonton pemula",
-  "bandingkan singkat pengalaman memakai email/akun siap pakai",
-  "awali dengan pertanyaan ringan yang relevan dengan isi video",
+  "tanggapi satu poin spesifik yang disebut di video, seperti penonton biasa",
+  "ceritakan pengalaman pribadi singkat yang nyambung dengan topik video",
+  "tanya hal teknis ringan yang wajar ditanyakan penonton",
+  "beri catatan tambahan kecil yang mungkin berguna buat penonton lain",
+  "komentar santai pendek, gaya ngobrol, tanpa basa-basi",
+  "sebut bagian/menit yang paling membantu menurut kamu",
 ];
 
-function fallbackDraft(video, profile) {
-  const topic = trim(video.title, 90);
-  return [
-    `Penjelasannya cukup jelas untuk yang baru mulai soal ${topic.toLowerCase()}.`,
-    `Buat yang butuh akun atau email siap pakai tanpa ribet, bisa lihat ${profile.brand}${profile.website ? ` (${profile.website})` : ""}.`,
-  ].join(" ");
+/* Kata/pola yang bikin komentar kelihatan promosi dan gampang kena filter spam. */
+const SPAM_PATTERNS = [
+  /https?:\/\/\S+/gi,
+  /\bwww\.\S+/gi,
+  /\b[\w.-]+\.(com|net|id|co|xyz|store|shop|online|site|io)\b/gi,
+  /\b[\w.+-]+@[\w-]+\.[\w.]+\b/gi,
+  /\b(wa|whatsapp|telegram|t\.me|dm|inbox|order|promo|diskon|murah|harga|gratis|klik|cek bio|link di bio|subscribe balik|sub4sub)\b/gi,
+  /(\+?62|08)\d{7,}/g,
+  /#[\w-]+/g,
+  /@[\w-]+/g,
+];
+
+/** Bersihkan draft supaya tidak terbaca sebagai spam oleh filter YouTube. */
+function humanizeComment(raw) {
+  let text = String(raw || "").replace(/^["“'`]+|["”'`]+$/g, "").trim();
+  for (const pattern of SPAM_PATTERNS) text = text.replace(pattern, " ");
+  text = text
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "") // buang emoji
+    .replace(/([!?.,])\1{1,}/g, "$1") // tanda baca berulang
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,!?])/g, "$1")
+    .trim();
+  // huruf kapital berlebihan -> huruf biasa
+  const letters = text.replace(/[^A-Za-z]/g, "");
+  if (letters.length > 8 && letters.replace(/[^A-Z]/g, "").length / letters.length > 0.4) {
+    text = text.toLowerCase();
+  }
+  // potong jadi maksimal dua kalimat pendek
+  text = text.replace(/^[^\p{L}\p{N}]+/u, "").replace(/\s*[.!?,]\s*(?=[.!?,])/g, "").trim();
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2);
+  text = sentences.join(" ").trim();
+  if (text.length > 180) text = `${text.slice(0, 177).trim()}...`;
+  return text;
+}
+
+function fallbackDraft(video) {
+  const topic = trim(video.title, 60).toLowerCase();
+  const options = [
+    `penjelasan soal ${topic} ini kebetulan pas banget sama yang lagi aku pelajari, makasih`,
+    `baru paham bagian ini setelah nonton, sebelumnya selalu bingung pas nyoba sendiri`,
+    `bagian tengahnya paling ngebantu sih, sisanya udah pernah aku coba juga`,
+    `kalau langkahnya diikutin pelan-pelan emang jalan, cuma butuh sabar di awal`,
+  ];
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 /**
- * Buat draft komentar promosi memakai konfigurasi AI (Qwen) yang sudah ada.
+ * Buat draft komentar memakai konfigurasi AI (Qwen) yang sudah ada.
+ * Fokus: terdengar seperti komentar penonton asli, bukan iklan.
  * Selalu mengembalikan teks; kalau AI gagal, pakai draft cadangan sederhana.
  */
 async function generateDraft(sql, { video, keyword, category, profile }) {
   const cfg = await assistantConfig(sql).catch(() => null);
   if (!cfg || !cfg.hasKey || cfg.enabled === false) {
-    return { comment: fallbackDraft(video, profile), source: "fallback", warning: "AI belum dikonfigurasi, dipakai draft cadangan." };
+    return { comment: fallbackDraft(video), source: "fallback", warning: "AI belum dikonfigurasi, dipakai draft cadangan." };
   }
 
   const hint = STYLE_HINTS[Math.floor(Math.random() * STYLE_HINTS.length)];
   const system = [
-    "Kamu menulis komentar YouTube berbahasa Indonesia yang natural dan sopan.",
-    "Aturan wajib:",
-    "- 1-2 kalimat, maksimal 300 karakter.",
-    "- Relevan dengan isi video, bukan template umum.",
-    "- Tidak terdengar seperti iklan/spam, tidak memaksa, tanpa huruf kapital berlebihan atau emoji berlebihan.",
-    "- Tidak membuat klaim palsu, tidak menjanjikan hasil, tidak menyebut harga.",
-    "- Sebut brand satu kali saja sebagai saran halus di akhir.",
+    "Kamu adalah penonton YouTube biasa asal Indonesia yang menulis komentar di kolom komentar.",
+    "Tulis SATU komentar yang benar-benar terdengar diketik manusia, bukan hasil AI dan bukan iklan.",
+    "Aturan wajib (mengikuti kebijakan spam & penipuan YouTube):",
+    "- 1-2 kalimat pendek, maksimal 180 karakter.",
+    "- DILARANG menyebut nama brand, toko, produk jualan, website, link, nomor WA/Telegram, harga, diskon, atau ajakan membeli.",
+    "- Dilarang memakai tagar, mention @, huruf kapital berlebihan, emoji, atau tanda baca berulang.",
+    "- Dilarang menyuruh orang cek bio, DM, subscribe, atau klik apa pun.",
+    "- Harus nyambung dengan isi video ini secara spesifik, jangan komentar template yang bisa dipakai di video mana pun.",
+    "- Boleh pakai bahasa santai sehari-hari, boleh tidak baku, boleh tanpa huruf kapital di awal.",
+    "- Jangan membuat klaim palsu atau menjanjikan hasil.",
     "- Jawab HANYA dengan teks komentarnya, tanpa tanda kutip dan tanpa penjelasan.",
     `Gaya kali ini: ${hint}.`,
   ].join("\n");
@@ -466,15 +510,12 @@ async function generateDraft(sql, { video, keyword, category, profile }) {
     `Judul video: ${trim(video.title, 200)}`,
     `Channel: ${trim(video.channelTitle, 120)}`,
     `Deskripsi: ${trim(video.description, 700)}`,
-    `Keyword pencarian: ${trim(keyword, 120)}`,
-    `Kategori: ${category}`,
+    `Topik yang sedang diamati admin (konteks internal, JANGAN disebut): ${trim(keyword, 120)} / ${category}`,
     "",
-    "Profil promosi:",
-    `- Brand: ${profile.brand}`,
-    `- Website: ${profile.website}`,
-    `- Deskripsi: ${profile.description}`,
-    `- Ajakan: ${profile.cta}`,
+    `Konteks internal lain (JANGAN disebut sama sekali): ${profile && profile.brand ? profile.brand : "-"}.`,
+    "Tulis komentarnya sebagai penonton murni, tanpa promosi apa pun.",
   ].join("\n");
+
 
   try {
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
@@ -493,17 +534,19 @@ async function generateDraft(sql, { video, keyword, category, profile }) {
     const data = await res.json().catch(() => null);
     if (!res.ok || !data || data.error) {
       const message = (data && data.error && data.error.message) || `HTTP ${res.status}`;
-      return { comment: fallbackDraft(video, profile), source: "fallback", warning: `AI gagal (${message}), dipakai draft cadangan.` };
+      return { comment: fallbackDraft(video), source: "fallback", warning: `AI gagal (${message}), dipakai draft cadangan.` };
     }
-    const text = trim(
-      (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "",
-      600,
-    ).replace(/^["“']|["”']$/g, "");
-    if (!text) return { comment: fallbackDraft(video, profile), source: "fallback", warning: "AI tidak mengembalikan teks, dipakai draft cadangan." };
-    return { comment: text.slice(0, 400), source: "ai", warning: "" };
+    const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+    const text = humanizeComment(raw);
+    if (text.length < 12) {
+      return { comment: fallbackDraft(video), source: "fallback", warning: "Hasil AI terlalu pendek/terdeteksi promosi, dipakai draft cadangan." };
+    }
+    const warning = raw.trim().length !== text.length ? "Draft dibersihkan otomatis dari unsur promosi/link agar aman dari filter spam YouTube." : "";
+    return { comment: text, source: "ai", warning };
   } catch (error) {
-    return { comment: fallbackDraft(video, profile), source: "fallback", warning: `AI error (${error && error.message}), dipakai draft cadangan.` };
+    return { comment: fallbackDraft(video), source: "fallback", warning: `AI error (${error && error.message}), dipakai draft cadangan.` };
   }
+
 }
 
 const newId = (prefix) => `${prefix}_${crypto.randomBytes(8).toString("hex")}`;
@@ -526,6 +569,7 @@ module.exports = {
   promotionStats,
   guardLimits,
   generateDraft,
+  humanizeComment,
   newId,
   trim,
   clampInt,

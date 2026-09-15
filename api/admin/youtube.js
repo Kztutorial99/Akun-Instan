@@ -371,12 +371,18 @@ module.exports = async function handler(request, response) {
       const promoId = P.newId("ytp");
       try {
         const token = await activeAccessToken(sql, account);
-        const sent = await yt.postComment({ accessToken: token, videoId: draft.videoId, text: draft.comment });
+        // Pembersihan terakhir: buang link/brand/ajakan agar tidak kena filter spam YouTube.
+        const safeText = P.humanizeComment(draft.comment);
+        if (!safeText || safeText.length < 8) {
+          return response.status(400).json({ error: "Komentar terlalu pendek setelah dibersihkan dari unsur promosi. Edit dulu draftnya." });
+        }
+        const sent = await yt.postComment({ accessToken: token, videoId: draft.videoId, text: safeText });
         await sql`
           INSERT INTO codexa_yt_promotions (id, draft_id, video_id, account_id, channel_title, comment, comment_id, status, admin)
           VALUES (${promoId}, ${draft.id}, ${draft.videoId}, ${ACCOUNT_ID}, ${(account && account.channelTitle) || ""},
-                  ${draft.comment}, ${sent.commentId}, 'sent', 'admin')
+                  ${safeText}, ${sent.commentId}, 'sent', 'admin')
         `;
+
         await sql`UPDATE codexa_yt_drafts SET status = 'sent', updated_at = NOW() WHERE id = ${draft.id}`;
         await sql`UPDATE codexa_yt_videos SET status = 'promoted', updated_at = NOW() WHERE video_id = ${draft.videoId}`;
         await P.logActivity(sql, {
