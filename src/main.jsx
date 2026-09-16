@@ -1160,6 +1160,50 @@ const readVerifyPending = () => {
   } catch (_) { return null; }
 };
 
+/* ── Visitor Traffic ──────────────────────────────────────────────────────
+   Setiap page view dikirim ke /api/data?resource=visit. ID pengunjung
+   disimpan di localStorage (anonim), ID sesi di sessionStorage. Halaman
+   admin tidak ikut dihitung. */
+let lastTrackedPath = "";
+function visitorIds() {
+  try {
+    let visitorId = localStorage.getItem("ai_visitor_id");
+    if (!visitorId) {
+      visitorId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+      localStorage.setItem("ai_visitor_id", visitorId);
+    }
+    let sessionId = sessionStorage.getItem("ai_session_id");
+    if (!sessionId) {
+      sessionId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+      sessionStorage.setItem("ai_session_id", sessionId);
+    }
+    return { visitorId, sessionId };
+  } catch {
+    return { visitorId: "", sessionId: "" };
+  }
+}
+
+function trackVisit() {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname + window.location.search;
+  if (path === lastTrackedPath) return;
+  if (/^\/admin/.test(window.location.pathname)) return;
+  lastTrackedPath = path;
+  const { visitorId, sessionId } = visitorIds();
+  const payload = JSON.stringify({
+    path, visitorId, sessionId,
+    referrer: document.referrer || "",
+    language: navigator.language || "",
+    screen: `${window.screen ? window.screen.width : 0}x${window.screen ? window.screen.height : 0}`,
+  });
+  fetch("/api/data?resource=visit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function App() {
   const [activePage, setActivePage] = useState(() => pageFromPath(window.location.pathname));
   const [search, setSearch]   = useState("");
@@ -1365,6 +1409,9 @@ function App() {
       .then((p) => setData({ products: p.products || [], loading: false, error: "" }))
       .catch((e) => setData((x) => ({ ...x, loading: false, error: e.message })));
   };
+
+  /* Visitor Traffic: catat setiap halaman yang dibuka pengunjung. */
+  useEffect(() => { trackVisit(); }, [activePage]);
 
   useEffect(() => {
     const pop = () => {

@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const { once } = require("./_schema");
 const { effectiveAccountPrice, agedInfo, readAgedConfig } = require("./_aged");
 const { currentUser, bodyOf } = require("./_users");
+const { recordVisit } = require("./_visits");
 
 /* ── Statistik sosial listing: jumlah terjual + rating bintang dari pembeli ── */
 const ensureSocialTables = once(async function ensureSocialTablesUncached(sql) {
@@ -284,6 +285,20 @@ async function buildSitemap(sql) {
 }
 
 module.exports = async function handler(request, response) {
+  /* POST ?resource=visit = catat kunjungan halaman (Visitor Traffic, tanpa login). */
+  if (request.method === "POST" && request.query && request.query.resource === "visit") {
+    response.setHeader("Cache-Control", "no-store");
+    if (!process.env.DATABASE_URL) return response.status(200).json({ ok: false });
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      await recordVisit(sql, request, bodyOf(request) || {});
+      return response.status(200).json({ ok: true });
+    } catch (error) {
+      console.error("visit: gagal dicatat", error && error.message);
+      return response.status(200).json({ ok: false });
+    }
+  }
+
   /* POST = pembeli memberi rating bintang ke satu listing (1 rating per akun). */
   if (request.method === "POST") {
     if (!process.env.DATABASE_URL) return response.status(500).json({ error: "DATABASE_URL is not configured" });

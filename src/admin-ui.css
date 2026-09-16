@@ -739,3 +739,51 @@
 .cx-yt-log strong{display:block;font-size:11px;color:var(--ink);margin-bottom:3px}
 .cx-yt-log-meta{font-size:10px;color:var(--faint)}
 @media (max-width:640px){.cx-yt-videos{grid-template-columns:1fr}}
+
+/* ── Visitor Traffic ───────────────────────────────────────────────────── */
+.cx-vt{display:block}
+.cx-vt .cx-spin{animation:cx-spin 1s linear infinite}
+@keyframes cx-spin{to{transform:rotate(360deg)}}
+.cx-vt-ranges{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 14px}
+.cx-vt-range{border:1px solid var(--line);background:transparent;color:var(--ink2);font-size:11px;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.15s}
+.cx-vt-range:hover{border-color:rgba(196,166,255,.4);color:var(--ink)}
+.cx-vt-range.active{border-color:rgba(196,166,255,.55);background:rgba(196,166,255,.12);color:#c4a6ff}
+.cx-vt-alert{border:1px solid rgba(201,121,128,.34);background:rgba(201,121,128,.09);color:var(--red);padding:9px 12px;border-radius:4px;font-size:11px;margin-bottom:12px}
+.cx-vt-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.cx-vt-card{border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:rgba(255,255,255,.015);display:flex;flex-direction:column;gap:3px}
+.cx-vt-card-top{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.cx-vt-card strong{font-size:21px;font-weight:600;color:var(--ink);line-height:1.1}
+.cx-vt-card small{font-size:10px;color:var(--faint)}
+.cx-vt-dot{width:6px;height:6px;border-radius:50%;background:#5ec48a;display:inline-block;animation:cx-vt-pulse 1.6s ease-in-out infinite}
+@keyframes cx-vt-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.cx-vt-panel{border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.012)}
+.cx-vt-panel-head{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink2);margin-bottom:10px;font-weight:600}
+.cx-vt-empty{font-size:11px;color:var(--faint);padding:10px 0}
+.cx-vt-chart{display:flex;align-items:flex-end;gap:5px;height:132px;overflow-x:auto;padding-bottom:2px}
+.cx-vt-bar-col{flex:1 0 26px;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+.cx-vt-bar-track{flex:1;width:100%;display:flex;align-items:flex-end}
+.cx-vt-bar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#c4a6ff,rgba(196,166,255,.28))}
+.cx-vt-bar-label{font-size:9px;color:var(--faint);white-space:nowrap}
+.cx-vt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:12px}
+.cx-vt-grid .cx-vt-panel{margin-bottom:0}
+.cx-vt-rank{position:relative;display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:4px;overflow:hidden;font-size:11px}
+.cx-vt-rank-fill{position:absolute;inset:0 auto 0 0;background:rgba(196,166,255,.12);border-radius:4px}
+.cx-vt-rank-label{position:relative;flex:1;min-width:0;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-vt-rank-value{position:relative;display:flex;gap:6px;align-items:baseline;color:var(--ink);font-variant-numeric:tabular-nums}
+.cx-vt-rank-value em{font-style:normal;color:var(--faint);font-size:10px}
+.cx-vt-list{display:flex;flex-direction:column;gap:6px;max-height:460px;overflow-y:auto}
+.cx-vt-item{border:1px solid var(--line);border-radius:5px;padding:8px 10px}
+.cx-vt-item-head{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.cx-vt-path{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-vt-time{font-size:10px;color:var(--faint);white-space:nowrap}
+.cx-vt-meta{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:6px}
+.cx-vt-meta span{font-size:10px;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:2px 7px}
+.cx-vt-meta .cx-vt-user{border-color:rgba(196,166,255,.4);color:#c4a6ff}
+.cx-vt-note{font-size:10px;color:var(--faint);line-height:1.7;margin:0 0 8px}
+@media (max-width:640px){
+  .cx-vt-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cx-vt-card strong{font-size:18px}
+  .cx-vt-grid{grid-template-columns:1fr}
+  .cx-vt-chart{height:110px}
+  .cx-vt-bar-col{flex:0 0 26px}
+}

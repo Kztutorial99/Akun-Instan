@@ -12,12 +12,20 @@ const {
   assistantConfig, publicAssistantConfig, writeAssistantSettings, clampInt, clampNum,
 } = require("../_settings");
 const { readAgedConfig, writeAgedConfig, DEFAULT_AGED_CONFIG } = require("../_aged");
+const { visitStats } = require("../_visits");
 
 module.exports = async function handler(request, response) {
   if (!isAdmin(request)) return response.status(401).json({ error: "Sesi admin tidak valid" });
 
   try {
     const sql = db();
+
+    /* Visitor Traffic: ringkasan kunjungan website untuk menu admin. */
+    if (request.method === "GET" && request.query && request.query.resource === "visits") {
+      const stats = await visitStats(sql, { days: request.query.days });
+      response.setHeader("Cache-Control", "no-store");
+      return response.status(200).json(stats);
+    }
 
     if (request.method === "GET") {
       const cfg = await assistantConfig(sql);
