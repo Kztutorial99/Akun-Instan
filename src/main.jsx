@@ -3073,29 +3073,49 @@ function useInstallApp() {
     window.addEventListener("appinstalled", onDone);
     return () => { window.removeEventListener("ai-install-ready", onReady); window.removeEventListener("appinstalled", onDone); };
   }, []);
+  const [hint, setHint] = useState(false);
   const install = async () => {
-    const e = evt || window.__aiInstallPrompt;
+    let e = evt || window.__aiInstallPrompt;
+    // Browser kadang baru siap beberapa detik setelah halaman dibuka: tunggu sebentar.
+    if (!e) {
+      e = await new Promise((resolve) => {
+        const t = setTimeout(() => { window.removeEventListener("ai-install-ready", on); resolve(null); }, 2500);
+        function on() { clearTimeout(t); resolve(window.__aiInstallPrompt || null); }
+        window.addEventListener("ai-install-ready", on, { once: true });
+      });
+    }
     if (e) {
       e.prompt();
       try { const r = await e.userChoice; if (r && r.outcome === "accepted") setInstalled(true); } catch (_) {}
       window.__aiInstallPrompt = null; setEvt(null);
       return;
     }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    window.alert(ios
-      ? "Cara install di iPhone:\n1. Tekan tombol Bagikan (Share) di Safari.\n2. Pilih 'Tambah ke Layar Utama'."
-      : "Cara install:\nBuka menu browser (titik tiga di pojok kanan atas), lalu pilih 'Instal aplikasi' atau 'Tambahkan ke layar utama'.");
+    setHint(true);
   };
-  return { installed, install };
+  return { installed, install, hint, setHint };
 }
 
 function InstallAppButton({ className = "", label = "Install Aplikasi", compact = false }) {
-  const { installed, install } = useInstallApp();
+  const { installed, install, hint, setHint } = useInstallApp();
   if (installed) return null;
+  const ios = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
   return (
+    <>
     <button type="button" className={`cx-install-app${compact ? " is-compact" : ""} ${className}`} onClick={install} aria-label="Install aplikasi Akun Instan" title="Install aplikasi Akun Instan">
-      <Download size={13} /> <span>{label}</span>
+      <Download size={14} /> <span>{label}</span>
     </button>
+    {hint && createPortal(
+      <div className="cx-install-sheet-bg" onClick={() => setHint(false)}>
+        <div className="cx-install-sheet" onClick={(ev) => ev.stopPropagation()}>
+          <img src="/icon-192.png" alt="" width="48" height="48" />
+          <strong>Install Akun Instan</strong>
+          <p>{ios ? "Tekan ikon Bagikan di Safari, lalu pilih \u201cTambah ke Layar Utama\u201d." : "Aplikasi mungkin sudah terpasang, atau browser ini belum mendukung pemasangan otomatis. Gunakan Chrome lalu tekan menu \u22ee \u2192 \u201cInstal aplikasi\u201d."}</p>
+          <button type="button" className="cx-btn cx-btn-primary" onClick={() => setHint(false)}>Mengerti</button>
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 
