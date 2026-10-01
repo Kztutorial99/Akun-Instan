@@ -34,11 +34,12 @@ export default function AdminNotifyPage({ onNotice }) {
     setLoading(true);
     const t = Date.now();
     try {
-      const [u, h] = await Promise.all([
+      const [u, h] = await Promise.allSettled([
         jsonRequest("/api/admin/users", { method: "GET" }),
         jsonRequest("/api/admin/users?action=notify", { method: "GET" }),
       ]);
-      setUsers(u.users || []); setHistory(h.history || []);
+      if (u.status === "fulfilled") setUsers(u.value.users || []); else throw u.reason;
+      if (h.status === "fulfilled") setHistory(h.value.history || []);
     } catch (e) { onNotice && onNotice(e.message || "Gagal memuat", "error"); }
     setTimeout(() => setLoading(false), Math.max(0, 600 - (Date.now() - t)));
   };
