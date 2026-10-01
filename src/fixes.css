@@ -1680,3 +1680,6 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-profile-list .cx-verified-tag,.cx-profile-list .cx-unverified-tag{margin-left:0}
 .cx-avatar{overflow:hidden}
 .cx-avatar-img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+
+.cx-profile-list li strong .cx-verified-tag{margin-left:0;word-break:normal;font-size:10px;font-weight:700;line-height:1.4;padding:2px 8px;gap:4px}
+.cx-profile-list li strong .cx-verified-tag svg{width:10px;height:10px;flex:none;color:currentColor}
