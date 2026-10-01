@@ -1065,7 +1065,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .cx-notif { position: relative; }
 .cx-notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--b2); background: var(--s1); color: var(--ink2); cursor: pointer; transition: .15s; }
 .cx-notif-trigger:hover { color: var(--ink); border-color: var(--b3); }
-.cx-notif-trigger b { position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 9px; background: var(--red); color: #1c1917; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.cx-notif-trigger b { position: absolute; top: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px var(--s1); }
 .cx-notif-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: 320px; max-width: calc(100vw - 24px); background: var(--s1); border: 1px solid var(--b2); border-radius: 10px; box-shadow: 0 14px 34px rgba(0,0,0,.5); z-index: 60; overflow: hidden; }
 .cx-notif-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--b2); }
 .cx-notif-head strong { font-size: 12px; color: var(--ink); }
