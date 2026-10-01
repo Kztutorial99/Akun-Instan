@@ -2647,6 +2647,7 @@ function timeAgo(value) {
 
 const NOTIF_TONE = {
   admin: { icon: Bell, color: "var(--indigo2)" },
+  stock_available: { icon: Package, color: "var(--green)" },
   topup_pending: { icon: Clock, color: "var(--amber)" },
   topup_approved: { icon: BadgeCheck, color: "var(--green)" },
   topup_rejected: { icon: X, color: "var(--red)" },
@@ -2804,7 +2805,7 @@ function NotificationBell({ navigate, activePage }) {
             <div className="cx-notif-list">
               {loading && !items.length && <div className="cx-notif-empty">Memuat...</div>}
               {!loading && !items.length && (
-                <div className="cx-notif-empty">Belum ada notifikasi. Aktivitas top up & pembelian akan muncul di sini.</div>
+                <div className="cx-notif-empty">Belum ada notifikasi. Info stok baru, top up, dan pembelian akan muncul di sini.</div>
               )}
               {items.map((n) => {
                 const tone = NOTIF_TONE[n.type] || { icon: Bell, color: "var(--muted)" };
@@ -2813,7 +2814,7 @@ function NotificationBell({ navigate, activePage }) {
                   <button
                     key={n.id}
                     type="button"
-                    className={`cx-notif-item${n.read ? "" : " is-unread"}${pressed === n.id ? " is-pressed" : ""}`}
+                    className={`cx-notif-item${n.type === "stock_available" ? " is-stock" : ""}${n.read ? "" : " is-unread"}${pressed === n.id ? " is-pressed" : ""}`}
                     onPointerDown={() => setPressed(n.id)}
                     onPointerUp={() => window.setTimeout(() => setPressed((v) => (v === n.id ? "" : v)), 160)}
                     onPointerLeave={() => setPressed((v) => (v === n.id ? "" : v))}
@@ -2821,6 +2822,7 @@ function NotificationBell({ navigate, activePage }) {
                   >
                     <span className="cx-notif-icon" style={{ color: tone.color }}><ToneIcon size={14} /></span>
                     <span className="cx-notif-copy">
+                      {n.type === "stock_available" && <span className="cx-notif-tag">STOK TERSEDIA</span>}
                       <strong>{n.title}</strong>
                       <small>{n.body}</small>
                       <em>{timeAgo(n.createdAt)}</em>

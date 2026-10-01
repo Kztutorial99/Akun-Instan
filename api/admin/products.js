@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const { isAdmin } = require("./_auth");
 const { handleReviewRequest } = require("../_reviews");
 const { effectiveAccountPrice, agedInfo, readAgedConfig, DEFAULT_AGED_CONFIG } = require("../_aged");
+const { broadcastNotification } = require("../_notifications");
 
 const LOGIN_TYPES = new Set(["Google", "Facebook", "Email/password", "Apple", "Microsoft", "Lainnya"]);
 const STATUSES = new Set(["available", "sold"]);
@@ -57,6 +58,25 @@ function normalizeAccounts(body, basePrice) {
 }
 
 function isDemoId(value) { return /^(etl-|demo-)/.test(String(value || "")); }
+
+/* Hanya stok yang benar-benar bisa dibeli yang dikabarkan ke pengguna aktif.
+   Kegagalan notifikasi tidak boleh membatalkan produk yang sudah tersimpan. */
+async function announceStock(sql, input, previous) {
+  if (input.demo || input.status !== "available" || input.stock <= 0) return;
+  const oldAvailable = previous && previous.status === "available" ? Number(previous.stock) || 0 : 0;
+  if (previous && input.stock <= oldAvailable) return;
+  try {
+    await broadcastNotification(sql, {
+      type: "stock_available",
+      title: previous ? "Stok baru tersedia" : "Produk baru tersedia",
+      body: `${input.title} kini tersedia: ${input.stock} akun siap dibeli. Cek katalog sebelum kehabisan.`,
+      link: "katalog",
+      statuses: ["active"],
+    });
+  } catch (error) {
+    console.error("Stock notification failure", error && error.message);
+  }
+}
 
 function validate(body, requireId = false) {
   const id = text(body.id, 160); const title = text(body.title, 160); const description = text(body.description, 500);
@@ -309,8 +329,20 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") { const rows = await sql`SELECT id, title, description, login_type AS "loginType", price, stock, status, credential_blob AS "credentialBlob", created_at AS "createdAt", updated_at AS "updatedAt" FROM codexa_account_listings ORDER BY created_at DESC`; return response.status(200).json({ products: rows.map((row) => view({ ...row, credentials: decryptCredentials(row.credentialBlob) }, agedCfg)) }); }
     if (request.method === "DELETE") { const id = text(bodyOf(request).id, 160) || text((request.query && request.query.id) || "", 160); if (!id) return response.status(400).json({ error: "id listing wajib diisi" }); const [row] = await sql`DELETE FROM codexa_account_listings WHERE id=${id} RETURNING id`; if (!row) return response.status(404).json({ error: "Listing tidak ditemukan" }); return response.status(200).json({ deleted: row }); }
     const input = validate(bodyOf(request), request.method === "PATCH" || request.method === "PUT"); if (input.error) return response.status(400).json({ error: input.error });
-    if (request.method === "POST") { const id = input.demo ? DEMO_PREFIX + crypto.randomUUID() : crypto.randomUUID(); const [row] = await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob) VALUES (${id},${input.title},${input.description},${input.loginType},${input.price},${input.stock},${input.status},${encryptCredentials(input.credentials)}) RETURNING id,title,description,login_type AS "loginType",price,stock,status,credential_blob AS "credentialBlob",created_at AS "createdAt",updated_at AS "updatedAt"`; return response.status(201).json({ product: view({ ...row, credentials: input.credentials }, agedCfg) }); }
-    if (request.method === "PATCH" || request.method === "PUT") { const [existing] = await sql`SELECT credential_blob AS "credentialBlob" FROM codexa_account_listings WHERE id = ${input.id}`; if (!existing) return response.status(404).json({ error: "Listing tidak ditemukan" }); const credentials = input.credentials; const [row] = await sql`UPDATE codexa_account_listings SET title=${input.title},description=${input.description},login_type=${input.loginType},price=${input.price},stock=${input.stock},status=${input.status},credential_blob=${encryptCredentials(credentials)},updated_at=NOW() WHERE id=${input.id} RETURNING id,title,description,login_type AS "loginType",price,stock,status,credential_blob AS "credentialBlob",created_at AS "createdAt",updated_at AS "updatedAt"`; return response.status(200).json({ product: view({ ...row, credentials }, agedCfg) }); }
+    if (request.method === "POST") {
+      const id = input.demo ? DEMO_PREFIX + crypto.randomUUID() : crypto.randomUUID();
+      const [row] = await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob) VALUES (${id},${input.title},${input.description},${input.loginType},${input.price},${input.stock},${input.status},${encryptCredentials(input.credentials)}) RETURNING id,title,description,login_type AS "loginType",price,stock,status,credential_blob AS "credentialBlob",created_at AS "createdAt",updated_at AS "updatedAt"`;
+      await announceStock(sql, input);
+      return response.status(201).json({ product: view({ ...row, credentials: input.credentials }, agedCfg) });
+    }
+    if (request.method === "PATCH" || request.method === "PUT") {
+      const [existing] = await sql`SELECT stock, status FROM codexa_account_listings WHERE id = ${input.id}`;
+      if (!existing) return response.status(404).json({ error: "Listing tidak ditemukan" });
+      const credentials = input.credentials;
+      const [row] = await sql`UPDATE codexa_account_listings SET title=${input.title},description=${input.description},login_type=${input.loginType},price=${input.price},stock=${input.stock},status=${input.status},credential_blob=${encryptCredentials(credentials)},updated_at=NOW() WHERE id=${input.id} RETURNING id,title,description,login_type AS "loginType",price,stock,status,credential_blob AS "credentialBlob",created_at AS "createdAt",updated_at AS "updatedAt"`;
+      await announceStock(sql, input, existing);
+      return response.status(200).json({ product: view({ ...row, credentials }, agedCfg) });
+    }
     response.setHeader("Allow", "GET, POST, PATCH, PUT, DELETE"); return response.status(405).json({ error: "Method not allowed" });
   } catch (error) { console.error("Admin products API failed", error); return response.status(500).json({ error: error.message === "ACCOUNT_CREDENTIALS_KEY is not configured" ? "Kunci enkripsi kredensial belum dikonfigurasi di Vercel" : "Operasi listing gagal diproses" }); }
 };
