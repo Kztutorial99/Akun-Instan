@@ -5330,7 +5330,7 @@ function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
             </li>
             <li><Phone size={13} /><span>WhatsApp</span><strong>{user.phone || "-"}</strong></li>
             <li><BadgeCheck size={13} /><span>ID Akun</span><strong className="cx-mono">{String(user.id).slice(0, 8)}</strong></li>
-            <li><ShieldCheck size={13} /><span>Status</span><strong>Terverifikasi</strong></li>
+            <li><ShieldCheck size={13} /><span>Verifikasi</span><strong><span className="cx-verified-tag"><BadgeCheck size={11} /> Terverifikasi{user.provider === "google" ? " (Google)" : ""}</span></strong></li>
             <li>
               <ShieldCheck size={13} /><span>Role akun</span>
               <strong>
