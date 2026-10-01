@@ -2,6 +2,7 @@ const { neon } = require("@neondatabase/serverless");
 const crypto = require("crypto");
 const { once } = require("./_schema");
 const { effectiveAccountPrice, agedInfo, readAgedConfig } = require("./_aged");
+const { readCustomEmailFee } = require("./_custom-email-fee");
 const { currentUser, bodyOf } = require("./_users");
 const { recordVisit } = require("./_visits");
 
@@ -425,7 +426,7 @@ module.exports = async function handler(request, response) {
       };
     });
 
-    return response.status(200).json({ products, source: "codexa_account_listings", generatedAt: new Date().toISOString() });
+    return response.status(200).json({ products, customEmailFee: await readCustomEmailFee(sql), source: "codexa_account_listings", generatedAt: new Date().toISOString() });
   } catch (error) {
     console.error("Failed to read public catalog", error);
     return response.status(500).json({ error: "Unable to read product catalog" });
