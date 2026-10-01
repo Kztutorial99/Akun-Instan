@@ -1028,7 +1028,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
               <button onClick={() => navigate("refund")}>Kebijakan Refund</button>
             </nav>
           </div>
-          <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman</p>
+          <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman · <a href="/keamanan.html">Standar Keamanan</a></p>
         </div>
       </footer>
     </div>
@@ -3959,7 +3959,7 @@ function StoreFooter({ navigate, guest }) {
             <button onClick={() => navigate("refund")}>Kebijakan Refund</button>
           </nav>
         </div>
-        <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman</p>
+        <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman · <a href="/keamanan.html">Standar Keamanan</a></p>
       </div>
     </footer>
   );
