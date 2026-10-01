@@ -3,7 +3,7 @@ import {
   ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star, MonitorPlay, Activity,
 } from "lucide-react";
 import {
-  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProductTypeIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
+  ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, setCustomEmailFee, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProductTypeIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
 } from "./main.jsx";
 import YoutubePromo from "./youtube-promo.jsx";
 import VisitorTraffic from "./visitor-traffic.jsx";
@@ -212,6 +212,40 @@ function AdminPage({ onBack, onNotice }) {
     (reviewFilter === "all" || r.source === reviewFilter)
     && (reviewListing === "all" || r.listingId === reviewListing));
 
+  const [feeValue, setFeeValue] = useState(CUSTOM_EMAIL_FEE);
+  const [feeInput, setFeeInput] = useState(String(CUSTOM_EMAIL_FEE));
+  const [savingFee, setSavingFee] = useState(false);
+  const saveCustomEmailFee = async () => {
+    const n = Math.round(Number(feeInput));
+    if (!Number.isFinite(n) || n < 0) { setApiError("Harga tidak valid"); return; }
+    setSavingFee(true); setApiError("");
+    try {
+      const p = await jsonRequest("/api/admin/settings", { method: "PATCH", body: JSON.stringify({ customEmailFee: n }) });
+      setCustomEmailFee(p.customEmailFee); setFeeValue(p.customEmailFee); setFeeInput(String(p.customEmailFee));
+      onNotice(`Harga Custom Email disimpan: ${formatPrice(p.customEmailFee)} / nama`);
+    } catch (e) { setApiError(e.message); } finally { setSavingFee(false); }
+  };
+  /* Install admin panel sebagai aplikasi (PWA). Event ditangkap lebih awal di index.html. */
+  const [installEvt, setInstallEvt] = useState(() => (typeof window !== "undefined" ? window.__aiInstallPrompt || null : null));
+  const [installed, setInstalled] = useState(() => typeof window !== "undefined" && window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  useEffect(() => {
+    const onReady = () => setInstallEvt(window.__aiInstallPrompt || null);
+    const onDone = () => { setInstalled(true); setInstallEvt(null); };
+    window.addEventListener("ai-install-ready", onReady);
+    window.addEventListener("appinstalled", onDone);
+    return () => { window.removeEventListener("ai-install-ready", onReady); window.removeEventListener("appinstalled", onDone); };
+  }, []);
+  const installApp = async () => {
+    if (installEvt) {
+      installEvt.prompt();
+      try { const r = await installEvt.userChoice; if (r && r.outcome === "accepted") setInstalled(true); } catch (_) {}
+      window.__aiInstallPrompt = null; setInstallEvt(null);
+      return;
+    }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    onNotice(ios ? "Di iPhone: tekan tombol Bagikan (Share) lalu pilih 'Tambah ke Layar Utama'." : "Buka menu browser (titik tiga) lalu pilih 'Instal aplikasi' / 'Tambahkan ke layar utama'.");
+  };
+
   const loadSettings = () =>
     jsonRequest("/api/admin/settings", { method: "GET" })
       .then((p) => {
@@ -228,6 +262,7 @@ function AdminPage({ onBack, onNotice }) {
         });
         const aged = p.aged && Array.isArray(p.aged.tiers) && p.aged.tiers.length ? p.aged : AGED_DEFAULTS;
         setAgedCfg(aged);
+        if (p.customEmailFee !== undefined) { setCustomEmailFee(p.customEmailFee); setFeeValue(Number(p.customEmailFee)); setFeeInput(String(p.customEmailFee)); }
         setAgedForm({
           enabled: aged.enabled !== false,
           tiers: aged.tiers.map((t) => ({ maxDays: String(t.maxDays), bonus: String(t.bonus), label: t.label || "" })),
@@ -804,6 +839,11 @@ function AdminPage({ onBack, onNotice }) {
           ))}
         </nav>
         <div className="cx-sidebar-footer">
+          {!installed && (
+            <button type="button" className="cx-install-admin" onClick={installApp}>
+              <ArrowDownRight size={13} /> <span>Install aplikasi admin</span>
+            </button>
+          )}
           <div className="cx-sidebar-user">
             <div className="cx-avatar">AR</div>
             <div className="cx-sidebar-user-info">
@@ -908,6 +948,7 @@ function AdminPage({ onBack, onNotice }) {
                   </div>
                   <button className="cx-admin-menu-item" onClick={() => { goNav("Pengaturan"); setHeaderMenu(""); }}><Settings size={12} /> Pengaturan</button>
                   <button className="cx-admin-menu-item" onClick={() => { onBack(); setHeaderMenu(""); }}><ShoppingBag size={12} /> Lihat store</button>
+                  {!installed && <button className="cx-admin-menu-item" onClick={() => { setHeaderMenu(""); installApp(); }}><ArrowDownRight size={12} /> Install aplikasi admin</button>}
                   <button className="cx-admin-menu-item danger" onClick={() => { setHeaderMenu(""); logout(); }}><LogOut size={12} /> Keluar</button>
                 </div>
               )}
@@ -1448,7 +1489,18 @@ function AdminPage({ onBack, onNotice }) {
               <div className="cx-panel cx-panel-plain">
                 <div className="cx-panel-header">
                   <h3>Permintaan Custom Email</h3>
-                  <span className="cx-panel-sub">{requests.length} permintaan · {openCount} belum selesai · {formatPrice(CUSTOM_EMAIL_FEE)} / nama</span>
+                  <span className="cx-panel-sub">{requests.length} permintaan · {openCount} belum selesai · {formatPrice(feeValue)} / nama</span>
+                </div>
+                <div className="cx-fee-box">
+                  <div className="cx-fee-info">
+                    <strong>Harga Custom Email</strong>
+                    <small>Harga per nama yang dibayar pembeli. Berlaku untuk pesanan baru.</small>
+                  </div>
+                  <div className="cx-fee-form">
+                    <span className="cx-fee-prefix">Rp</span>
+                    <input className="cx-input cx-fee-input" type="number" min="0" step="500" inputMode="numeric" value={feeInput} onChange={(e) => setFeeInput(e.target.value)} />
+                    <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={saveCustomEmailFee} disabled={savingFee || Number(feeInput) === feeValue}>{savingFee ? <Spinner /> : <Check size={11} />} Simpan</button>
+                  </div>
                 </div>
                 {ordersLoading && !orders.length
                   ? <RowSkeleton rows={3} />
