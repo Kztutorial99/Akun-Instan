@@ -33,7 +33,20 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" id="app-manifest" href="/manifest.webmanifest" />
+    <script>
+      (function () {
+        if (/^\/admin(\/|$)/.test(location.pathname)) {
+          var m = document.getElementById("app-manifest");
+          if (m) m.setAttribute("href", "/admin.webmanifest");
+        }
+        window.addEventListener("beforeinstallprompt", function (e) {
+          e.preventDefault();
+          window.__aiInstallPrompt = e;
+          window.dispatchEvent(new Event("ai-install-ready"));
+        });
+      })();
+    </script>
     <link rel="canonical" href="https://akuninstan.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Akun Instan" />
