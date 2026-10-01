@@ -17,15 +17,32 @@ export async function uploadMedia(file, apiUrl, onProgress, abortSignal) {
   const { upload } = await import("@vercel/blob/client");
   const sep = apiUrl.includes("?") ? "&" : "?";
   const clean = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(-60) || "file";
-  const blob = await upload(`assistant/${Date.now()}-${clean}`, file, {
-    access: "public",
-    handleUploadUrl: `${apiUrl}${sep}resource=upload`,
-    contentType: file.type,
-    multipart: file.size >= 4 * 1024 * 1024,
-    abortSignal,
-    onUploadProgress: onProgress ? (e) => onProgress(e.percentage) : undefined,
-  });
-  return { url: blob.url, type: file.type, name: file.name.slice(0, 120), size: file.size };
+  // Tanpa onUploadProgress: progres memaksa upload streaming (fetch duplex) yang
+  // macet di banyak browser Android dan terus di-retry tanpa henti.
+  const ctrl = new AbortController();
+  const timeoutMs = 30000 + Math.ceil(file.size / (256 * 1024)) * 1000;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, timeoutMs);
+  const onAbort = () => ctrl.abort();
+  if (abortSignal) abortSignal.addEventListener("abort", onAbort);
+  if (onProgress) onProgress(1);
+  try {
+    const blob = await upload(`assistant/${Date.now()}-${clean}`, file, {
+      access: "public",
+      handleUploadUrl: `${apiUrl}${sep}resource=upload`,
+      contentType: file.type,
+      multipart: file.size >= 8 * 1024 * 1024,
+      abortSignal: ctrl.signal,
+    });
+    if (onProgress) onProgress(100);
+    return { url: blob.url, type: file.type, name: file.name.slice(0, 120), size: file.size };
+  } catch (e) {
+    if (timedOut) throw new Error("Upload terlalu lama, cek koneksi lalu coba lagi");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+    if (abortSignal) abortSignal.removeEventListener("abort", onAbort);
+  }
 }
 
 /** Grid lampiran rapi + lightbox untuk lihat ukuran penuh. */

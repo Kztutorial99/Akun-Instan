@@ -6219,10 +6219,10 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
       const ctrl = new AbortController();
       uploadAbort.current = ctrl;
       setUploading(true);
+      setPending([]);
       try {
         for (const f of files) {
-          const up = await uploadMedia(f.file, apiUrl, (pct) =>
-            setPending((p) => p.map((x) => (x.id === f.id ? { ...x, progress: pct } : x))), ctrl.signal);
+          const up = await uploadMedia(f.file, apiUrl, null, ctrl.signal);
           attachments.push(up);
         }
       } catch (e) {
@@ -6230,7 +6230,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
         setError(aborted ? "Upload dibatalkan. Lampiran masih tersimpan, bisa dikirim ulang." : `Gagal mengunggah lampiran: ${e.message || "coba lagi"}. Lampiran masih tersimpan, coba kirim lagi.`);
         setMessages(base);
         setDraft(content);
-        setPending((p) => p.map((x) => ({ ...x, progress: 0 })));
+        setPending(files.map((x) => ({ ...x, progress: 0 })));
         setBusy(false);
         setUploading(false);
         uploadAbort.current = null;

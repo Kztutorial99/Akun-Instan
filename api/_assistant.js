@@ -1395,6 +1395,50 @@ function stripMedia(messages) {
   return changed;
 }
 
+function parseArgs(raw) {
+  const txt = String(raw || "").trim();
+  if (!txt) return {};
+  try { return JSON.parse(txt); } catch (_) { /* coba format parameter */ }
+  const m = txt.match(/\{[\s\S]*\}/);
+  if (m) { try { return JSON.parse(m[0]); } catch (_) { /* lanjut */ } }
+  const out = {};
+  const re = /<parameter=([\w.-]+)>\s*([\s\S]*?)\s*<\/parameter>/g;
+  let p;
+  while ((p = re.exec(txt))) out[p[1]] = p[2];
+  return out;
+}
+
+function parseTextToolCalls(content, tools, step) {
+  const names = new Set((tools || []).map((t) => t.function && t.function.name).filter(Boolean));
+  const found = [];
+  let m;
+  const reFn = /<function=([\w.-]+)>([\s\S]*?)(?:<\/function>|$)/g;
+  while ((m = reFn.exec(content))) found.push({ name: m[1], args: parseArgs(m[2]) });
+  const reTc = /<tool_call>([\s\S]*?)(?:<\/tool_call>|$)/g;
+  while ((m = reTc.exec(content))) {
+    const obj = parseArgs(m[1]);
+    if (obj && obj.name) {
+      const a = obj.arguments || obj.parameters || {};
+      found.push({ name: obj.name, args: typeof a === "string" ? parseArgs(a) : a });
+    }
+  }
+  return found
+    .filter((c) => names.has(c.name))
+    .map((c, i) => ({
+      id: `txtcall_${step}_${i}`,
+      type: "function",
+      function: { name: c.name, arguments: JSON.stringify(c.args || {}) },
+    }));
+}
+
+function cleanReply(content) {
+  return String(content || "")
+    .replace(/<function=[\s\S]*?(<\/function>|$)/g, "")
+    .replace(/<tool_call>[\s\S]*?(<\/tool_call>|$)/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 async function runAssistant({ ctx, history, onEvent }) {
   const emit = (event) => {
     if (typeof onEvent !== "function") return;
@@ -1437,12 +1481,22 @@ async function runAssistant({ ctx, history, onEvent }) {
 
     const choice = (data.choices && data.choices[0]) || {};
     const message = choice.message || {};
-    const calls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+    let calls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+    // Beberapa model Qwen menulis tool call sebagai teks (<function=x>{...}</function>
+    // atau <tool_call>{...}</tool_call>) alih-alih tool_calls terstruktur. Tanpa ini
+    // laporan tidak pernah tersimpan dan model mengarang nomor tiket.
+    if (!calls.length) {
+      const parsed = parseTextToolCalls(String(message.content || ""), tools, step);
+      if (parsed.length) {
+        calls = parsed;
+        message.content = "";
+      }
+    }
 
     if (!calls.length) {
       emit({ type: "reply" });
       return {
-        reply: String(message.content || "").trim() || "Maaf, aku belum bisa menjawab itu.",
+        reply: cleanReply(message.content) || "Maaf, aku belum bisa menjawab itu.",
         actions,
         usage,
         model,
