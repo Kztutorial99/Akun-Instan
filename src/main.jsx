@@ -5100,6 +5100,10 @@ const QRIS_APPS = [
   { id: "BRI",       short: "BRI",   icon: "/wallets/bri.png",       color: "#00529C", tint: "rgba(0,82,156,.14)" },
   { id: "BNI",       short: "BNI",   icon: "/wallets/bni.png",       color: "#00695C", tint: "rgba(0,105,92,.14)" },
   { id: "Mandiri",   short: "Livin", icon: "/wallets/mandiri.png",   color: "#003D79", tint: "rgba(0,61,121,.14)" },
+  { id: "CIMB Niaga", short: "CIMB", icon: "",                       color: "#CC0C2F", tint: "rgba(204,12,47,.14)" },
+  { id: "UOB",        short: "UOB",  icon: "",                       color: "#24519C", tint: "rgba(36,81,156,.14)" },
+  { id: "Maybank",    short: "May",  icon: "",                       color: "#E6A81B", tint: "rgba(230,168,27,.16)" },
+  { id: "BSI",        short: "BSI",  icon: "",                       color: "#F7941D", tint: "rgba(247,148,29,.16)" },
 ];
 const appMeta = (id) => QRIS_APPS.find((a) => a.id === id) || QRIS_APPS[QRIS_APPS.length - 1];
 
@@ -5803,12 +5807,12 @@ function TopUpPage({ user, onBack, onNotice, onRefresh }) {
             <div className="cx-pay-apps">
               <div className="cx-pay-apps-head">
                 <strong>Bisa Bayar dari Aplikasi</strong>
-                <small>Bank &amp; e-wallet berlogo QRIS</small>
+                <small>Didukung platform WijayaPay</small>
               </div>
               <div className="cx-app-grid">
                 {QRIS_APPS.map((a) => (
                   <div key={a.id} className="cx-app-tile is-static">
-                    <AppLogo app={a.id} size={28} />
+                    <AppLogo app={a.id} size={20} />
                     <span>{a.id.replace("QRIS ", "")}</span>
                   </div>
                 ))}

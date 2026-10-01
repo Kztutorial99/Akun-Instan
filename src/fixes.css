@@ -475,28 +475,28 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   color: #fff;
 }
 
-.nk-custom { margin-top: 14px; border-top: 1px solid var(--b1); padding-top: 13px; }
+.nk-custom { margin-top: 12px; border-top: 1px solid var(--b1); padding-top: 11px; }
 .nk-custom-input {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid var(--b2);
-  border-radius: 13px;
+  border-radius: 10px;
   background: var(--s1);
-  padding: 0 12px;
-  margin-top: 7px;
+  padding: 0 10px;
+  margin-top: 6px;
   transition: border-color .18s;
 }
 .nk-custom-input:focus-within { border-color: var(--indigo); }
-.nk-custom-rp { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.nk-custom-rp { font-size: 12px; font-weight: 700; color: var(--muted); }
 .nk-custom-input input {
   flex: 1;
   min-width: 0;
   background: transparent;
   border: 0;
   outline: none;
-  padding: 11px 0;
-  font-size: 14px;
+  padding: 7px 0;
+  font-size: 13px;
   color: var(--ink);
 }
 .nk-custom .cx-field-hint { display: block; margin-top: 6px; }
