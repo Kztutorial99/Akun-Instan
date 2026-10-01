@@ -1,1 +1,161 @@
-aW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VNZW1vLCB1c2VTdGF0ZSB9IGZyb20gInJlYWN0IjsKaW1wb3J0IHsgU2VuZCwgVXNlcnMsIFVzZXIsIFNlYXJjaCwgUmVmcmVzaEN3LCBNZXNzYWdlU3F1YXJlVGV4dCwgTWVnYXBob25lLCBHaWZ0LCBTaGllbGRBbGVydCwgQ2hlY2ssIFgsIEV5ZSB9IGZyb20gImx1Y2lkZS1yZWFjdCI7CmltcG9ydCB7IGpzb25SZXF1ZXN0IH0gZnJvbSAiLi9tYWluLmpzeCI7Cgpjb25zdCBUWVBFUyA9IFsKICB7IGtleTogImFkbWluX21zZyIsIGxhYmVsOiAiUGVzYW4iLCBpY29uOiBNZXNzYWdlU3F1YXJlVGV4dCB9LAogIHsga2V5OiAiYWRtaW5faW5mbyIsIGxhYmVsOiAiSW5mbyIsIGljb246IE1lZ2FwaG9uZSB9LAogIHsga2V5OiAiYWRtaW5fcHJvbW8iLCBsYWJlbDogIlByb21vIiwgaWNvbjogR2lmdCB9LAogIHsga2V5OiAiYWRtaW5fd2FybiIsIGxhYmVsOiAiUGVudGluZyIsIGljb246IFNoaWVsZEFsZXJ0IH0sCl07CmNvbnN0IExJTktTID0gW1siIiwgIlRhbnBhIHRvbWJvbCJdLCBbImthdGFsb2ciLCAiS2F0YWxvZyJdLCBbInRvcHVwIiwgIlRvcCBVcCJdLCBbIm9yZGVycyIsICJQZXNhbmFuIl0sIFsicmVwb3J0cyIsICJMYXBvcmFuIl1dOwpjb25zdCBhZ28gPSAoaXNvKSA9PiB7CiAgY29uc3QgZCA9IChEYXRlLm5vdygpIC0gbmV3IERhdGUoaXNvKS5nZXRUaW1lKCkpIC8gMTAwMDsKICBpZiAoZCA8IDYwKSByZXR1cm4gImJhcnUgc2FqYSI7CiAgaWYgKGQgPCAzNjAwKSByZXR1cm4gYCR7TWF0aC5mbG9vcihkIC8gNjApfSBtbnQgbGFsdWA7CiAgaWYgKGQgPCA4NjQwMCkgcmV0dXJuIGAke01hdGguZmxvb3IoZCAvIDM2MDApfSBqYW0gbGFsdWA7CiAgcmV0dXJuIGAke01hdGguZmxvb3IoZCAvIDg2NDAwKX0gaGFyaSBsYWx1YDsKfTsKCmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIEFkbWluTm90aWZ5UGFnZSh7IG9uTm90aWNlIH0pIHsKICBjb25zdCBbdXNlcnMsIHNldFVzZXJzXSA9IHVzZVN0YXRlKFtdKTsKICBjb25zdCBbaGlzdG9yeSwgc2V0SGlzdG9yeV0gPSB1c2VTdGF0ZShbXSk7CiAgY29uc3QgW2xvYWRpbmcsIHNldExvYWRpbmddID0gdXNlU3RhdGUoZmFsc2UpOwogIGNvbnN0IFt0YXJnZXQsIHNldFRhcmdldF0gPSB1c2VTdGF0ZSgidXNlciIpOwogIGNvbnN0IFtwaWNrZWQsIHNldFBpY2tlZF0gPSB1c2VTdGF0ZShbXSk7CiAgY29uc3QgW3EsIHNldFFdID0gdXNlU3RhdGUoIiIpOwogIGNvbnN0IFt0eXBlLCBzZXRUeXBlXSA9IHVzZVN0YXRlKCJhZG1pbl9tc2ciKTsKICBjb25zdCBbdGl0bGUsIHNldFRpdGxlXSA9IHVzZVN0YXRlKCIiKTsKICBjb25zdCBbYm9keSwgc2V0Qm9keV0gPSB1c2VTdGF0ZSgiIik7CiAgY29uc3QgW2xpbmssIHNldExpbmtdID0gdXNlU3RhdGUoIiIpOwogIGNvbnN0IFtzZW5kaW5nLCBzZXRTZW5kaW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgY29uc3QgbG9hZCA9IGFzeW5jICgpID0+IHsKICAgIHNldExvYWRpbmcodHJ1ZSk7CiAgICBjb25zdCB0ID0gRGF0ZS5ub3coKTsKICAgIHRyeSB7CiAgICAgIGNvbnN0IFt1LCBoXSA9IGF3YWl0IFByb21pc2UuYWxsU2V0dGxlZChbCiAgICAgICAganNvblJlcXVlc3QoIi9hcGkvYWRtaW4vdXNlcnMiLCB7IG1ldGhvZDogIkdFVCIgfSksCiAgICAgICAganNvblJlcXVlc3QoIi9hcGkvYWRtaW4vdXNlcnM/YWN0aW9uPW5vdGlmeSIsIHsgbWV0aG9kOiAiR0VUIiB9KSwKICAgICAgXSk7CiAgICAgIGlmICh1LnN0YXR1cyA9PT0gImZ1bGZpbGxlZCIpIHNldFVzZXJzKHUudmFsdWUudXNlcnMgfHwgW10pOyBlbHNlIHRocm93IHUucmVhc29uOwogICAgICBpZiAoaC5zdGF0dXMgPT09ICJmdWxmaWxsZWQiKSBzZXRIaXN0b3J5KGgudmFsdWUuaGlzdG9yeSB8fCBbXSk7CiAgICB9IGNhdGNoIChlKSB7IG9uTm90aWNlICYmIG9uTm90aWNlKGUubWVzc2FnZSB8fCAiR2FnYWwgbWVtdWF0IiwgImVycm9yIik7IH0KICAgIHNldFRpbWVvdXQoKCkgPT4gc2V0TG9hZGluZyhmYWxzZSksIE1hdGgubWF4KDAsIDYwMCAtIChEYXRlLm5vdygpIC0gdCkpKTsKICB9OwogIHVzZUVmZmVjdCgoKSA9PiB7IGxvYWQoKTsgfSwgW10pOwoKICBjb25zdCBmb3VuZCA9IHVzZU1lbW8oKCkgPT4gewogICAgY29uc3QgcyA9IHEudHJpbSgpLnRvTG93ZXJDYXNlKCk7CiAgICByZXR1cm4gdXNlcnMuZmlsdGVyKCh1KSA9PiAhcyB8fCBgJHt1Lm5hbWV9ICR7dS5lbWFpbH1gLnRvTG93ZXJDYXNlKCkuaW5jbHVkZXMocykpLnNsaWNlKDAsIDMwKTsKICB9LCBbdXNlcnMsIHFdKTsKICBjb25zdCBwaWNrZWRVc2VycyA9IHVzZXJzLmZpbHRlcigodSkgPT4gcGlja2VkLmluY2x1ZGVzKHUuaWQpKTsKICBjb25zdCB0b2dnbGUgPSAoaWQpID0+IHNldFBpY2tlZCgobCkgPT4gKGwuaW5jbHVkZXMoaWQpID8gbC5maWx0ZXIoKHgpID0+IHggIT09IGlkKSA6IFsuLi5sLCBpZF0pKTsKCiAgY29uc3Qgc2VuZCA9IGFzeW5jICgpID0+IHsKICAgIGlmICh0aXRsZS50cmltKCkubGVuZ3RoIDwgMikgcmV0dXJuIG9uTm90aWNlICYmIG9uTm90aWNlKCJKdWR1bCB3YWppYiBkaWlzaSIsICJlcnJvciIpOwogICAgaWYgKHRhcmdldCA9PT0gInVzZXIiICYmICFwaWNrZWQubGVuZ3RoKSByZXR1cm4gb25Ob3RpY2UgJiYgb25Ob3RpY2UoIlBpbGloIG1pbmltYWwgMSB1c2VyIiwgImVycm9yIik7CiAgICBpZiAodGFyZ2V0ID09PSAiYWxsIiAmJiAhd2luZG93LmNvbmZpcm0oIktpcmltIGtlIFNFTVVBIHVzZXIgYWt0aWY/IikpIHJldHVybjsKICAgIHNldFNlbmRpbmcodHJ1ZSk7CiAgICB0cnkgewogICAgICBjb25zdCBwID0gYXdhaXQganNvblJlcXVlc3QoIi9hcGkvYWRtaW4vdXNlcnM/YWN0aW9uPW5vdGlmeSIsIHsKICAgICAgICBtZXRob2Q6ICJQT1NUIiwKICAgICAgICBib2R5OiBKU09OLnN0cmluZ2lmeSh7IHRhcmdldCwgdXNlcklkczogcGlja2VkLCB0eXBlLCB0aXRsZSwgYm9keSwgbGluayB9KSwKICAgICAgfSk7CiAgICAgIG9uTm90aWNlICYmIG9uTm90aWNlKHAuc2tpcHBlZCA/IGBUZXJraXJpbSBrZSAke3Auc2VudH0gdXNlciwgJHtwLnNraXBwZWR9IHVzZXIgZGlibG9raXIgZGlsZXdhdGlgIDogYFRlcmtpcmltIGtlICR7cC5zZW50fSB1c2VyYCwgInN1Y2Nlc3MiKTsKICAgICAgc2V0VGl0bGUoIiIpOyBzZXRCb2R5KCIiKTsgc2V0UGlja2VkKFtdKTsKICAgICAgbG9hZCgpOwogICAgfSBjYXRjaCAoZSkgeyBvbk5vdGljZSAmJiBvbk5vdGljZShlLm1lc3NhZ2UgfHwgIkdhZ2FsIG1lbmdpcmltIiwgImVycm9yIik7IH0KICAgIHNldFNlbmRpbmcoZmFsc2UpOwogIH07CgogIGNvbnN0IFQgPSBUWVBFUy5maW5kKCh4KSA9PiB4LmtleSA9PT0gdHlwZSkgfHwgVFlQRVNbMF07CgogIHJldHVybiAoCiAgICA8ZGl2IGNsYXNzTmFtZT0iY3gtYW4iPgogICAgICA8ZGl2IGNsYXNzTmFtZT0iY3gtYWRtaW4tdG9wIj4KICAgICAgICA8ZGl2PgogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImN4LWFkbWluLWRhdGUiPktpcmltIHBlc2FuIGxhbmdzdW5nIGtlIGtvdGFrIG5vdGlmaWthc2kgdXNlcjwvZGl2PgogICAgICAgICAgPGgxPlNlbmQgQ2hhdCAmIE5vdGlmaWthc2k8L2gxPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hZG1pbi1hY3Rpb25zIj4KICAgICAgICAgIDxidXR0b24gY2xhc3NOYW1lPXtgY3gtYnRuIGN4LWJ0bi1zZWNvbmRhcnkgY3gtYnRuLXNtJHtsb2FkaW5nID8gIiBpcy1zcGlubmluZyIgOiAiIn1gfSBvbkNsaWNrPXtsb2FkfSBkaXNhYmxlZD17bG9hZGluZ30+PFJlZnJlc2hDdyBzaXplPXsxMX0gLz4gUmVmcmVzaDwvYnV0dG9uPgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi1ncmlkIj4KICAgICAgICA8c2VjdGlvbiBjbGFzc05hbWU9ImN4LWFuLWNhcmQiPgogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImN4LWFuLXNlZyI+CiAgICAgICAgICAgIDxidXR0b24gY2xhc3NOYW1lPXt0YXJnZXQgPT09ICJ1c2VyIiA/ICJvbiIgOiAiIn0gb25DbGljaz17KCkgPT4gc2V0VGFyZ2V0KCJ1c2VyIil9PjxVc2VyIHNpemU9ezEyfSAvPiBQaWxpaCB1c2VyPC9idXR0b24+CiAgICAgICAgICAgIDxidXR0b24gY2xhc3NOYW1lPXt0YXJnZXQgPT09ICJhbGwiID8gIm9uIiA6ICIifSBvbkNsaWNrPXsoKSA9PiBzZXRUYXJnZXQoImFsbCIpfT48VXNlcnMgc2l6ZT17MTJ9IC8+IFNlbXVhIHVzZXI8L2J1dHRvbj4KICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgIHt0YXJnZXQgPT09ICJ1c2VyIiAmJiAoCiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi1waWNrIj4KICAgICAgICAgICAgICB7cGlja2VkVXNlcnMubGVuZ3RoID4gMCAmJiAoCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iY3gtYW4tY2hpcHMiPgogICAgICAgICAgICAgICAgICB7cGlja2VkVXNlcnMubWFwKCh1KSA9PiAoCiAgICAgICAgICAgICAgICAgICAgPHNwYW4ga2V5PXt1LmlkfT57dS5uYW1lIHx8IHUuZW1haWx9PGJ1dHRvbiBvbkNsaWNrPXsoKSA9PiB0b2dnbGUodS5pZCl9IGFyaWEtbGFiZWw9IkhhcHVzIj48WCBzaXplPXsxMH0gLz48L2J1dHRvbj48L3NwYW4+CiAgICAgICAgICAgICAgICAgICkpfQogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgKX0KICAgICAgICAgICAgICA8bGFiZWwgY2xhc3NOYW1lPSJjeC1hbi1zZWFyY2giPjxTZWFyY2ggc2l6ZT17MTJ9IC8+PGlucHV0IHZhbHVlPXtxfSBvbkNoYW5nZT17KGUpID0+IHNldFEoZS50YXJnZXQudmFsdWUpfSBwbGFjZWhvbGRlcj0iQ2FyaSBuYW1hIC8gZW1haWwgdXNlci4uLiIgLz48L2xhYmVsPgogICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi11c2VycyI+CiAgICAgICAgICAgICAgICB7Zm91bmQubWFwKCh1KSA9PiAoCiAgICAgICAgICAgICAgICAgIDxidXR0b24ga2V5PXt1LmlkfSBjbGFzc05hbWU9e3BpY2tlZC5pbmNsdWRlcyh1LmlkKSA/ICJvbiIgOiAiIn0gb25DbGljaz17KCkgPT4gdG9nZ2xlKHUuaWQpfT4KICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9ImN4LWFuLWF2Ij57KHUubmFtZSB8fCB1LmVtYWlsIHx8ICI/Iikuc2xpY2UoMCwgMSkudG9VcHBlckNhc2UoKX08L3NwYW4+CiAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJjeC1hbi11dCI+PGI+e3UubmFtZSB8fCAiLSJ9PC9iPjxzbWFsbD57dS5lbWFpbH08L3NtYWxsPjwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICB7dS5zdGF0dXMgIT09ICJhY3RpdmUiICYmIDxzcGFuIGNsYXNzTmFtZT0iY3gtYW4tb2ZmIj5kaWJsb2tpcjwvc3Bhbj59CiAgICAgICAgICAgICAgICAgICAge3BpY2tlZC5pbmNsdWRlcyh1LmlkKSAmJiA8Q2hlY2sgc2l6ZT17MTN9IC8+fQogICAgICAgICAgICAgICAgICA8L2J1dHRvbj4KICAgICAgICAgICAgICAgICkpfQogICAgICAgICAgICAgICAgeyFmb3VuZC5sZW5ndGggJiYgPHAgY2xhc3NOYW1lPSJjeC1hbi1lbXB0eSI+VXNlciB0aWRhayBkaXRlbXVrYW48L3A+fQogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICl9CiAgICAgICAgICB7dGFyZ2V0ID09PSAiYWxsIiAmJiA8cCBjbGFzc05hbWU9ImN4LWFuLWhpbnQiPjxVc2VycyBzaXplPXsxMn0gLz4gRGlraXJpbSBrZSB7dXNlcnMuZmlsdGVyKCh1KSA9PiB1LnN0YXR1cyA9PT0gImFjdGl2ZSIpLmxlbmd0aH0gdXNlciBha3RpZi48L3A+fQoKICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi10eXBlcyI+CiAgICAgICAgICAgIHtUWVBFUy5tYXAoKHQpID0+ICgKICAgICAgICAgICAgICA8YnV0dG9uIGtleT17dC5rZXl9IGNsYXNzTmFtZT17YHQtJHt0LmtleX0ke3R5cGUgPT09IHQua2V5ID8gIiBvbiIgOiAiIn1gfSBvbkNsaWNrPXsoKSA9PiBzZXRUeXBlKHQua2V5KX0+PHQuaWNvbiBzaXplPXsxMn0gLz57dC5sYWJlbH08L2J1dHRvbj4KICAgICAgICAgICAgKSl9CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxpbnB1dCBjbGFzc05hbWU9ImN4LWFuLWluIiB2YWx1ZT17dGl0bGV9IG1heExlbmd0aD17MTYwfSBvbkNoYW5nZT17KGUpID0+IHNldFRpdGxlKGUudGFyZ2V0LnZhbHVlKX0gcGxhY2Vob2xkZXI9Ikp1ZHVsIG5vdGlmaWthc2kiIC8+CiAgICAgICAgICA8dGV4dGFyZWEgY2xhc3NOYW1lPSJjeC1hbi1pbiIgdmFsdWU9e2JvZHl9IG1heExlbmd0aD17NjAwfSByb3dzPXs0fSBvbkNoYW5nZT17KGUpID0+IHNldEJvZHkoZS50YXJnZXQudmFsdWUpfSBwbGFjZWhvbGRlcj0iVHVsaXMgcGVzYW4gdW50dWsgdXNlci4uLiIgLz4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi1yb3ciPgogICAgICAgICAgICA8c2VsZWN0IGNsYXNzTmFtZT0iY3gtYW4taW4iIHZhbHVlPXtsaW5rfSBvbkNoYW5nZT17KGUpID0+IHNldExpbmsoZS50YXJnZXQudmFsdWUpfT4KICAgICAgICAgICAgICB7TElOS1MubWFwKChbaywgbF0pID0+IDxvcHRpb24ga2V5PXtrfSB2YWx1ZT17a30+e2sgPyBgVG9tYm9sOiAke2x9YCA6IGx9PC9vcHRpb24+KX0KICAgICAgICAgICAgPC9zZWxlY3Q+CiAgICAgICAgICAgIDxzbWFsbD57Ym9keS5sZW5ndGh9LzYwMDwvc21hbGw+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxidXR0b24gY2xhc3NOYW1lPSJjeC1idG4gY3gtYnRuLXByaW1hcnkgY3gtYW4tc2VuZCIgb25DbGljaz17c2VuZH0gZGlzYWJsZWQ9e3NlbmRpbmd9PgogICAgICAgICAgICB7c2VuZGluZyA/IDxSZWZyZXNoQ3cgc2l6ZT17MTN9IGNsYXNzTmFtZT0iY3gtc3BpbiIgLz4gOiA8U2VuZCBzaXplPXsxM30gLz59CiAgICAgICAgICAgIHtzZW5kaW5nID8gIk1lbmdpcmltLi4uIiA6IHRhcmdldCA9PT0gImFsbCIgPyAiS2lyaW0ga2Ugc2VtdWEiIDogYEtpcmltIGtlICR7cGlja2VkLmxlbmd0aCB8fCAwfSB1c2VyYH0KICAgICAgICAgIDwvYnV0dG9uPgogICAgICAgIDwvc2VjdGlvbj4KCiAgICAgICAgPHNlY3Rpb24gY2xhc3NOYW1lPSJjeC1hbi1zaWRlIj4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPSJjeC1hbi1sYWJlbCI+PEV5ZSBzaXplPXsxMX0gLz4gUHJhdGluamF1IGRpIEhQIHVzZXI8L2Rpdj4KICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPXtgY3gtYW4tcHJldmlldyB0LSR7dHlwZX1gfT4KICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPSJjeC1hbi1waWMiPjxULmljb24gc2l6ZT17MTR9IC8+PC9zcGFuPgogICAgICAgICAgICA8ZGl2PjxlbT57VC5sYWJlbH0gwrcgYmFydSBzYWphPC9lbT48Yj57dGl0bGUgfHwgIkp1ZHVsIG5vdGlmaWthc2kifTwvYj48cD57Ym9keSB8fCAiSXNpIHBlc2FuIGFrYW4gdGFtcGlsIGRpIHNpbmkuIn08L3A+PC9kaXY+CiAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT0iY3gtYW4tbGFiZWwiIHN0eWxlPXt7IG1hcmdpblRvcDogMTQgfX0+Uml3YXlhdCB0ZXJraXJpbTwvZGl2PgogICAgICAgICAgPGRpdiBjbGFzc05hbWU9ImN4LWFuLWhpc3QiPgogICAgICAgICAgICB7aGlzdG9yeS5tYXAoKGgsIGkpID0+IHsKICAgICAgICAgICAgICBjb25zdCBodCA9IFRZUEVTLmZpbmQoKHgpID0+IHgua2V5ID09PSBoLnR5cGUpIHx8IFRZUEVTWzBdOwogICAgICAgICAgICAgIHJldHVybiAoCiAgICAgICAgICAgICAgICA8ZGl2IGtleT17aX0gY2xhc3NOYW1lPXtgY3gtYW4taCB0LSR7aC50eXBlfWB9PgogICAgICAgICAgICAgICAgICA8aHQuaWNvbiBzaXplPXsxMn0gLz4KICAgICAgICAgICAgICAgICAgPGRpdj48Yj57aC50aXRsZX08L2I+PHNtYWxsPntoLnJlY2lwaWVudHMgPiAxID8gYCR7aC5yZWNpcGllbnRzfSB1c2VyYCA6IChoLnRvTmFtZSB8fCBoLnRvRW1haWwgfHwgIjEgdXNlciIpfSDCtyBkaWJhY2Ege2gucmVhZENvdW50fS97aC5yZWNpcGllbnRzfSDCtyB7YWdvKGguY3JlYXRlZEF0KX08L3NtYWxsPjwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgKTsKICAgICAgICAgICAgfSl9CiAgICAgICAgICAgIHshaGlzdG9yeS5sZW5ndGggJiYgPHAgY2xhc3NOYW1lPSJjeC1hbi1lbXB0eSI+QmVsdW0gYWRhIHBlc2FuIHRlcmtpcmltLjwvcD59CiAgICAgICAgICA8L2Rpdj4KICAgICAgICA8L3NlY3Rpb24+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgKTsKfQo=
+import { useEffect, useMemo, useState } from "react";
+import { Send, Users, User, Search, RefreshCw, MessageSquareText, Megaphone, Gift, ShieldAlert, Check, X, Eye } from "lucide-react";
+import { jsonRequest } from "./main.jsx";
+
+const TYPES = [
+  { key: "admin_msg", label: "Pesan", icon: MessageSquareText },
+  { key: "admin_info", label: "Info", icon: Megaphone },
+  { key: "admin_promo", label: "Promo", icon: Gift },
+  { key: "admin_warn", label: "Penting", icon: ShieldAlert },
+];
+const LINKS = [["", "Tanpa tombol"], ["katalog", "Katalog"], ["topup", "Top Up"], ["orders", "Pesanan"], ["reports", "Laporan"]];
+const ago = (iso) => {
+  const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (d < 60) return "baru saja";
+  if (d < 3600) return `${Math.floor(d / 60)} mnt lalu`;
+  if (d < 86400) return `${Math.floor(d / 3600)} jam lalu`;
+  return `${Math.floor(d / 86400)} hari lalu`;
+};
+
+export default function AdminNotifyPage({ onNotice }) {
+  const [users, setUsers] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [target, setTarget] = useState("user");
+  const [picked, setPicked] = useState([]);
+  const [q, setQ] = useState("");
+  const [type, setType] = useState("admin_msg");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [link, setLink] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const t = Date.now();
+    try {
+      const [u, h] = await Promise.allSettled([
+        jsonRequest("/api/admin/users", { method: "GET" }),
+        jsonRequest("/api/admin/users?action=notify", { method: "GET" }),
+      ]);
+      if (u.status === "fulfilled") setUsers(u.value.users || []); else throw u.reason;
+      if (h.status === "fulfilled") setHistory(h.value.history || []);
+    } catch (e) { onNotice && onNotice(e.message || "Gagal memuat", "error"); }
+    setTimeout(() => setLoading(false), Math.max(0, 600 - (Date.now() - t)));
+  };
+  useEffect(() => { load(); }, []);
+
+  const found = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return users.filter((u) => !s || `${u.name} ${u.email}`.toLowerCase().includes(s)).slice(0, 30);
+  }, [users, q]);
+  const pickedUsers = users.filter((u) => picked.includes(u.id));
+  const toggle = (id) => setPicked((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]));
+
+  const send = async () => {
+    if (title.trim().length < 2) return onNotice && onNotice("Judul wajib diisi", "error");
+    if (target === "user" && !picked.length) return onNotice && onNotice("Pilih minimal 1 user", "error");
+    if (target === "all" && !window.confirm("Kirim ke SEMUA user aktif?")) return;
+    setSending(true);
+    try {
+      const p = await jsonRequest("/api/admin/users?action=notify", {
+        method: "POST",
+        body: JSON.stringify({ target, userIds: picked, type, title, body, link }),
+      });
+      onNotice && onNotice(p.skipped ? `Terkirim ke ${p.sent} user, ${p.skipped} user diblokir dilewati` : `Terkirim ke ${p.sent} user`, "success");
+      setTitle(""); setBody(""); setPicked([]);
+      load();
+    } catch (e) { onNotice && onNotice(e.message || "Gagal mengirim", "error"); }
+    setSending(false);
+  };
+
+  const T = TYPES.find((x) => x.key === type) || TYPES[0];
+
+  return (
+    <div className="cx-an">
+      <div className="cx-admin-top">
+        <div>
+          <div className="cx-admin-date">Kirim pesan langsung ke kotak notifikasi user</div>
+          <h1>Send Chat & Notifikasi</h1>
+        </div>
+        <div className="cx-admin-actions">
+          <button className={`cx-btn cx-btn-secondary cx-btn-sm${loading ? " is-spinning" : ""}`} onClick={load} disabled={loading}><RefreshCw size={11} /> Refresh</button>
+        </div>
+      </div>
+
+      <div className="cx-an-grid">
+        <section className="cx-an-card">
+          <div className="cx-an-seg">
+            <button className={target === "user" ? "on" : ""} onClick={() => setTarget("user")}><User size={12} /> Pilih user</button>
+            <button className={target === "all" ? "on" : ""} onClick={() => setTarget("all")}><Users size={12} /> Semua user</button>
+          </div>
+
+          {target === "user" && (
+            <div className="cx-an-pick">
+              {pickedUsers.length > 0 && (
+                <div className="cx-an-chips">
+                  {pickedUsers.map((u) => (
+                    <span key={u.id}>{u.name || u.email}<button onClick={() => toggle(u.id)} aria-label="Hapus"><X size={10} /></button></span>
+                  ))}
+                </div>
+              )}
+              <label className="cx-an-search"><Search size={12} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama / email user..." /></label>
+              <div className="cx-an-users">
+                {found.map((u) => (
+                  <button key={u.id} className={picked.includes(u.id) ? "on" : ""} onClick={() => toggle(u.id)}>
+                    <span className="cx-an-av">{(u.name || u.email || "?").slice(0, 1).toUpperCase()}</span>
+                    <span className="cx-an-ut"><b>{u.name || "-"}</b><small>{u.email}</small></span>
+                    {u.status !== "active" && <span className="cx-an-off">diblokir</span>}
+                    {picked.includes(u.id) && <Check size={13} />}
+                  </button>
+                ))}
+                {!found.length && <p className="cx-an-empty">User tidak ditemukan</p>}
+              </div>
+            </div>
+          )}
+          {target === "all" && <p className="cx-an-hint"><Users size={12} /> Dikirim ke {users.filter((u) => u.status === "active").length} user aktif.</p>}
+
+          <div className="cx-an-types">
+            {TYPES.map((t) => (
+              <button key={t.key} className={`t-${t.key}${type === t.key ? " on" : ""}`} onClick={() => setType(t.key)}><t.icon size={12} />{t.label}</button>
+            ))}
+          </div>
+          <input className="cx-an-in" value={title} maxLength={160} onChange={(e) => setTitle(e.target.value)} placeholder="Judul notifikasi" />
+          <textarea className="cx-an-in" value={body} maxLength={600} rows={4} onChange={(e) => setBody(e.target.value)} placeholder="Tulis pesan untuk user..." />
+          <div className="cx-an-row">
+            <select className="cx-an-in" value={link} onChange={(e) => setLink(e.target.value)}>
+              {LINKS.map(([k, l]) => <option key={k} value={k}>{k ? `Tombol: ${l}` : l}</option>)}
+            </select>
+            <small>{body.length}/600</small>
+          </div>
+          <button className="cx-btn cx-btn-primary cx-an-send" onClick={send} disabled={sending}>
+            {sending ? <RefreshCw size={13} className="cx-spin" /> : <Send size={13} />}
+            {sending ? "Mengirim..." : target === "all" ? "Kirim ke semua" : `Kirim ke ${picked.length || 0} user`}
+          </button>
+        </section>
+
+        <section className="cx-an-side">
+          <div className="cx-an-label"><Eye size={11} /> Pratinjau di HP user</div>
+          <div className={`cx-an-preview t-${type}`}>
+            <span className="cx-an-pic"><T.icon size={14} /></span>
+            <div><em>{T.label} · baru saja</em><b>{title || "Judul notifikasi"}</b><p>{body || "Isi pesan akan tampil di sini."}</p></div>
+          </div>
+
+          <div className="cx-an-label" style={{ marginTop: 14 }}>Riwayat terkirim</div>
+          <div className="cx-an-hist">
+            {history.map((h, i) => {
+              const ht = TYPES.find((x) => x.key === h.type) || TYPES[0];
+              return (
+                <div key={i} className={`cx-an-h t-${h.type}`}>
+                  <ht.icon size={12} />
+                  <div><b>{h.title}</b><small>{h.recipients > 1 ? `${h.recipients} user` : (h.toName || h.toEmail || "1 user")} · dibaca {h.readCount}/{h.recipients} · {ago(h.createdAt)}</small></div>
+                </div>
+              );
+            })}
+            {!history.length && <p className="cx-an-empty">Belum ada pesan terkirim.</p>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
