@@ -13,6 +13,7 @@ const {
 } = require("../_settings");
 const { readAgedConfig, writeAgedConfig, DEFAULT_AGED_CONFIG } = require("../_aged");
 const { visitStats } = require("../_visits");
+const { readCustomEmailFee, writeCustomEmailFee } = require("../_custom-email-fee");
 
 module.exports = async function handler(request, response) {
   if (!isAdmin(request)) return response.status(401).json({ error: "Sesi admin tidak valid" });
@@ -30,7 +31,7 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") {
       const cfg = await assistantConfig(sql);
       const aged = await readAgedConfig(sql, { fresh: true });
-      return response.status(200).json({ assistant: publicAssistantConfig(cfg), aged, agedDefaults: DEFAULT_AGED_CONFIG });
+      return response.status(200).json({ assistant: publicAssistantConfig(cfg), aged, agedDefaults: DEFAULT_AGED_CONFIG, customEmailFee: await readCustomEmailFee(sql, { fresh: true }) });
     }
 
     if (request.method === "POST") {
@@ -59,6 +60,12 @@ module.exports = async function handler(request, response) {
     }
 
     const body = bodyOf(request);
+
+    // Harga Custom Email per nama.
+    if (body.customEmailFee !== undefined) {
+      const customEmailFee = await writeCustomEmailFee(sql, body.customEmailFee);
+      return response.status(200).json({ ok: true, customEmailFee });
+    }
 
     // Pengaturan harga aged (tingkatan bonus umur akun) disimpan terpisah.
     if (body.aged && typeof body.aged === "object") {
