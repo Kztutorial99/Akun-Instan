@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const { db, ensureTables, currentUser, bodyOf, text } = require("./_users");
-const { callTelegram, adminChatId } = require("./_telegram");
 const { createNotification } = require("./_notifications");
 const { handleNotifications } = require("./_notifications_handler");
 const { handleStream } = require("./_stream");
@@ -66,26 +65,6 @@ async function settlePaid(sql, refId) {
     body: `Pembayaran QRIS ${rupiah(amount)} sudah diterima${bonus ? ` + bonus ${rupiah(bonus)}` : ""}, saldo kamu langsung bertambah ${rupiah(credit)}.`,
     link: "topup",
   });
-
-  // Notifikasi admin: pembayaran QRIS masuk otomatis.
-  try {
-    if (adminChatId()) {
-      await callTelegram("sendMessage", {
-        chat_id: adminChatId(),
-        text: [
-          "<b>Top up QRIS otomatis lunas</b>",
-          `Nominal: <b>${rupiah(amount)}</b>${bonus ? ` + bonus ${rupiah(bonus)}` : ""}`,
-          `User: ${user ? user.name : row.userId} (${user ? user.email : "-"})`,
-          `Saldo sekarang: <b>${rupiah(user && user.balance)}</b>`,
-          `Ref ID: <code>${refId}</code>`,
-        ].join("\n"),
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      });
-    }
-  } catch (notifyError) {
-    console.error("Telegram notify failure", notifyError && notifyError.message);
-  }
 
   return { credited: true, amount, balance: user ? Number(user.balance) || 0 : null };
 }

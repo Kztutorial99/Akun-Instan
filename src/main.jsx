@@ -6062,6 +6062,26 @@ function parseBlocks(text) {
   return blocks;
 }
 
+/* Animasi mengetik: teks balasan muncul bertahap seperti sedang diketik. */
+function TypeOut({ text, onDone, onTick }) {
+  const full = String(text || "");
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!full) { onDone && onDone(); return undefined; }
+    // Kecepatan menyesuaikan panjang: balasan panjang tetap selesai ~3-4 detik.
+    const step = Math.max(1, Math.ceil(full.length / 220));
+    let cur = 0;
+    const t = setInterval(() => {
+      cur = Math.min(full.length, cur + step);
+      setN(cur);
+      onTick && onTick();
+      if (cur >= full.length) { clearInterval(t); onDone && onDone(); }
+    }, 16);
+    return () => clearInterval(t);
+  }, [full]);
+  return <><RichText text={full.slice(0, n)} /><span className="cx-ai-caret" /></>;
+}
+
 function RichText({ text }) {
   const blocks = parseBlocks(text);
   if (!blocks.length) return null;
@@ -6194,7 +6214,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
       if (!done) throw new Error("Koneksi ke Assisten terputus, coba lagi.");
       setMessages([
         ...next,
-        { role: "assistant", content: done.reply || "", actions: done.actions || [], notes },
+        { role: "assistant", content: done.reply || "", actions: done.actions || [], notes, typing: true },
       ]);
     } catch (e) {
       setError(e.message);
@@ -6318,9 +6338,13 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
                   </div>
                 )}
                 <div className="cx-ai-bubble">
-                  {m.role === "assistant" ? <RichText text={m.content} /> : m.content}
+                  {m.role === "assistant"
+                    ? m.typing
+                      ? <TypeOut text={m.content} onTick={() => { if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight; }} onDone={() => setMessages((all) => all.map((x, k) => (k === i ? { ...x, typing: false } : x)))} />
+                      : <RichText text={m.content} />
+                    : m.content}
                 </div>
-                {m.role === "assistant" && m.actions && m.actions.length > 0 && (
+                {m.role === "assistant" && !m.typing && m.actions && m.actions.length > 0 && (
                   <div className="cx-ai-actions">
                     {m.actions.map((a, j) => <span key={j}><Check size={9} />{a}</span>)}
                   </div>

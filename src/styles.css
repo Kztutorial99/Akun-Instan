@@ -4146,3 +4146,7 @@ html { scroll-behavior: smooth; }
   .cx-tpl-btn { width: 100%; min-width: 0; padding: 7px 8px; justify-content: flex-start; }
   .cx-tpl-btn span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ── animasi mengetik Assisten ── */
+.cx-ai-caret{display:inline-block;width:6px;height:12px;margin-left:2px;vertical-align:-1px;background:currentColor;opacity:.7;animation:cx-ai-blink .9s steps(1) infinite}
+@keyframes cx-ai-blink{50%{opacity:0}}

@@ -1,6 +1,5 @@
 const { db, ensureTables, bodyOf, text } = require("../_users");
 const { isAdmin } = require("./_auth");
-const { callTelegram, adminChatId, topupMessage } = require("../_telegram");
 const { createNotification } = require("../_notifications");
 
 module.exports = async function handler(request, response) {
@@ -85,45 +84,6 @@ module.exports = async function handler(request, response) {
         : `Permintaan top up Rp${topupAmount.toLocaleString("id-ID")} ditolak. Cek kembali bukti transfermu atau hubungi admin.`,
       link: "topup",
     });
-
-    // Beri tahu chat admin bahwa permintaan sudah diproses lewat panel web,
-    // supaya status di Telegram tidak tertinggal.
-    try {
-      const detail = await sql`
-        SELECT t.id, t.amount, t.method, t.reference, t.note, t.created_at AS "createdAt",
-               u.name AS "userName", u.email AS "userEmail", u.phone AS "userPhone", u.balance AS "userBalance"
-        FROM codexa_topups t JOIN codexa_users u ON u.id = t.user_id
-        WHERE t.id = ${id} LIMIT 1
-      `;
-      if (detail[0] && adminChatId()) {
-        const d = detail[0];
-        await callTelegram("sendMessage", {
-          chat_id: adminChatId(),
-          text: topupMessage({
-            topup: {
-              id: d.id,
-              amount: Number(d.amount) || 0,
-              method: d.method,
-              reference: d.reference,
-              note: d.note,
-              createdAt: d.createdAt,
-            },
-            user: {
-              name: d.userName,
-              email: d.userEmail,
-              phone: d.userPhone,
-              balance: Number(d.userBalance) || 0,
-            },
-            status: action === "approve" ? "approved" : "rejected",
-            reviewer: "panel admin web",
-          }),
-          parse_mode: "HTML",
-          disable_web_page_preview: true,
-        });
-      }
-    } catch (notifyError) {
-      console.error("Telegram notify failure", notifyError && notifyError.message);
-    }
 
     return response.status(200).json({ ok: true });
   } catch (error) {

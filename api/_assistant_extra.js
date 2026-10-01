@@ -6,7 +6,7 @@
  */
 const crypto = require("crypto");
 const { text } = require("./_users");
-const { rupiah, waktuWib } = require("./_telegram");
+const { rupiah, waktuWib } = require("./_format");
 const { readCustomEmailFee, writeCustomEmailFee } = require("./_custom-email-fee");
 const { createNotification } = require("./_notifications");
 

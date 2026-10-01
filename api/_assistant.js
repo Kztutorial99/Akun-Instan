@@ -20,9 +20,11 @@ const crypto = require("crypto");
 const { hashPassword, text } = require("./_users");
 const { createNotification, broadcastNotification } = require("./_notifications");
 const { extraUserTools, extraAdminTools } = require("./_assistant_extra");
-const {
-  callTelegram, adminChatId, telegramEnabled, escapeHtml, rupiah, waktuWib,
-} = require("./_telegram");
+const { escapeHtml, rupiah, waktuWib } = require("./_format");
+
+/* Batas laporan per user supaya tidak spam. */
+const REPORT_LIMIT_PER_DAY = 3;
+const REPORT_COOLDOWN_MIN = 10;
 
 const DEFAULT_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 const MAX_STEPS = 6;
@@ -255,7 +257,7 @@ const userTools = {
     schema: {
       name: "contact_admin",
       description:
-        "Kirim laporan/eskalasi ke admin lewat Telegram. WAJIB dipakai ketika user punya masalah yang tidak bisa kamu selesaikan sendiri: " +
+        "Kirim laporan/eskalasi ke menu Data Laporan di admin panel. Ada batas anti-spam (maks 3 laporan/24 jam, jeda 10 menit, laporan serupa yang masih terbuka tidak dibuat ulang); kalau ditolak, jelaskan alasannya ke user dengan sopan. WAJIB dipakai ketika user punya masalah yang tidak bisa kamu selesaikan sendiri: " +
         "top up tidak masuk, saldo salah, akun terkunci/suspend, komplain produk, permintaan refund, atau apa pun yang butuh keputusan admin. " +
         "Rangkum masalahnya sendiri dari percakapan, jangan menyuruh user mengulang.",
       parameters: {
@@ -280,6 +282,34 @@ const userTools = {
       const urgency = ["rendah", "sedang", "tinggi"].includes(args.urgency) ? args.urgency : "sedang";
       if (summary.length < 5) return fail("Ringkasan masalah terlalu pendek");
 
+      // Anti-spam: hanya untuk user terdaftar (sesi admin dibebaskan).
+      if (ctx.role !== "admin") {
+        const [st] = await ctx.sql`
+          SELECT
+            COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')::int AS day,
+            MAX(created_at) AS last
+          FROM codexa_reports WHERE user_id = ${ctx.user.id}
+        `;
+        const open = await ctx.sql`
+          SELECT ticket, summary, status FROM codexa_reports
+          WHERE user_id = ${ctx.user.id} AND category = ${category} AND status IN ('open','in_progress')
+          ORDER BY created_at DESC LIMIT 1
+        `;
+        if (open.length) {
+          return ok({
+            ticket: open[0].ticket, tersimpan: false, duplikat: true,
+            message: `User sudah punya laporan ${category} yang masih ${open[0].status === "open" ? "menunggu" : "diproses"} (tiket ${open[0].ticket}). Jangan buat laporan baru; minta user menunggu, tambahan info sudah dicatat sebagai bagian tiket itu.`,
+          });
+        }
+        if (st && st.day >= REPORT_LIMIT_PER_DAY) {
+          return fail(`Batas laporan tercapai (${REPORT_LIMIT_PER_DAY} laporan per 24 jam). Minta user menunggu balasan admin untuk laporan sebelumnya.`);
+        }
+        if (st && st.last && Date.now() - new Date(st.last).getTime() < REPORT_COOLDOWN_MIN * 60000) {
+          const wait = Math.ceil((REPORT_COOLDOWN_MIN * 60000 - (Date.now() - new Date(st.last).getTime())) / 60000);
+          return fail(`Baru saja mengirim laporan. Bisa kirim laporan baru lagi dalam ${wait} menit.`);
+        }
+      }
+
       const ticket = `AI-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
       const id = `rep_${crypto.randomBytes(8).toString("hex")}`;
 
@@ -295,42 +325,10 @@ const userTools = {
            ${category}, ${summary}, ${detail}, ${urgency}, 'open', 'assistant')
       `;
 
-      let telegramSent = false;
-      if (telegramEnabled() && adminChatId()) {
-        const flag = urgency === "tinggi" ? "🔴" : urgency === "rendah" ? "🟢" : "🟡";
-        const lines = [
-          `${flag} <b>LAPORAN DARI ASSISTEN AI</b>`,
-          `<b>Tiket:</b> <code>${escapeHtml(ticket)}</code>`,
-          `<b>Kategori:</b> ${escapeHtml(category)} · <b>Urgensi:</b> ${escapeHtml(urgency)}`,
-          "",
-          `<b>User:</b> ${escapeHtml(ctx.user.name)}`,
-          `<b>Email:</b> ${escapeHtml(ctx.user.email)}`,
-          `<b>Telepon:</b> ${escapeHtml(ctx.user.phone || "-")}`,
-          `<b>Saldo:</b> ${escapeHtml(money(ctx.user.balance))}`,
-          `<b>ID User:</b> <code>${escapeHtml(ctx.user.id)}</code>`,
-          "",
-          `<b>Masalah:</b>`,
-          escapeHtml(summary),
-        ];
-        if (detail) lines.push("", `<b>Detail:</b>`, escapeHtml(detail));
-        lines.push("", `<i>${escapeHtml(waktuWib())} WIB</i>`);
-        const sent = await callTelegram("sendMessage", {
-          chat_id: adminChatId(),
-          text: lines.join("\n"),
-          parse_mode: "HTML",
-          disable_web_page_preview: true,
-        });
-        telegramSent = !!(sent && sent.ok === true);
-        if (telegramSent) {
-          await ctx.sql`UPDATE codexa_reports SET telegram_sent = TRUE WHERE id = ${id}`;
-        }
-      }
-
       return ok({
         ticket,
         tersimpan: true,
-        notifikasiTelegram: telegramSent,
-        message: `Laporan tersimpan dengan nomor tiket ${ticket} dan sudah masuk ke daftar laporan admin.`,
+        message: `Laporan tersimpan dengan nomor tiket ${ticket} dan sudah masuk ke menu Data Laporan admin.`,
       });
     },
   },
@@ -645,7 +643,6 @@ const adminTools = {
           urgensi: r.urgency,
           status: r.status,
           catatanAdmin: r.adminNote || "-",
-          telegram: r.telegramSent ? "terkirim" : "tidak",
           dibuat: waktuWib(r.createdAt),
           diperbarui: waktuWib(r.updatedAt),
         })),
@@ -836,33 +833,6 @@ const adminTools = {
       } catch (_) {
         return fail("Tabel produk belum tersedia");
       }
-    },
-  },
-
-  admin_notify_user_channel: {
-    schema: {
-      name: "admin_notify_user_channel",
-      description: "Kirim catatan ke chat admin di Telegram (internal tim saja). BUKAN untuk mengirim notifikasi ke user \u2014 untuk itu pakai admin_notify_user atau admin_broadcast_notification.",
-      parameters: {
-        type: "object",
-        properties: {
-          message: { type: "string", description: "Isi pesan." },
-        },
-        required: ["message"],
-      },
-    },
-    handler: async (args, ctx) => {
-      const message = text(args.message, 2000);
-      if (message.length < 3) return fail("Pesan terlalu pendek");
-      if (!telegramEnabled() || !adminChatId()) return fail("Telegram belum dikonfigurasi");
-      const sent = await callTelegram("sendMessage", {
-        chat_id: adminChatId(),
-        text: `🤖 <b>CATATAN ADMIN (via Assisten)</b>\n\n${escapeHtml(message)}\n\n<i>${escapeHtml(waktuWib())} WIB</i>`,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      });
-      if (!sent || sent.ok !== true) return fail("Gagal mengirim pesan");
-      return ok({ message: "Pesan terkirim ke chat admin." });
     },
   },
 
@@ -1269,7 +1239,7 @@ function systemPrompt(ctx) {
       "- Boleh memanggil beberapa tool berurutan untuk menyelesaikan satu permintaan.",
       "- Jangan pernah menampilkan password hash atau kredensial akun produk.",
       "",
-      "- Kirim notifikasi ke user pakai admin_notify_user (satu user) atau admin_broadcast_notification (semua user). Notifikasi ini langsung muncul di lonceng notifikasi user. admin_notify_user_channel HANYA mengirim catatan ke Telegram tim, bukan ke user.",
+      "- Kirim notifikasi ke user pakai admin_notify_user (satu user) atau admin_broadcast_notification (semua user). Notifikasi ini langsung muncul di lonceng notifikasi user.",
       "- Laporan/keluhan user dari Assisten tersimpan di database. Pakai admin_list_reports untuk melihat daftarnya, admin_report_stats untuk ringkasan, dan admin_update_report untuk mengubah status atau menulis balasan yang bisa dibaca user.",
       "",
       "",
@@ -1332,7 +1302,7 @@ function systemPrompt(ctx) {
     "- Setelah terkirim, sampaikan nomor tiketnya ke user dan beri tahu admin akan menindaklanjuti.",
     "- Jangan spam: cukup sekali per masalah dalam satu percakapan.",
     "",
-    "- Laporan tersimpan permanen di database, jadi admin pasti melihatnya walau notifikasi Telegram gagal.",
+    "- Laporan tersimpan permanen di database dan langsung tampil di menu Data Laporan admin. Batas: maks 3 laporan per 24 jam, jeda 10 menit, dan laporan kategori sama yang masih terbuka tidak dibuat ulang.",
     "- Kalau user menanyakan kabar/status laporannya, panggil get_my_reports dan sampaikan status + catatan admin bila ada. Cek juga tool ini sebelum membuat laporan baru supaya tidak dobel.",
     "",
     "ALUR KERJA (wajib untuk permintaan yang butuh aksi/data):",
