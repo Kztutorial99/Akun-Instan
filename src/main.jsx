@@ -1103,11 +1103,15 @@ const productSlugMap = (list) => {
     // urutan daftar berubah pun tidak akan tertukar antar produk.
     const slug = tail ? `${base}-${tail}` : seen[base] > 1 ? `${base}-${seen[base]}` : base;
     map.set(p, slug);
+    if (p.id) map.set(`id:${p.id}`, slug);
   });
   return map;
 };
 export const productPagePath = (p, list) => {
-  const slug = (list && productSlugMap(list).get(p)) || productBaseSlug(p);
+  const map = list ? productSlugMap(list) : null;
+  const tail = String((p && p.id) || "").replace(/[^a-zA-Z0-9]/g, "").slice(-6).toLowerCase();
+  const slug = (map && (map.get(p) || (p && p.id && map.get(`id:${p.id}`)))) ||
+    (tail ? `${productBaseSlug(p)}-${tail}` : productBaseSlug(p));
   return `${PRODUCT_PATH_PREFIX}/${slug}`;
 };
 export const isProductPage = (page) => String(page || "").startsWith(`${PRODUCT_PATH_PREFIX}/`);
