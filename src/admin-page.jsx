@@ -1860,10 +1860,13 @@ function AdminPage({ onBack, onNotice }) {
                 return (
                 <div key={u.id} className="cx-user-row">
                   <div className="cx-user-ident">
-                    <div className="cx-avatar">{String(u.name || "U").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</div>
+                    <div className="cx-avatar">{u.avatar ? <img src={u.avatar} alt="" referrerPolicy="no-referrer" className="cx-avatar-img" /> : String(u.name || "U").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</div>
                     <div style={{ minWidth: 0 }}>
                       <strong>
                         {u.name}
+                        {(u.provider === "google" || u.emailVerifiedAt)
+                          ? <span className="cx-verified-tag" title="Akun terverifikasi"><BadgeCheck size={10} /> Terverifikasi</span>
+                          : <span className="cx-unverified-tag" title="Belum verifikasi email">Belum verifikasi</span>}
                         {u.role === "admin" && (
                           <span className="cx-role-tag"><ShieldCheck size={9} /> Admin</span>
                         )}
@@ -1898,7 +1901,7 @@ function AdminPage({ onBack, onNotice }) {
                     >
                       <ShieldCheck size={11} /> <span>{u.role === "admin" ? "Cabut admin" : "Jadikan admin"}</span>
                     </button>
-                    <button className="cx-row-btn" onClick={() => openUserForm(u)} aria-label="Edit user"><Pencil size={11} /> <span>Detail</span></button>
+                    <button className="cx-row-btn" onClick={() => openUserForm(u)} aria-label="Lihat profil user"><User size={11} /> <span>Lihat profil</span></button>
                     <button className="cx-row-btn danger" onClick={() => deleteUser(u)} aria-label="Hapus user" disabled={isPending(`user-del-${u.id}`)}>
                       {isPending(`user-del-${u.id}`) ? <Spinner /> : <Trash2 size={11} />} <span>Hapus</span>
                     </button>
@@ -1993,7 +1996,7 @@ function AdminPage({ onBack, onNotice }) {
           <div className="cx-modal cx-user-modal" onClick={(e) => e.stopPropagation()}>
 
             <div className="cx-modal-header">
-              <h2>Detail User</h2>
+              <h2>Profil User</h2>
               <button className="cx-icon-btn" onClick={closeUserForm}><X size={14} /></button>
             </div>
             <div className="cx-modal-body">
@@ -2008,7 +2011,7 @@ function AdminPage({ onBack, onNotice }) {
                 return (
                   <>
                     <div className={`cx-ud-head is-${d.status || "unknown"}`}>
-                      <div className="cx-avatar cx-ud-avatar">{initials}</div>
+                      <div className="cx-avatar cx-ud-avatar">{d.avatar ? <img src={d.avatar} alt="" referrerPolicy="no-referrer" className="cx-avatar-img" /> : initials}</div>
                       <div className="cx-ud-head-main">
                         <strong>{d.name || userForm.name || "Tanpa nama"}</strong>
                         <div className="cx-ud-badges">
@@ -2067,7 +2070,7 @@ function AdminPage({ onBack, onNotice }) {
                         <div><BadgeCheck size={11} /><span>Status akun</span><strong><span className={`cx-chip ${chipClass(d.status)}`}><i /> {statusLabel(d.status)}</span></strong></div>
                         <div><ShieldCheck size={11} /><span>Role</span><strong><span className={`cx-chip ${d.role === "admin" ? "cx-chip-admin" : "cx-chip-user"}`}><i /> {d.role === "admin" ? "Admin" : "User"}</span></strong></div>
                         <div><Mail size={11} /><span>Status email</span><strong>{d.provider === "google" ? <span className="cx-chip cx-chip-ok"><i /> Terverifikasi (Google)</span> : d.emailVerifiedAt ? <span className="cx-chip cx-chip-ok"><i /> Terverifikasi</span> : <span className="cx-chip cx-chip-warn"><i /> Belum terverifikasi</span>}</strong></div>
-                        <div><CircleHelp size={11} /><span>Verifikasi akun</span><strong><span className="cx-chip cx-chip-none"><i /> Belum tersedia</span></strong></div>
+                        <div><CircleHelp size={11} /><span>Verifikasi akun</span><strong>{(d.provider === "google" || d.emailVerifiedAt) ? <span className="cx-chip cx-chip-ok"><i /> Terverifikasi</span> : <span className="cx-chip cx-chip-warn"><i /> Belum terverifikasi</span>}</strong></div>
                       </div>
                     </div>
 
