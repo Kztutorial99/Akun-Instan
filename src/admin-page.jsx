@@ -839,11 +839,6 @@ function AdminPage({ onBack, onNotice }) {
           ))}
         </nav>
         <div className="cx-sidebar-footer">
-          {!installed && (
-            <button type="button" className="cx-install-admin" onClick={installApp}>
-              <ArrowDownRight size={13} /> <span>Install aplikasi admin</span>
-            </button>
-          )}
           <div className="cx-sidebar-user">
             <div className="cx-avatar">AR</div>
             <div className="cx-sidebar-user-info">
@@ -948,7 +943,6 @@ function AdminPage({ onBack, onNotice }) {
                   </div>
                   <button className="cx-admin-menu-item" onClick={() => { goNav("Pengaturan"); setHeaderMenu(""); }}><Settings size={12} /> Pengaturan</button>
                   <button className="cx-admin-menu-item" onClick={() => { onBack(); setHeaderMenu(""); }}><ShoppingBag size={12} /> Lihat store</button>
-                  {!installed && <button className="cx-admin-menu-item" onClick={() => { setHeaderMenu(""); installApp(); }}><ArrowDownRight size={12} /> Install aplikasi admin</button>}
                   <button className="cx-admin-menu-item danger" onClick={() => { setHeaderMenu(""); logout(); }}><LogOut size={12} /> Keluar</button>
                 </div>
               )}
