@@ -1097,8 +1097,12 @@ const productSlugMap = (list) => {
   const map = new Map();
   items.forEach((p) => {
     const base = productBaseSlug(p);
+    const tail = String(p.id || "").replace(/[^a-zA-Z0-9]/g, "").slice(-6).toLowerCase();
     seen[base] = (seen[base] || 0) + 1;
-    map.set(p, seen[base] > 1 ? `${base}-${seen[base]}` : base);
+    // Slug selalu menyertakan kode id produk supaya stabil & unik:
+    // urutan daftar berubah pun tidak akan tertukar antar produk.
+    const slug = tail ? `${base}-${tail}` : seen[base] > 1 ? `${base}-${seen[base]}` : base;
+    map.set(p, slug);
   });
   return map;
 };
