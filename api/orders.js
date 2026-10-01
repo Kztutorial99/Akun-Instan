@@ -470,7 +470,7 @@ async function openCustomEmails(sql, userId) {
   `;
 }
 
-const CUSTOM_EMAIL_FEE = 10000;
+const { readCustomEmailFee } = require("./_custom-email-fee");
 
 const MAX_ITEMS = 50;
 const MAX_PICKS_PER_ITEM = 100;
@@ -719,7 +719,7 @@ module.exports = async function handler(request, response) {
       try { open = await openCustomEmails(sql, user.id); } catch (_) { open = []; }
       return response.status(200).json({
         max: MAX_CUSTOM_EMAILS,
-        fee: CUSTOM_EMAIL_FEE,
+        fee: await readCustomEmailFee(sql),
         open: open.map((r) => ({ id: r.id, requested: r.requested, status: r.status || "pending", createdAt: r.createdAt })),
         canOrder: open.length === 0,
       });
@@ -860,7 +860,8 @@ module.exports = async function handler(request, response) {
     }
 
     // Permintaan email/username khusus dikenakan biaya tetap.
-    total += customEmails.length * CUSTOM_EMAIL_FEE;
+    const customEmailFee = customEmails.length ? await readCustomEmailFee(sql, { fresh: true }) : 0;
+    total += customEmails.length * customEmailFee;
 
     if (total > user.balance) {
       return response.status(402).json({
