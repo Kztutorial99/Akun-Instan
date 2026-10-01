@@ -6,7 +6,7 @@ import {
   CircleHelp, Command, Copy, CreditCard, Eye, EyeOff, ChevronDown,
   FileText, Home, LayoutDashboard, LockKeyhole, LogIn, LogOut, Menu,
   MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, QrCode, Download,
-  Search, Settings, ShieldCheck, ShoppingBag, Trash2, X,
+  Search, Settings, ShieldCheck, Lock, ShoppingBag, Trash2, X,
   User, UserPlus, Wallet, Mail, Phone, Clock, Sparkles, Send, Zap, KeyRound,
   Star,
 } from "lucide-react";
@@ -5813,6 +5813,15 @@ function TopUpPage({ user, onBack, onNotice, onRefresh }) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="cx-secured" role="note">
+              <span className="cx-secured-icon"><ShieldCheck size={18} /></span>
+              <div className="cx-secured-copy">
+                <strong>Secured by <b>WijayaPay</b></strong>
+                <small>Semua transaksi diproses aman melalui mitra berizin Bank Indonesia</small>
+              </div>
+              <span className="cx-secured-lock"><Lock size={12} /> SSL</span>
             </div>
             {formError && <p className="cx-form-error">{formError}</p>}
           </div>
