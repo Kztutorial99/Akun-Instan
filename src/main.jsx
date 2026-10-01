@@ -920,9 +920,14 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
         <section className="cx-hero cx-hero-modern">
           <div className="cx-hero-glow" aria-hidden="true" />
           <div className="cx-container cx-hero-inner">
-            <div className="cx-hero-badge">
-              <span className="cx-hero-pulse" />
-              Stok tersedia · {loading ? "memuat" : `${totalAccounts} akun`} · Berhasil terjual {loading ? "memuat" : `${totalSold} akun`}
+            <div className="cx-hero-badges">
+              <div className="cx-hero-badge">
+                <span className="cx-hero-pulse" />
+                Stok tersedia <strong className="cx-num cx-num-stock">{loading ? "memuat" : totalAccounts}</strong> akun
+              </div>
+              <div className="cx-hero-badge">
+                Berhasil terjual <strong className="cx-num cx-num-sold">{loading ? "memuat" : totalSold}</strong> akun
+              </div>
             </div>
             <div className="cx-kicker">AKUN INSTAN</div>
             <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
@@ -2315,7 +2320,10 @@ function App() {
       <section className="cx-hero cx-hero-modern">
         <div className="cx-hero-glow" aria-hidden="true" />
         <div className="cx-container cx-hero-inner">
-          <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia · {data.loading ? "memuat" : `${totalAccounts} akun`} · Berhasil terjual {data.loading ? "memuat" : `${totalSold} akun`}</div>
+          <div className="cx-hero-badges">
+            <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia <strong className="cx-num cx-num-stock">{data.loading ? "memuat" : totalAccounts}</strong> akun</div>
+            <div className="cx-hero-badge">Berhasil terjual <strong className="cx-num cx-num-sold">{data.loading ? "memuat" : totalSold}</strong> akun</div>
+          </div>
           <div className="cx-kicker">AKUN INSTAN</div>
           <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
             <p className="cx-seo-only">Jual beli akun Gmail fresh (no-PVA), custom Gmail sesuai nama, akun Google, dan akun digital lainnya dengan harga murah dan proses instan.</p>
