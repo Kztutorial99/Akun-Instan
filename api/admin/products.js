@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { isAdmin } = require("./_auth");
 const { handleReviewRequest } = require("../_reviews");
 const { effectiveAccountPrice, agedInfo, readAgedConfig, DEFAULT_AGED_CONFIG } = require("../_aged");
-const { broadcastNotification } = require("../_notifications");
+const { updateStockNotification } = require("../_notifications");
 
 const LOGIN_TYPES = new Set(["Google", "Facebook", "Email/password", "Apple", "Microsoft", "Lainnya"]);
 const STATUSES = new Set(["available", "sold"]);
@@ -66,11 +66,15 @@ async function announceStock(sql, input, previous) {
   const oldAvailable = previous && previous.status === "available" ? Number(previous.stock) || 0 : 0;
   if (previous && input.stock <= oldAvailable) return;
   try {
-    await broadcastNotification(sql, {
-      type: "stock_available",
-      title: previous ? "Stok baru tersedia" : "Produk baru tersedia",
-      body: `${input.title} kini tersedia: ${input.stock} akun siap dibeli. Cek katalog sebelum kehabisan.`,
-      link: "katalog",
+    const [summary] = await sql`
+      SELECT COALESCE(SUM(stock), 0)::int AS accounts, COUNT(*)::int AS products
+      FROM codexa_account_listings
+      WHERE status = 'available' AND stock > 0
+        AND id NOT LIKE 'etl-%' AND id NOT LIKE 'demo-%'
+    `;
+    await updateStockNotification(sql, {
+      title: "Stok tersedia diperbarui",
+      body: `${Number(summary && summary.accounts) || 0} akun tersedia di ${Number(summary && summary.products) || 0} produk. Terbaru: ${input.title}.`,
       statuses: ["active"],
     });
   } catch (error) {

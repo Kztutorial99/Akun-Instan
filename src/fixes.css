@@ -1666,3 +1666,10 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   .cx-catv2 .cx-grid{gap:10px}
   .cx-cat-divider{margin:18px 0 10px;padding-top:12px}
 }
+
+/* Grup Google di katalog: pisahkan stok yang siap dibeli tanpa kartu bertumpuk. */
+.cx-cat-group + .cx-cat-group { margin-top: 24px; }
+.cx-cat-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; padding-bottom: 9px; border-bottom: 1px solid var(--b2); }
+.cx-cat-group-head h2 { margin: 0; color: var(--ink); font-size: 15px; font-weight: 700; }
+.cx-cat-group-head span { color: var(--muted); font-size: 11px; white-space: nowrap; }
+@media (max-width: 520px) { .cx-cat-group + .cx-cat-group { margin-top: 20px; } }

@@ -110,6 +110,8 @@ export const CATALOG_CATEGORIES = [
   { key: "all", label: "Semua kategori" },
   { key: "social", label: "Social" },
   { key: "game", label: "Game" },
+  { key: "google-basic", label: "Google Biasa" },
+  { key: "google-pva", label: "Google PVA" },
   { key: "email", label: "Email" },
   { key: "streaming", label: "Streaming" },
   { key: "other", label: "Lainnya" },
@@ -350,6 +352,9 @@ export function productCategoryKey(product) {
   const known = CATALOG_CATEGORIES.find((item) => item.key !== "all" && (item.key === explicit || item.label.toLowerCase() === explicit));
   if (known) return known.key;
   const text = `${product?.title || ""} ${product?.name || ""} ${explicit}`.toLowerCase();
+  if (/\b(google|gmail)\b/.test(text)) {
+    return /\bpva\b/.test(text) && !/\b(no[ -]?pva|non[ -]?pva)\b/.test(text) ? "google-pva" : "google-basic";
+  }
   for (const [category, words] of CATEGORY_MATCHERS) if (words.some((word) => text.includes(word))) return category;
   return "other";
 }
@@ -1452,7 +1457,7 @@ function App() {
     const ready = [];
     const out = [];
     for (const p of list) (stockOf(p) > 0 && p.status !== "sold" ? ready : out).push(p);
-    return [...ready, ...out];
+    return [...ready, ...out.sort((a, b) => (Number(b.soldCount) || 0) - (Number(a.soldCount) || 0))];
 
   }, [data.products, search, sortBy, ageFilter, categoryFilter]);
 
@@ -2267,7 +2272,7 @@ function App() {
           <div className="cx-empty">
             <Package size={28} />
             <h3>Belum ada akun tersedia</h3>
-            <p>{search ? "Tidak ada produk yang cocok dengan pencarian." : "Belum ada listing nyata di database."}</p>
+            <p>{search ? "Tidak ada produk yang cocok dengan pencarian." : "Akun untuk pilihan ini belum tersedia. Coba kategori lain."}</p>
           </div>
         )}
 
@@ -2275,6 +2280,14 @@ function App() {
           const isOut = (p) => !((Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold");
           const ready = products.filter((p) => !isOut(p));
           const out = products.filter(isOut);
+          const googleBasic = ready.filter((p) => productCategoryKey(p) === "google-basic");
+          const googlePva = ready.filter((p) => productCategoryKey(p) === "google-pva");
+          const others = ready.filter((p) => !["google-basic", "google-pva"].includes(productCategoryKey(p)));
+          const groups = [
+            { label: "Google Biasa", items: googleBasic },
+            { label: "Google PVA", items: googlePva },
+            { label: "Akun lainnya", items: others },
+          ];
           const card = (p, i) => (
             <ProductCard
               key={p.id || i}
@@ -2289,13 +2302,18 @@ function App() {
               {ready.length > 0 && (
                 <>
                   <div className="cx-cat-count">Tersedia · {ready.length} produk</div>
-                  <div className="cx-grid">{ready.map(card)}</div>
+                  {groups.filter((group) => group.items.length).map((group) => (
+                    <section className="cx-cat-group" key={group.label} aria-label={group.label}>
+                      <div className="cx-cat-group-head"><h2>{group.label}</h2><span>{group.items.length} produk</span></div>
+                      <div className="cx-grid">{group.items.map(card)}</div>
+                    </section>
+                  ))}
                 </>
               )}
               {out.length > 0 && (
                 <>
                   <div className="cx-cat-divider">
-                    <span>Stok habis · {out.length} produk</span>
+                    <span>Stok habis · {out.length} produk</span><small>Urut terlaris</small>
                   </div>
                   <div className="cx-grid cx-grid-out">{out.map(card)}</div>
                 </>
@@ -4165,7 +4183,7 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
           </h3>
           {product.loginType && (
             <span className="cx-pc-plat cx-pc-plat-sub" style={{ color }}>
-              Login: {product.loginType}
+              Login: {product.loginType}{productCategoryKey(product) === "google-pva" ? " · Google PVA" : productCategoryKey(product) === "google-basic" ? " · Google Biasa" : ""}
             </span>
           )}
         </div>
