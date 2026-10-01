@@ -16,7 +16,7 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET" && detailId) {
       const rows = await sql`
         SELECT u.id, u.name, u.email, u.phone, u.balance, u.status, u.role, u.note,
-               u.provider, u.email_verified_at AS "emailVerifiedAt", u.created_at AS "createdAt"
+               u.provider, u.avatar, u.email_verified_at AS "emailVerifiedAt", u.created_at AS "createdAt"
         FROM codexa_users u WHERE u.id = ${detailId} LIMIT 1
       `;
       if (!rows.length) return response.status(404).json({ error: "User tidak ditemukan" });
@@ -100,7 +100,7 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") {
       const users = await sql`
         SELECT u.id, u.name, u.email, u.phone, u.balance, u.status, u.role, u.note,
-                u.provider, u.email_verified_at AS "emailVerifiedAt", u.created_at AS "createdAt",
+                u.provider, u.avatar, u.email_verified_at AS "emailVerifiedAt", u.created_at AS "createdAt",
                COALESCE(SUM(CASE WHEN t.status = 'approved' THEN t.amount ELSE 0 END), 0) AS "topupTotal",
                COUNT(t.id) FILTER (WHERE t.status = 'pending') AS "pendingCount",
                MAX(t.created_at) AS "lastTopupAt"
