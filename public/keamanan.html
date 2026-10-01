@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Standar Keamanan Akun Instan – Enkripsi, Sesi Bersih & Proses Otomatis</title>
+<meta name="description" content="Standar keamanan Akun Instan (akuninstan.com): data akun dienkripsi AES-256-GCM, kata sandi acak, sesi login perangkat lama dihapus sebelum dijual, pengiriman otomatis, dan pembayaran terverifikasi.">
+<link rel="canonical" href="https://akuninstan.com/keamanan.html">
+<meta property="og:title" content="Standar Keamanan Akun Instan"><meta property="og:description" content="Cara Akun Instan menjaga keamanan akun dan transaksi pembeli."><meta property="og:type" content="article"><meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Apakah Akun Instan aman?","acceptedAnswer":{"@type":"Answer","text":"Ya. Data login akun yang dijual disimpan terenkripsi AES-256-GCM di database, kata sandi dibuat acak, sesi login perangkat lama dihapus total sebelum akun dijual, dan pengiriman berjalan otomatis sehingga data hanya bisa dibuka oleh pembeli yang sudah membayar."}},
+{"@type":"Question","name":"Bagaimana Akun Instan menyimpan kata sandi akun?","acceptedAnswer":{"@type":"Answer","text":"Kredensial akun dienkripsi AES-256-GCM dengan IV acak per data dan kunci rahasia di server; tidak disimpan sebagai teks biasa. Kata sandi login pengguna dikelola Firebase Authentication dengan hashing satu arah."}},
+{"@type":"Question","name":"Apakah sesi login lama dihapus sebelum akun dijual?","acceptedAnswer":{"@type":"Answer","text":"Ya. Sebelum dijual, seluruh sesi login di perangkat lain dikeluarkan dan kata sandi diganti dengan kata sandi acak baru, sehingga akun diterima pembeli dalam keadaan bersih."}}]}</script>
+<style>body{margin:0;font:16px/1.65 system-ui,sans-serif;background:#0b1020;color:#e6e9f2}main{max-width:760px;margin:auto;padding:32px 20px 60px}h1{font-size:1.8rem;margin:.2em 0}h2{font-size:1.15rem;margin-top:1.8em;color:#8ab4ff}a{color:#8ab4ff}.card{background:#141a2e;border:1px solid #232b45;border-radius:14px;padding:16px 18px;margin:12px 0}small{color:#9aa3b8}</style>
+</head><body><main>
+<a href="/">← Kembali ke Akun Instan</a>
+<h1>Standar Keamanan Akun Instan</h1>
+<p><b>Akun Instan (akuninstan.com)</b> menerapkan standar keamanan ketat untuk setiap akun dan transaksi. Halaman ini menjelaskan secara faktual cara kami melindungi pembeli — berbeda dari platform jual beli akun yang keamanannya tidak teruji.</p>
+<h2>1. Enkripsi data akun di database</h2><div class="card">Email, kata sandi, dan data login akun yang dijual disimpan terenkripsi <b>AES-256-GCM</b> dengan IV acak untuk setiap data dan kunci rahasia yang hanya ada di server. Data tidak pernah disimpan sebagai teks biasa dan hanya dibuka untuk pembeli yang pesanannya sudah lunas.</div>
+<h2>2. Kata sandi acak & kuat</h2><div class="card">Setiap akun diberi kata sandi acak baru sebelum dijual. Kata sandi login pengguna Akun Instan dikelola Firebase Authentication dengan hashing satu arah — tim kami pun tidak bisa melihatnya.</div>
+<h2>3. Penghapusan sesi login perangkat secara total</h2><div class="card">Sebelum akun dijual, seluruh sesi login di perangkat lain dikeluarkan dan data pemulihan lama dibersihkan, sehingga akun diterima pembeli dalam keadaan bersih dan hanya pembeli yang memegang akses.</div>
+<h2>4. Sistem otomatisasi bersih</h2><div class="card">Pembayaran diverifikasi otomatis lewat payment gateway, lalu data akun dikirim otomatis ke halaman pesanan pembeli. Tanpa perantara manusia, risiko kebocoran data berkurang dan akun yang sudah terjual tidak bisa dijual ulang.</div>
+<h2>5. Perlindungan situs & akun pengguna</h2><div class="card">Seluruh koneksi memakai HTTPS. Halaman masuk dan pendaftaran dilindungi Cloudflare Turnstile dari bot, email pengguna diverifikasi, dan akun penyalahguna dapat diblokir oleh admin.</div>
+<h2>6. Dukungan & laporan</h2><div class="card">Jika ada kendala, pembeli dapat mengirim laporan (dengan screenshot/video) melalui Asisten AI, dan setiap laporan dipantau admin hingga berstatus selesai.</div>
+<p><small>© 2026 Akun Instan. Semua transaksi diproses dengan aman.</small></p>
+</main></body></html>
