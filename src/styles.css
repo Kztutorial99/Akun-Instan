@@ -1757,6 +1757,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
   animation: cx-rise .35s ease both;
 }
 .cx-hero-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: cx-pulse 1.6s ease-in-out infinite; }
+.cx-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.cx-hero-badges .cx-hero-badge { margin-bottom: 0; }
+.cx-hero-badge .cx-num { font-weight: 800; }
+.cx-num-stock { color: var(--green); }
+.cx-num-sold { color: var(--amber); }
 .cx-hero-modern h1 { animation: cx-rise .4s .04s ease both; }
 .cx-hero-modern .cx-hero-sub { animation: cx-rise .4s .08s ease both; max-width: 560px; }
 .cx-hero-modern .cx-hero-actions { animation: cx-rise .4s .12s ease both; }
