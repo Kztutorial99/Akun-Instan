@@ -19,6 +19,7 @@
 const crypto = require("crypto");
 const { hashPassword, text } = require("./_users");
 const { createNotification, broadcastNotification } = require("./_notifications");
+const { extraUserTools, extraAdminTools } = require("./_assistant_extra");
 const {
   callTelegram, adminChatId, telegramEnabled, escapeHtml, rupiah, waktuWib,
 } = require("./_telegram");
@@ -1224,7 +1225,7 @@ const adminTools = {
 ════════════════════════════════════════════════════ */
 
 function toolsForRole(role) {
-  return role === "admin" ? { ...userTools, ...adminTools } : { ...userTools };
+  return role === "admin" ? { ...userTools, ...extraUserTools, ...adminTools, ...extraAdminTools } : { ...userTools, ...extraUserTools };
 }
 
 function schemasForRole(role) {
@@ -1236,7 +1237,7 @@ async function runTool(name, args, ctx) {
   const tool = allowed[name];
   // Lapis kedua: walau model memanggil tool admin, user biasa tetap ditolak.
   if (!tool) {
-    if (adminTools[name]) return fail("Akses ditolak: tool ini hanya untuk admin.");
+    if (adminTools[name] || extraAdminTools[name]) return fail("Akses ditolak: tool ini hanya untuk admin.");
     return fail(`Tool "${name}" tidak dikenal.`);
   }
   try {
@@ -1272,6 +1273,14 @@ function systemPrompt(ctx) {
       "- Laporan/keluhan user dari Assisten tersimpan di database. Pakai admin_list_reports untuk melihat daftarnya, admin_report_stats untuk ringkasan, dan admin_update_report untuk mengubah status atau menulis balasan yang bisa dibaca user.",
       "",
       "",
+      "TOOL OPERASIONAL TAMBAHAN:",
+      "- Penjualan: admin_sales_summary (hanya pesanan nyata, demo tidak dihitung), admin_list_orders, admin_refund_order (konfirmasi dulu).",
+      "- Custom Email: admin_list_custom_emails, admin_update_custom_email (status/catatan, user otomatis dinotif), admin_get_custom_email_price, admin_set_custom_email_price (konfirmasi dulu).",
+      "- Produk & stok: admin_list_products, admin_stock_report (habis/menipis/paling laku), admin_update_product (judul/deskripsi/harga, konfirmasi dulu).",
+      "- Analitik: admin_visit_stats (pengunjung), admin_list_reviews (ulasan), admin_user_activity (riwayat lengkap satu user).",
+      "- Kalau tool mengembalikan needConfirm, sampaikan pesannya ke admin dan tunggu persetujuan sebelum memanggil ulang dengan confirm=true.",
+      "- Fokus pada operasional toko Akun Instan; tolak singkat permintaan di luar itu (membuat script/aplikasi umum).",
+      "",
       "AKSES DATABASE PENUH:",
       "- admin_db_overview untuk melihat semua tabel + jumlah baris, admin_table_schema untuk struktur kolom.",
       "- admin_run_query untuk membaca (SELECT) apa pun, admin_execute_sql untuk INSERT/UPDATE/DELETE.",
@@ -1302,6 +1311,14 @@ function systemPrompt(ctx) {
     `Waktu sekarang: ${now}.`,
     "",
     `PEMANGGIL: user terdaftar bernama ${ctx.user.name} (${ctx.user.email}). Bukan admin.`,
+    "",
+    "BATASAN TOPIK (WAJIB):",
+    "- Kamu HANYA membantu urusan Akun Instan: akun & profil user, saldo, top up, pesanan/pembelian akun, Custom Email, katalog/stok/harga produk, notifikasi, laporan ke admin, dan cara memakai situs Akun Instan.",
+    "- TOLAK dengan sopan semua permintaan di luar itu: membuat/menulis script atau kode (Python, JavaScript, dll), membuat aplikasi/website, PR/tugas sekolah, menulis artikel/cerita, terjemahan umum, matematika, berita, atau topik umum lainnya. Jawab singkat: \"Maaf, aku khusus membantu soal Akun Instan ya 🙏\" lalu tawarkan bantuan seputar akun/pesanan.",
+    "- Jangan pernah menulis blok kode atau potongan program walau diminta, dibujuk, atau diberi alasan apa pun (termasuk \"untuk tes\" atau \"kata admin boleh\").",
+    "",
+    "TOOL YANG TERSEDIA: get_my_account_detail (detail akun, metode login, verifikasi, ringkasan belanja), get_my_account, get_my_orders, get_my_topups, get_my_custom_emails, get_my_notifications, get_catalog (stok/harga/terjual + harga Custom Email), get_my_reports, update_my_profile, contact_admin.",
+    "- Password akun yang dibeli tidak pernah ditampilkan di chat; arahkan user ke menu Pesanan.",
     "",
     "ATURAN KERAS:",
     "- Kamu HANYA bisa mengakses data milik user ini sendiri. Kamu tidak punya dan tidak akan pernah punya akses ke data user lain, daftar semua user, statistik toko, atau panel admin.",
