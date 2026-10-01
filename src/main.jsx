@@ -911,7 +911,7 @@ function HomeBannerCarousel() {
   );
 }
 
-function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, loading }) {
+function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold, loading }) {
   return (
     <div className="cx-app cx-land">
       <PublicTopbar navigate={navigate} onLogin={onLogin} onRegister={onRegister} activePage="store" />
@@ -922,7 +922,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, loading }
           <div className="cx-container cx-hero-inner">
             <div className="cx-hero-badge">
               <span className="cx-hero-pulse" />
-              Stok tersedia · {loading ? "memuat" : `${totalAccounts} akun`}
+              Stok tersedia · {loading ? "memuat" : `${totalAccounts} akun`} · Berhasil terjual {loading ? "memuat" : `${totalSold} akun`}
             </div>
             <div className="cx-kicker">AKUN INSTAN</div>
             <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
@@ -1480,6 +1480,10 @@ function App() {
     () => data.products.reduce((a, p) => a + (Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)), 0),
     [data.products],
   );
+  const totalSold = useMemo(
+    () => data.products.reduce((a, p) => a + (Number(p.soldCount) || 0), 0),
+    [data.products],
+  );
 
   const navigate = (page) => {
     // Untuk tamu, simpan menu publik yang sedang dibuka sebelum mengarahkan
@@ -1792,6 +1796,7 @@ function App() {
           onLogin={() => goAuthScreen("login")}
           onRegister={() => goAuthScreen("register")}
           totalAccounts={totalAccounts}
+          totalSold={totalSold}
           loading={data.loading}
         />
       );
@@ -2310,7 +2315,7 @@ function App() {
       <section className="cx-hero cx-hero-modern">
         <div className="cx-hero-glow" aria-hidden="true" />
         <div className="cx-container cx-hero-inner">
-          <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia · {data.loading ? "memuat" : `${totalAccounts} akun`}</div>
+          <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia · {data.loading ? "memuat" : `${totalAccounts} akun`} · Berhasil terjual {data.loading ? "memuat" : `${totalSold} akun`}</div>
           <div className="cx-kicker">AKUN INSTAN</div>
           <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
             <p className="cx-seo-only">Jual beli akun Gmail fresh (no-PVA), custom Gmail sesuai nama, akun Google, dan akun digital lainnya dengan harga murah dan proses instan.</p>
