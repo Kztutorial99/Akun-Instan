@@ -19,7 +19,9 @@ import { useTurnstile, Captcha } from "./turnstile.jsx";
 /* ─── helpers ─── */
 export const formatPrice = (v) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(v) || 0);
 export const formatDate = (v) => v ? new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(v)) : "-";
-export const CUSTOM_EMAIL_FEE = 10000;
+export let CUSTOM_EMAIL_FEE = 10000;
+/* Harga diatur admin (menu Custom Email); nilai terbaru datang dari server. */
+export const setCustomEmailFee = (v) => { const n = Number(v); if (Number.isFinite(n) && n >= 0) CUSTOM_EMAIL_FEE = n; };
 export const CUSTOM_EMAIL_STATUS_LABEL = { pending: "Menunggu", processing: "Diproses", done: "Selesai", rejected: "Ditolak" };
 const CUSTOM_EMAIL_MAX = 3;
 export const CUSTOM_GENDER_LABEL = { male: "Laki-laki", female: "Perempuan", other: "Lainnya" };
@@ -1416,7 +1418,7 @@ function App() {
     setData((x) => ({ ...x, loading: true, error: "" }));
     fetch("/api/data")
       .then(async (r) => { const p = await r.json(); if (!r.ok) throw new Error(p.error || "Data tidak tersedia"); return p; })
-      .then((p) => setData({ products: p.products || [], loading: false, error: "" }))
+      .then((p) => { if (p.customEmailFee !== undefined) setCustomEmailFee(p.customEmailFee); setData({ products: p.products || [], loading: false, error: "" }); })
       .catch((e) => setData((x) => ({ ...x, loading: false, error: e.message })));
   };
 
