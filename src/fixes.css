@@ -938,7 +938,7 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   border:1px solid var(--b2); background:rgba(255,255,255,.02);
 }
 .nk-custom-input{ margin-top:7px; gap:8px }
-.nk-custom-input input{ height:42px }
+.nk-custom-input input{ height:34px }
 .cx-topup-page .cx-account-grid{ gap:10px }
 .cx-topup-page .cx-panel{ border-radius:16px }
 
