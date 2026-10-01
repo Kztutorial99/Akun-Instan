@@ -22,7 +22,7 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") {
       const reports = await sql`
         SELECT r.id, r.ticket, r.user_id AS "userId", r.user_name AS "userName", r.user_email AS "userEmail",
-               r.category, r.summary, r.detail, r.urgency, r.status, r.source, r.admin_note AS "adminNote",
+               r.category, r.summary, r.detail, r.urgency, r.status, r.source, r.admin_note AS "adminNote", r.attachments,
                r.created_at AS "createdAt", r.updated_at AS "updatedAt",
                u.balance AS "userBalance", u.status AS "userStatus", u.phone AS "userPhone",
                (SELECT COUNT(*)::int FROM codexa_reports x WHERE x.user_id = r.user_id) AS "userReportCount"

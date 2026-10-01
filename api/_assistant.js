@@ -281,6 +281,8 @@ const userTools = {
       const detail = text(args.detail, 1200);
       const urgency = ["rendah", "sedang", "tinggi"].includes(args.urgency) ? args.urgency : "sedang";
       if (summary.length < 5) return fail("Ringkasan masalah terlalu pendek");
+      // Lampiran (screenshot/video) yang dikirim user di percakapan ini ikut ke laporan.
+      const media = (Array.isArray(ctx.attachments) ? ctx.attachments : []).slice(-8);
 
       // Anti-spam: hanya untuk user terdaftar (sesi admin dibebaskan).
       if (ctx.role !== "admin") {
@@ -296,9 +298,20 @@ const userTools = {
           ORDER BY created_at DESC LIMIT 1
         `;
         if (open.length) {
+          const extra = [summary, detail].filter(Boolean).join(" — ");
+          await ctx.sql`
+            UPDATE codexa_reports
+            SET detail = LEFT(CONCAT(detail, CASE WHEN detail = '' THEN '' ELSE E'\n\n' END, '[Tambahan ', TO_CHAR(NOW() AT TIME ZONE 'Asia/Jakarta', 'DD/MM HH24:MI'), '] ', ${extra}), 4000),
+                attachments = (
+                  SELECT COALESCE(jsonb_agg(DISTINCT x), '[]'::jsonb)
+                  FROM jsonb_array_elements(attachments || ${JSON.stringify(media)}::jsonb) x
+                ),
+                updated_at = NOW()
+            WHERE ticket = ${open[0].ticket}
+          `;
           return ok({
             ticket: open[0].ticket, tersimpan: false, duplikat: true,
-            message: `User sudah punya laporan ${category} yang masih ${open[0].status === "open" ? "menunggu" : "diproses"} (tiket ${open[0].ticket}). Jangan buat laporan baru; minta user menunggu, tambahan info sudah dicatat sebagai bagian tiket itu.`,
+            message: `User sudah punya laporan ${category} yang masih ${open[0].status === "open" ? "menunggu" : "diproses"} (tiket ${open[0].ticket}). Info tambahan & lampiran sudah ditambahkan ke tiket itu di Data Laporan admin. Sampaikan nomor tiketnya ke user.`,
           });
         }
         if (st && st.day >= REPORT_LIMIT_PER_DAY) {
@@ -319,16 +332,17 @@ const userTools = {
 
       await ctx.sql`
         INSERT INTO codexa_reports
-          (id, ticket, user_id, user_name, user_email, category, summary, detail, urgency, status, source)
+          (id, ticket, user_id, user_name, user_email, category, summary, detail, urgency, status, source, attachments)
         VALUES
           (${id}, ${ticket}, ${ownerId}, ${ctx.user.name || ""}, ${ctx.user.email || ""},
-           ${category}, ${summary}, ${detail}, ${urgency}, 'open', 'assistant')
+           ${category}, ${summary}, ${detail}, ${urgency}, 'open', 'assistant', ${JSON.stringify(media)}::jsonb)
       `;
 
       return ok({
         ticket,
         tersimpan: true,
-        message: `Laporan tersimpan dengan nomor tiket ${ticket} dan sudah masuk ke menu Data Laporan admin.`,
+        lampiran: media.length,
+        message: `Laporan tersimpan dengan nomor tiket ${ticket}${media.length ? ` beserta ${media.length} lampiran` : ""} dan sudah masuk ke menu Data Laporan admin.`,
       });
     },
   },
@@ -1296,7 +1310,12 @@ function systemPrompt(ctx) {
     "- Jangan mengarang informasi. Kalau butuh data akun, panggil get_my_account atau get_my_topups.",
     "- Perubahan profil hanya nama dan nomor telepon lewat update_my_profile. Email, saldo, dan status akun tidak bisa diubah dari sini.",
     "",
+    "LAMPIRAN GAMBAR/VIDEO:",
+    "- User bisa mengirim screenshot atau video. Lihat dan analisis isinya dengan teliti (status transaksi, nominal, pesan error, tanggal, dsb) lalu jelaskan apa yang kamu lihat.",
+    "- Kalau lampiran menunjukkan masalah yang butuh admin (bukti transfer, error, akun bermasalah), panggil contact_admin. Lampiran otomatis ikut terkirim ke laporan admin, sebutkan itu ke user.",
+    "",
     "ESKALASI KE ADMIN (penting):",
+    "- WAJIB benar-benar memanggil tool contact_admin. JANGAN PERNAH bilang laporan sudah dikirim atau memberi nomor tiket kalau tool belum dipanggil dan belum mengembalikan ticket.",
     "- Kalau dari percakapan terdeteksi ada masalah yang butuh admin — top up tidak masuk padahal sudah bayar, saldo tidak sesuai, akun suspended/banned, komplain produk, minta refund, atau permintaan di luar kewenanganmu — panggil tool contact_admin dengan ringkasan masalahnya.",
     "- Rangkum sendiri masalahnya dari percakapan. Jangan menyuruh user mengetik ulang keluhannya.",
     "- Setelah terkirim, sampaikan nomor tiketnya ke user dan beri tahu admin akan menindaklanjuti.",
@@ -1351,6 +1370,19 @@ async function callQwen(payload, cfg) {
  * Jalankan satu giliran percakapan.
  * @returns {{reply:string, actions:string[], usage:object}}
  */
+function stripMedia(messages) {
+  let changed = false;
+  messages.forEach((m) => {
+    if (Array.isArray(m.content)) {
+      const textPart = m.content.filter((p) => p.type === "text").map((p) => p.text).join("\n");
+      const n = m.content.length - m.content.filter((p) => p.type === "text").length;
+      m.content = `${textPart}\n[User melampirkan ${n} gambar/video, tapi model tidak bisa melihatnya. Minta user menjelaskan isinya bila perlu.]`;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 async function runAssistant({ ctx, history, onEvent }) {
   const emit = (event) => {
     if (typeof onEvent !== "function") return;
@@ -1369,10 +1401,20 @@ async function runAssistant({ ctx, history, onEvent }) {
   const steps = Math.min(10, Math.max(1, Number(cfg.maxSteps) || MAX_STEPS));
 
   for (let step = 0; step < steps; step += 1) {
-    const data = await callQwen(
-      { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
-      cfg,
-    );
+    let data;
+    try {
+      data = await callQwen(
+        { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
+        cfg,
+      );
+    } catch (error) {
+      // Model tidak mendukung gambar/video → ulangi dengan teks saja.
+      if (!(error && error.status === 400 && stripMedia(messages))) throw error;
+      data = await callQwen(
+        { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
+        cfg,
+      );
+    }
     if (data.usage) {
       usage = {
         prompt_tokens: usage.prompt_tokens + num(data.usage.prompt_tokens),

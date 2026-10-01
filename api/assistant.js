@@ -22,15 +22,75 @@ const { assistantConfig } = require("./_settings");
 const MAX_HISTORY = 24;
 const MAX_CHARS = 4000;
 
+const MAX_MEDIA_BYTES = 20 * 1024 * 1024;
+const BLOB_HOST = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
+
+/** Hanya lampiran yang memang di-upload ke Blob store kita yang diterima. */
+function sanitizeAttachments(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((a) => a && typeof a.url === "string" && BLOB_HOST.test(a.url) && /^(image|video)\//.test(String(a.type || "")))
+    .slice(0, 4)
+    .map((a) => ({
+      url: a.url.slice(0, 500),
+      type: String(a.type).slice(0, 60),
+      name: String(a.name || "").slice(0, 120),
+      size: Math.min(Number(a.size) || 0, MAX_MEDIA_BYTES),
+    }));
+}
+
 function sanitizeHistory(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((m) => m && (m.role === "user" || m.role === "assistant"))
     .map((m) => (typeof m.content === "string"
-      ? { role: m.role, content: m.content.trim().slice(0, MAX_CHARS) }
+      ? {
+        role: m.role,
+        content: m.content.trim().slice(0, MAX_CHARS),
+        attachments: m.role === "user" ? sanitizeAttachments(m.attachments) : [],
+      }
       : null))
-    .filter((m) => m && m.content.length > 0)
+    .filter((m) => m && (m.content.length > 0 || m.attachments.length > 0))
     .slice(-MAX_HISTORY);
+}
+
+/** Ubah history ke format model: lampiran 2 pesan user terakhir dikirim sebagai gambar/video. */
+function toModelHistory(history) {
+  const withMedia = history.map((m, i) => (m.attachments.length ? i : -1)).filter((i) => i >= 0).slice(-2);
+  return history.map((m, i) => {
+    const textContent = m.content || "(user mengirim lampiran tanpa teks)";
+    if (!m.attachments.length) return { role: m.role, content: textContent };
+    if (!withMedia.includes(i)) {
+      return { role: m.role, content: `${textContent}\n[Lampiran sebelumnya: ${m.attachments.length} file]` };
+    }
+    const parts = [{ type: "text", text: `${textContent}\n[User melampirkan ${m.attachments.length} file: ${m.attachments.map((a) => (a.type.startsWith("video/") ? "video" : "gambar")).join(", ")}]` }];
+    m.attachments.forEach((a) => {
+      if (a.type.startsWith("video/")) parts.push({ type: "video_url", video_url: { url: a.url } });
+      else parts.push({ type: "image_url", image_url: { url: a.url } });
+    });
+    return { role: m.role, content: parts };
+  });
+}
+
+/** Token upload langsung ke Vercel Blob — hanya untuk pemanggil yang sudah login. */
+async function handleMediaUpload(request, response, role) {
+  if (!role) return response.status(401).json({ error: "Silakan masuk dulu" });
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return response.status(503).json({ error: "Penyimpanan lampiran belum aktif" });
+  const { handleUpload } = require("@vercel/blob/client");
+  try {
+    const json = await handleUpload({
+      body: bodyOf(request),
+      request,
+      onBeforeGenerateToken: async () => ({
+        allowedContentTypes: ["image/*", "video/*"],
+        maximumSizeInBytes: MAX_MEDIA_BYTES,
+        addRandomSuffix: true,
+      }),
+    });
+    return response.status(200).json(json);
+  } catch (error) {
+    return response.status(400).json({ error: (error && error.message) || "Upload gagal" });
+  }
 }
 
 /** Pesan error yang aman ditampilkan ke user. */
@@ -65,6 +125,12 @@ module.exports = async function handler(request, response) {
       role = "admin";
     }
 
+    const resource = String((request.query && request.query.resource) || "");
+    if (resource === "upload") {
+      if (request.method !== "POST") return response.status(405).json({ error: "Method not allowed" });
+      return handleMediaUpload(request, response, role);
+    }
+
     // GET → info kemampuan assisten untuk pemanggil ini (dipakai UI).
     if (request.method === "GET") {
       if (!role) return response.status(401).json({ error: "Silakan masuk dulu untuk memakai Assisten" });
@@ -74,6 +140,8 @@ module.exports = async function handler(request, response) {
         role,
         model: modelFor(role, cfg),
         streaming: true,
+        attachments: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+        maxMediaMb: 20,
         tools: schemasForRole(role).map((t) => t.function.name),
       });
     }
@@ -105,7 +173,9 @@ module.exports = async function handler(request, response) {
       user: user || { id: "admin", name: "Admin", email: "admin@codexa", phone: "", balance: 0 },
     };
 
-    const history = sanitizeHistory(bodyOf(request).messages);
+    const cleanHistory = sanitizeHistory(bodyOf(request).messages);
+    const history = toModelHistory(cleanHistory);
+    ctx.attachments = cleanHistory.flatMap((m) => m.attachments);
     if (!history.length) return response.status(400).json({ error: "Pesan tidak boleh kosong" });
     if (history[history.length - 1].role !== "user") {
       return response.status(400).json({ error: "Pesan terakhir harus dari user" });

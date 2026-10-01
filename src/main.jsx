@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
+import { MediaGrid, uploadMedia, isVideo, fmtSize, MAX_MEDIA_BYTES, MAX_MEDIA_FILES } from "./media-attach.jsx";
 import {
   ArrowRight, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check,
   CircleHelp, Command, Copy, CreditCard, Eye, EyeOff, ChevronDown,
@@ -8,7 +9,7 @@ import {
   MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, QrCode, Download,
   Search, Settings, ShieldCheck, Lock, ShoppingBag, Trash2, X,
   User, UserPlus, Wallet, Mail, Phone, Clock, Sparkles, Send, Zap, KeyRound,
-  Star,
+  Star, ImagePlus, Play,
 } from "lucide-react";
 import "./styles.css";
 import { applySeo, applyProductSchema, applyProductSeo } from "./seo.js";
@@ -6124,6 +6125,31 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
   const [error, setError] = useState("");
   const scroller = useRef(null);
   const inputRef = useRef(null);
+  const fileRef = useRef(null);
+  // Lampiran yang dipilih tapi belum dikirim: { id, file, preview, type, name, size, progress }
+  const [pending, setPending] = useState([]);
+
+  const pickFiles = (list) => {
+    const files = Array.from(list || []);
+    if (!files.length) return;
+    const room = MAX_MEDIA_FILES - pending.length;
+    const accepted = [];
+    let msg = "";
+    files.forEach((f) => {
+      if (!/^(image|video)\//.test(f.type)) { msg = "Hanya gambar atau video yang bisa dilampirkan."; return; }
+      if (f.size > MAX_MEDIA_BYTES) { msg = `"${f.name}" ${fmtSize(f.size)} — maksimal 20MB per file.`; return; }
+      if (accepted.length >= room) { msg = `Maksimal ${MAX_MEDIA_FILES} lampiran per pesan.`; return; }
+      accepted.push({ id: `${Date.now()}-${Math.random()}`, file: f, preview: URL.createObjectURL(f), type: f.type, name: f.name, size: f.size, progress: 0 });
+    });
+    setError(msg);
+    if (accepted.length) setPending((p) => [...p, ...accepted]);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+  const removePending = (id) => setPending((p) => {
+    const x = p.find((a) => a.id === id);
+    if (x) URL.revokeObjectURL(x.preview);
+    return p.filter((a) => a.id !== id);
+  });
 
   const loadInfo = () => {
     setInfo((s) => ({ ...s, loading: true, error: "" }));
@@ -6150,12 +6176,26 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
 
   const send = async (raw) => {
     const content = String(raw == null ? draft : raw).trim();
-    if (!content || busy) return;
-    const next = [...messages, { role: "user", content }];
-    setMessages(next);
-    setDraft("");
+    const files = raw == null ? pending : [];
+    if ((!content && !files.length) || busy) return;
     setBusy(true);
     setError("");
+    let attachments = [];
+    if (files.length) {
+      try {
+        attachments = await Promise.all(files.map((f) => uploadMedia(f.file, apiUrl, (pct) =>
+          setPending((p) => p.map((a) => (a.id === f.id ? { ...a, progress: pct } : a))))));
+      } catch (e) {
+        setError(`Gagal mengunggah lampiran: ${e.message || "coba lagi"}`);
+        setBusy(false);
+        return;
+      }
+      files.forEach((f) => URL.revokeObjectURL(f.preview));
+      setPending([]);
+    }
+    const next = [...messages, { role: "user", content, attachments }];
+    setMessages(next);
+    setDraft("");
     setLive({ notes: [], steps: [] });
     const pushNote = (text) => setLive((s) => ({ ...s, notes: [...s.notes, text] }));
     const startTool = (name) =>
@@ -6175,7 +6215,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.content })), stream: true }),
+        body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.content, attachments: m.attachments || [] })), stream: true }),
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
@@ -6337,13 +6377,16 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
                     {m.notes.map((n, j) => <p key={j}><Check size={9} />{n}</p>)}
                   </div>
                 )}
-                <div className="cx-ai-bubble">
+                {m.role === "user" && m.attachments && m.attachments.length > 0 && (
+                  <MediaGrid items={m.attachments} className="cx-ai-media" />
+                )}
+                {(m.role === "assistant" || m.content) && <div className="cx-ai-bubble">
                   {m.role === "assistant"
                     ? m.typing
                       ? <TypeOut text={m.content} onTick={() => { if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight; }} onDone={() => setMessages((all) => all.map((x, k) => (k === i ? { ...x, typing: false } : x)))} />
                       : <RichText text={m.content} />
                     : m.content}
-                </div>
+                </div>}
                 {m.role === "assistant" && !m.typing && m.actions && m.actions.length > 0 && (
                   <div className="cx-ai-actions">
                     {m.actions.map((a, j) => <span key={j}><Check size={9} />{a}</span>)}
@@ -6377,19 +6420,44 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
 
           {!guest && !info.loading && !info.error && info.available && (
             <div className="cx-ai-composer-wrap">
+              {pending.length > 0 && (
+                <div className="cx-ai-pending">
+                  {pending.map((a) => (
+                    <div key={a.id} className="cx-ai-pending-item">
+                      {isVideo(a)
+                        ? <><video src={a.preview} muted playsInline preload="metadata" /><span className="cx-media-play sm"><Play size={10} /></span></>
+                        : <img src={a.preview} alt={a.name} />}
+                      <small>{fmtSize(a.size)}</small>
+                      {busy && <span className="cx-ai-pending-bar"><i style={{ width: `${a.progress || 0}%` }} /></span>}
+                      {!busy && <button type="button" onClick={() => removePending(a.id)} aria-label="Hapus lampiran"><X size={10} /></button>}
+                    </div>
+                  ))}
+                </div>
+              )}
               <form
                 className="cx-ai-composer"
                 onSubmit={(e) => { e.preventDefault(); send(); }}
               >
+                <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => pickFiles(e.target.files)} />
+                <button
+                  type="button"
+                  className="cx-ai-attach"
+                  onClick={() => fileRef.current && fileRef.current.click()}
+                  disabled={busy || pending.length >= MAX_MEDIA_FILES}
+                  aria-label="Lampirkan gambar atau video"
+                  title="Lampirkan gambar/video (maks 20MB)"
+                >
+                  <ImagePlus size={14} />
+                </button>
                 <input
                   ref={inputRef}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder={isAdminMode ? "Perintah untuk Assisten admin..." : "Tanya apa saja soal akunmu..."}
+                  placeholder={pending.length ? "Tambahkan keterangan (opsional)..." : isAdminMode ? "Perintah untuk Assisten admin..." : "Tanya atau kirim screenshot..."}
                   maxLength={2000}
                   disabled={busy}
                 />
-                <button type="submit" className="cx-ai-send" disabled={busy || !draft.trim()} aria-label="Kirim">
+                <button type="submit" className="cx-ai-send" disabled={busy || (!draft.trim() && !pending.length)} aria-label="Kirim">
                   {busy ? <RefreshCw size={13} /> : <Send size={13} />}
                 </button>
               </form>

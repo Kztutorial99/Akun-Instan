@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AlertTriangle, CheckCircle2, ClipboardList, Clock, Flame, Inbox, Loader2, MessageSquareText, RefreshCw, Search, ShieldAlert, Trash2, User, Wallet,
+  AlertTriangle, CheckCircle2, ClipboardList, Clock, Flame, Inbox, Loader2, MessageSquareText, RefreshCw, Search, ShieldAlert, Paperclip, Trash2, User, Wallet,
 } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
+import { MediaGrid } from "./media-attach.jsx";
 
 const STATUS = {
   open: { label: "Baru", cls: "open" },
@@ -171,6 +172,7 @@ export default function ReportsPage({ onNotice }) {
                 <code>{r.ticket}</code>
                 <span className="cx-rp-cat">{CAT_LABEL[r.category] || r.category}</span>
                 {r.urgency === "tinggi" && <span className="cx-rp-urg"><Flame size={10} /> Tinggi</span>}
+                {Array.isArray(r.attachments) && r.attachments.length > 0 && <span className="cx-rp-att"><Paperclip size={10} /> {r.attachments.length}</span>}
                 <span className="cx-rp-time">{timeAgo(r.createdAt)}</span>
               </button>
               <p className="cx-rp-summary">{r.summary}</p>
@@ -181,6 +183,12 @@ export default function ReportsPage({ onNotice }) {
               {expanded && (
                 <div className="cx-rp-body">
                   {r.detail && <div className="cx-rp-detail"><MessageSquareText size={11} /><span>{r.detail}</span></div>}
+                  {Array.isArray(r.attachments) && r.attachments.length > 0 && (
+                    <div className="cx-rp-media">
+                      <div className="cx-rp-media-head"><Paperclip size={11} /> Lampiran dari user ({r.attachments.length})</div>
+                      <MediaGrid items={r.attachments} />
+                    </div>
+                  )}
                   <div className="cx-rp-facts">
                     <span>Saldo: <b>{rupiah(r.userBalance)}</b></span>
                     <span>Status akun: <b>{r.userStatus || "-"}</b></span>

@@ -73,6 +73,7 @@ async function ensureTablesUncached(sql) {
   await Promise.all([
     sql`CREATE INDEX IF NOT EXISTS codexa_reports_user_idx ON codexa_reports (user_id, created_at DESC)`,
     sql`CREATE INDEX IF NOT EXISTS codexa_reports_status_idx ON codexa_reports (status, created_at DESC)`,
+    sql`ALTER TABLE codexa_reports ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb`,
     sql`ALTER TABLE codexa_users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`,
     sql`ALTER TABLE codexa_users ADD COLUMN IF NOT EXISTS note TEXT NOT NULL DEFAULT ''`,
     sql`ALTER TABLE codexa_users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'`,
