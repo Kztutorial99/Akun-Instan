@@ -30,4 +30,7 @@ Disallow: /topup
 Disallow: /login
 Disallow: /register
 
+Allow: /keamanan.html
+Allow: /llms.txt
+
 Sitemap: https://akuninstan.com/sitemap.xml
