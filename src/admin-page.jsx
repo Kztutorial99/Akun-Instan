@@ -58,6 +58,7 @@ function AdminPage({ onBack, onNotice }) {
 
 
   const [orders, setOrders]               = useState([]);
+  const [salesSummary, setSalesSummary]   = useState({ accounts: 0, revenue: 0 });
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [refreshing, setRefreshing]       = useState(false);
   const [headerMenu, setHeaderMenu]       = useState("");
@@ -445,7 +446,7 @@ function AdminPage({ onBack, onNotice }) {
   const loadOrders = () => {
     setOrdersLoading(true);
     return jsonRequest("/api/orders?scope=admin", { method: "GET" })
-      .then((p) => setOrders(p.orders || []))
+      .then((p) => { setOrders(p.orders || []); setSalesSummary(p.salesSummary || { accounts: 0, revenue: 0 }); })
       .catch((e) => setApiError(e.message))
       .finally(() => setOrdersLoading(false));
   };
@@ -470,6 +471,7 @@ function AdminPage({ onBack, onNotice }) {
       try {
         await jsonRequest("/api/orders?scope=admin", { method: "DELETE", body: JSON.stringify({ id }) });
         setOrders((list) => list.filter((o) => o.id !== id));
+        await loadOrders();
         onNotice("Pesanan dihapus");
       } catch (e) { setApiError(e.message); }
     });
@@ -731,8 +733,8 @@ function AdminPage({ onBack, onNotice }) {
 
   /* stats */
   const totalProducts = listings.length;
-  const totalSold     = listings.filter((l) => l.status === "sold").length;
-  const revenue       = listings.filter((l) => l.status === "sold").reduce((a, l) => a + (Number(l.price) || 0), 0);
+  const totalSold     = salesSummary.accounts;
+  const revenue       = salesSummary.revenue;
   const lowStock      = listings.filter((l) => Number(l.stock) <= 3 && l.status !== "sold").length;
 
   /* login screen */
@@ -1234,7 +1236,7 @@ function AdminPage({ onBack, onNotice }) {
               <div className="cx-stat-grid">
                 {[
                   { label: "Total Produk", value: totalProducts, delta: `${listings.length} listing`, up: true },
-                  { label: "Terjual",      value: totalSold,     delta: "dari total listing", up: totalSold > 0 },
+                  { label: "Terjual",      value: totalSold,     delta: "akun dibeli user", up: totalSold > 0 },
                   { label: "Revenue",      value: formatPrice(revenue), delta: "akumulasi terjual", up: revenue > 0 },
                   { label: "Stok Menipis", value: lowStock,      delta: "perlu restock", up: false },
                 ].map(({ label, value, delta, up }) => (

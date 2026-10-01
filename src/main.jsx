@@ -5324,7 +5324,7 @@ function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
           <ul className="cx-profile-list">
             <li><Mail size={13} /><span>Email</span><strong>{user.email}</strong></li>
             <li>
-              <ProviderIcon type={user.provider === "google" ? "google" : "email/password"} size={13} />
+              <LogIn size={13} aria-hidden="true" />
               <span>Daftar via</span>
               <strong>{user.provider === "google" ? "Google" : "Email & password"}</strong>
             </li>

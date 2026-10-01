@@ -536,6 +536,23 @@ async function handleAdmin(sql, request, response) {
         customByOrder.set(c.orderId, list);
       }
     } catch (_) { customByOrder = new Map(); }
+    // Ringkasan dari seluruh pesanan lunas, bukan dari status listing (produk
+    // etalase juga berstatus sold) atau hanya 100 pesanan yang ditampilkan.
+    // Jumlahkan harga akun yang benar-benar dibeli, tanpa biaya email kustom.
+    const paidRows = await sql`SELECT payload_blob AS "payloadBlob" FROM codexa_orders WHERE status = 'paid'`;
+    const salesSummary = { accounts: 0, revenue: 0 };
+    for (const paid of paidRows) {
+      try {
+        const items = (decryptCredentials(paid.payloadBlob) || {}).items || [];
+        for (const item of items) {
+          if (/^(etl-|demo-)/.test(String(item.listingId || ""))) continue;
+          for (const account of (item.accounts || [])) {
+            salesSummary.accounts += 1;
+            salesSummary.revenue += Number(account.price) || 0;
+          }
+        }
+      } catch (error) { console.error("Sales summary order unreadable", error && error.message); }
+    }
     const orders = rows.map((row) => {
       let items = [];
       try { items = (decryptCredentials(row.payloadBlob) || {}).items || []; } catch (_) { items = []; }
@@ -561,7 +578,7 @@ async function handleAdmin(sql, request, response) {
         })),
       };
     });
-    return response.status(200).json({ orders });
+    return response.status(200).json({ orders, salesSummary });
   }
   if (request.method === "PATCH") {
     // Update status / password / catatan permintaan custom email dari panel admin.
