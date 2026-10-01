@@ -1698,3 +1698,9 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-install-admin:hover{background:rgba(34,197,94,.2)}
 .cx-fee-input{height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--b1,rgba(255,255,255,.12));background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px;outline:none}
 .cx-fee-input:focus{border-color:rgba(34,197,94,.5)}
+/* Tombol Install Aplikasi (toko) */
+.cx-install-app{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.12);color:#4ade80;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.cx-install-app:hover{background:rgba(34,197,94,.2)}
+.cx-install-app.is-compact{padding:0 10px}
+.cx-install-drawer{display:flex;width:100%;height:40px;margin:12px 0 10px}
+@media (max-width:420px){.cx-land-top-auth .cx-install-app.is-compact span{display:none}.cx-land-top-auth .cx-install-app.is-compact{width:34px;padding:0}}
