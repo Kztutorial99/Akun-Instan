@@ -804,6 +804,7 @@ function PublicTopbar({ navigate, onLogin, onRegister, activePage }) {
             ))}
           </nav>
           <div className="cx-land-top-auth">
+            <InstallAppButton compact label="Install" />
             <button className="cx-btn cx-btn-ghost" onClick={onLogin}><LogIn size={13} /> Masuk</button>
             <button className="cx-btn cx-btn-primary" onClick={onRegister}><UserPlus size={13} /> Daftar</button>
           </div>
@@ -3042,6 +3043,8 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
               )}
             </nav>
 
+            <InstallAppButton className="cx-install-drawer" label="Install Aplikasi" />
+
             <div className="cx-drawer-user">
               <UserAvatar user={user} className="cx-avatar-lg" />
               <div className="cx-drawer-user-copy">
@@ -3055,6 +3058,44 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
         document.body
       )}
     </header>
+  );
+}
+
+/* Tombol "Install Aplikasi": memakai pemasangan bawaan browser (PWA).
+   Event beforeinstallprompt ditangkap lebih awal di index.html. */
+function useInstallApp() {
+  const [evt, setEvt] = useState(() => (typeof window !== "undefined" ? window.__aiInstallPrompt || null : null));
+  const [installed, setInstalled] = useState(() => typeof window !== "undefined" && !!window.matchMedia && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true));
+  useEffect(() => {
+    const onReady = () => setEvt(window.__aiInstallPrompt || null);
+    const onDone = () => { setInstalled(true); setEvt(null); };
+    window.addEventListener("ai-install-ready", onReady);
+    window.addEventListener("appinstalled", onDone);
+    return () => { window.removeEventListener("ai-install-ready", onReady); window.removeEventListener("appinstalled", onDone); };
+  }, []);
+  const install = async () => {
+    const e = evt || window.__aiInstallPrompt;
+    if (e) {
+      e.prompt();
+      try { const r = await e.userChoice; if (r && r.outcome === "accepted") setInstalled(true); } catch (_) {}
+      window.__aiInstallPrompt = null; setEvt(null);
+      return;
+    }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    window.alert(ios
+      ? "Cara install di iPhone:\n1. Tekan tombol Bagikan (Share) di Safari.\n2. Pilih 'Tambah ke Layar Utama'."
+      : "Cara install:\nBuka menu browser (titik tiga di pojok kanan atas), lalu pilih 'Instal aplikasi' atau 'Tambahkan ke layar utama'.");
+  };
+  return { installed, install };
+}
+
+function InstallAppButton({ className = "", label = "Install Aplikasi", compact = false }) {
+  const { installed, install } = useInstallApp();
+  if (installed) return null;
+  return (
+    <button type="button" className={`cx-install-app${compact ? " is-compact" : ""} ${className}`} onClick={install} aria-label="Install aplikasi Akun Instan" title="Install aplikasi Akun Instan">
+      <Download size={13} /> <span>{label}</span>
+    </button>
   );
 }
 
