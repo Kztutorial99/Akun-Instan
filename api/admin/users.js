@@ -18,14 +18,14 @@ module.exports = async function handler(request, response) {
       await ensureNotificationTables(sql);
       if (request.method === "GET") {
         const history = await sql`
-          SELECT title, body, type, link, MIN(created_at) AS "createdAt", COUNT(*)::int AS recipients,
-                 COUNT(read_at)::int AS "readCount",
+          SELECT n.title, n.body, n.type, n.link, MIN(n.created_at) AS "createdAt", COUNT(*)::int AS recipients,
+                 COUNT(n.read_at)::int AS "readCount",
                  CASE WHEN COUNT(*) = 1 THEN MAX(u.email) ELSE NULL END AS "toEmail",
                  CASE WHEN COUNT(*) = 1 THEN MAX(u.name) ELSE NULL END AS "toName"
           FROM codexa_notifications n LEFT JOIN codexa_users u ON u.id = n.user_id
           WHERE n.type IN ('admin_msg','admin_info','admin_promo','admin_warn')
-          GROUP BY title, body, type, link, date_trunc('second', n.created_at)
-          ORDER BY MIN(created_at) DESC LIMIT 40
+          GROUP BY n.title, n.body, n.type, n.link, date_trunc('second', n.created_at)
+          ORDER BY MIN(n.created_at) DESC LIMIT 40
         `;
         return response.status(200).json({ history });
       }
@@ -37,7 +37,7 @@ module.exports = async function handler(request, response) {
         const link = ["", "katalog", "topup", "orders", "reports", "notifications"].includes(body.link) ? body.link : "";
         if (title.length < 2) return response.status(400).json({ error: "Judul wajib diisi" });
         if (body.target === "all") {
-          const sent = await broadcastNotification(sql, { type: kind, title, body: message, link, statuses: ["active"] });
+          const sent = await broadcastNotification(sql, { type: kind, title, body: message, link, statuses: null });
           return response.status(200).json({ ok: true, sent });
         }
         const ids = (Array.isArray(body.userIds) ? body.userIds : []).map((v) => text(v, 80)).filter(Boolean).slice(0, 200);
