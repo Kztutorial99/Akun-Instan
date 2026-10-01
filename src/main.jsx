@@ -2836,7 +2836,7 @@ function NotificationBell({ navigate, activePage }) {
     <div className="cx-notif">
       <button className="cx-notif-trigger" onClick={toggle} aria-label="Notifikasi">
         <Bell size={14} />
-        {unread > 0 && <b>{unread > 9 ? "9+" : unread}</b>}
+        {unread > 0 && <b aria-hidden="true" />}
       </button>
       {open && (
         <>
