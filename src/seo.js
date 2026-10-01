@@ -99,6 +99,7 @@ const PAGE_SEO = {
   refund: { path: "/refund", title: "Kebijakan Refund | Akun Instan", description: "Ketentuan pengembalian dana dan garansi produk akun digital Akun Instan." },
   disclaimer: { path: "/disclaimer", title: "Disclaimer | Akun Instan", description: "Disclaimer layanan Akun Instan." },
   orders: { path: "/orders", title: "Pesanan Saya | Akun Instan", description: "Riwayat pesanan akun digital kamu di Akun Instan.", noindex: true },
+  reports: { path: "/reports", title: "Laporan Saya | Akun Instan", description: "Status laporan dan balasan admin untuk akun Akun Instan kamu.", noindex: true },
   account: { path: "/account", title: "Akun Saya | Akun Instan", description: "Kelola profil dan saldo akun Akun Instan kamu.", noindex: true },
   admin: { path: "/admin", title: "Admin | Akun Instan", description: "Panel admin Akun Instan.", noindex: true },
   login: { path: "/login", title: "Masuk ke Akun Instan", description: "Masuk ke akun Akun Instan untuk mengakses katalog, saldo, dan riwayat pesanan kamu.", noindex: true },

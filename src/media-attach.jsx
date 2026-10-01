@@ -13,7 +13,7 @@ export const fmtSize = (n) => {
 };
 
 /** Upload satu file langsung ke Vercel Blob (tidak lewat batas 4.5MB function). */
-export async function uploadMedia(file, apiUrl, onProgress) {
+export async function uploadMedia(file, apiUrl, onProgress, abortSignal) {
   const { upload } = await import("@vercel/blob/client");
   const sep = apiUrl.includes("?") ? "&" : "?";
   const clean = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(-60) || "file";
@@ -21,6 +21,8 @@ export async function uploadMedia(file, apiUrl, onProgress) {
     access: "public",
     handleUploadUrl: `${apiUrl}${sep}resource=upload`,
     contentType: file.type,
+    multipart: file.size >= 4 * 1024 * 1024,
+    abortSignal,
     onUploadProgress: onProgress ? (e) => onProgress(e.percentage) : undefined,
   });
   return { url: blob.url, type: file.type, name: file.name.slice(0, 120), size: file.size };

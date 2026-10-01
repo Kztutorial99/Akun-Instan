@@ -93,11 +93,49 @@ async function handleMediaUpload(request, response, role) {
   }
 }
 
+const REPORT_LIMIT = 3;
+const REPORT_COOLDOWN_MIN = 10;
+
+async function reportQuota(sql, user) {
+  if (!user) return null;
+  const [st] = await sql`
+    SELECT COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')::int AS day,
+           MAX(created_at) AS last,
+           MIN(created_at) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours') AS first
+    FROM codexa_reports WHERE user_id = ${user.id}
+  `;
+  const used = (st && st.day) || 0;
+  const now = Date.now();
+  let waitMin = 0;
+  if (st && st.last) {
+    const left = REPORT_COOLDOWN_MIN * 60000 - (now - new Date(st.last).getTime());
+    if (left > 0) waitMin = Math.ceil(left / 60000);
+  }
+  if (used >= REPORT_LIMIT && st && st.first) {
+    const left = 24 * 3600000 - (now - new Date(st.first).getTime());
+    if (left > 0) waitMin = Math.max(waitMin, Math.ceil(left / 60000));
+  }
+  return { limit: REPORT_LIMIT, used, remaining: Math.max(0, REPORT_LIMIT - used), waitMin };
+}
+
+async function handleMyReports(sql, user, response) {
+  if (!user) return response.status(401).json({ error: "Silakan masuk dulu" });
+  const rows = await sql`
+    SELECT ticket, category, summary, detail, urgency, status, admin_note AS "adminNote",
+           attachments, created_at AS "createdAt", updated_at AS "updatedAt"
+    FROM codexa_reports WHERE user_id = ${user.id}
+    ORDER BY created_at DESC LIMIT 100
+  `;
+  response.setHeader("Cache-Control", "no-store");
+  return response.status(200).json({ reports: rows, quota: await reportQuota(sql, user) });
+}
+
 /** Pesan error yang aman ditampilkan ke user. */
 function errorMessage(error) {
   const message = (error && error.message) || "";
   if (/QWEN_API_KEY/.test(message)) return "Assisten belum dikonfigurasi. Cek Admin Panel → Assisten.";
   if (/DATABASE_URL/.test(message)) return "Database belum terhubung. Hubungi admin.";
+  if (error && error.status === 504) return "AI terlalu lama merespons, coba kirim lagi.";
   if (error && error.status === 429) return "Assisten sedang sibuk, coba lagi beberapa saat.";
   if (error && (error.status === 401 || error.status === 403)) return "API key Assisten ditolak penyedia AI. Hubungi admin.";
   return "Assisten sedang bermasalah, coba lagi.";
@@ -131,6 +169,11 @@ module.exports = async function handler(request, response) {
       return handleMediaUpload(request, response, role);
     }
 
+    if (resource === "reports") {
+      if (request.method !== "GET") return response.status(405).json({ error: "Method not allowed" });
+      return handleMyReports(sql, user, response);
+    }
+
     // GET → info kemampuan assisten untuk pemanggil ini (dipakai UI).
     if (request.method === "GET") {
       if (!role) return response.status(401).json({ error: "Silakan masuk dulu untuk memakai Assisten" });
@@ -142,6 +185,7 @@ module.exports = async function handler(request, response) {
         streaming: true,
         attachments: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
         maxMediaMb: 20,
+        reportQuota: role === "user" ? await reportQuota(sql, user) : null,
         tools: schemasForRole(role).map((t) => t.function.name),
       });
     }

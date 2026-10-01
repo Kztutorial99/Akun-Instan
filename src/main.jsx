@@ -1038,7 +1038,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
 /* ═══════════════════════════════════════════════════
    APP ROOT
 ════════════════════════════════════════════════════ */
-const PAGE_PATHS = ["admin", "katalog", "orders", "help", "faq", "cara-beli", "account", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
+const PAGE_PATHS = ["admin", "katalog", "orders", "reports", "help", "faq", "cara-beli", "account", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 // Halaman publik: bisa dibuka tanpa login dan boleh di-crawl Google.
 export const PUBLIC_PAGES = ["store", "katalog", "custom-email", "help", "faq", "cara-beli", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 const PAGE_LABELS = {
@@ -2029,6 +2029,7 @@ function App() {
         guest={guest}
         onLogin={() => goAuthScreen("login")}
         onRegister={() => goAuthScreen("register")}
+        onOpenReports={() => navigate("reports")}
       />
 
       {checkout.order && (
@@ -2093,6 +2094,18 @@ function App() {
   );
 
   /* ── simple pages ── */
+  if (activePage === "reports") return (
+    <div className={shellClass}>
+      {topbar}
+      <Suspense fallback={<div className="cx-container cx-ur-loading">Memuat laporan...</div>}>
+        <UserReportsPage guest={guest} onLogin={() => goAuthScreen("login")} onAskAssistant={() => setAiOpen(true)} />
+      </Suspense>
+      <StoreFooter navigate={navigate} guest={guest} />
+      {tabbar}
+      {overlays}
+    </div>
+  );
+
   if (activePage === "orders") return (
     <div className={shellClass}>
       {topbar}
@@ -2916,6 +2929,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
     ["katalog", "Katalog Produk", ShoppingBag],
     ["custom-email", "Custom Email", Mail],
     ["orders", "Pesanan Saya", Package],
+    ...(user ? [["reports", "Laporan", FileText]] : []),
     ["topup", "Top Up Saldo", CreditCard],
     ["help", "Bantuan", CircleHelp],
   ];
@@ -2989,6 +3003,9 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                   </button>
                   <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("orders"); }}>
                     <Package size={13} /> Pesanan saya
+                  </button>
+                  <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("reports"); }}>
+                    <FileText size={13} /> Laporan saya
                   </button>
                   <button className="cx-account-item cx-account-item-danger" onClick={onLogout}>
                     <LogOut size={13} /> Keluar
@@ -4412,6 +4429,7 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
    ADMIN PAGE  —  LinearPro sidebar layout
 ════════════════════════════════════════════════════ */
 const AdminPage = lazy(() => import("./admin-page.jsx"));
+const UserReportsPage = lazy(() => import("./user-reports-page.jsx"));
 
 /* ═══════════════════════════════════════════════════
    WELCOME / LANDING PAGE (entry point untuk guest)
@@ -6106,7 +6124,7 @@ function toolLabel(name) {
     .replace(/_/g, " ");
 }
 
-export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false, scope = "", guest = false, onLogin, onRegister }) {
+export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false, scope = "", guest = false, onLogin, onRegister, onOpenReports }) {
   const apiUrl = scope === "admin" ? "/api/assistant?scope=admin" : "/api/assistant";
   const controlled = typeof openProp === "boolean";
   const [openState, setOpenState] = useState(false);
@@ -6159,8 +6177,15 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
         if (!r.ok) throw new Error(p.error || "Assisten tidak tersedia");
         return p;
       })
-      .then((p) => setInfo({ loading: false, role: p.role, available: p.available, model: p.model || "", reason: p.reason || "", error: "" }))
+      .then((p) => setInfo({ loading: false, role: p.role, available: p.available, model: p.model || "", reason: p.reason || "", error: "", reportQuota: p.reportQuota || null }))
       .catch((e) => setInfo({ loading: false, role: "", available: false, model: "", reason: "", error: e.message }));
+  };
+
+  const loadQuota = () => {
+    fetch("/api/assistant?resource=reports", { credentials: "same-origin" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => { if (p && p.quota) setInfo((s) => ({ ...s, reportQuota: p.quota })); })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -6174,28 +6199,49 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
 
   const isAdminMode = info.role === "admin";
 
+  const uploadAbort = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const cancelUpload = () => { if (uploadAbort.current) uploadAbort.current.abort(); };
+
   const send = async (raw) => {
     const content = String(raw == null ? draft : raw).trim();
     const files = raw == null ? pending : [];
     if ((!content && !files.length) || busy) return;
     setBusy(true);
     setError("");
+    // Pesan langsung tampil (pakai pratinjau lokal) sambil lampiran diunggah.
+    const base = messages;
+    const localAtt = files.map((f) => ({ preview: f.preview, type: f.type, name: f.name, size: f.size }));
+    setMessages([...base, { role: "user", content, attachments: localAtt, uploading: files.length > 0 }]);
+    setDraft("");
     let attachments = [];
     if (files.length) {
+      const ctrl = new AbortController();
+      uploadAbort.current = ctrl;
+      setUploading(true);
       try {
-        attachments = await Promise.all(files.map((f) => uploadMedia(f.file, apiUrl, (pct) =>
-          setPending((p) => p.map((a) => (a.id === f.id ? { ...a, progress: pct } : a))))));
+        for (const f of files) {
+          const up = await uploadMedia(f.file, apiUrl, (pct) =>
+            setPending((p) => p.map((x) => (x.id === f.id ? { ...x, progress: pct } : x))), ctrl.signal);
+          attachments.push(up);
+        }
       } catch (e) {
-        setError(`Gagal mengunggah lampiran: ${e.message || "coba lagi"}`);
+        const aborted = ctrl.signal.aborted;
+        setError(aborted ? "Upload dibatalkan. Lampiran masih tersimpan, bisa dikirim ulang." : `Gagal mengunggah lampiran: ${e.message || "coba lagi"}. Lampiran masih tersimpan, coba kirim lagi.`);
+        setMessages(base);
+        setDraft(content);
+        setPending((p) => p.map((x) => ({ ...x, progress: 0 })));
         setBusy(false);
+        setUploading(false);
+        uploadAbort.current = null;
         return;
       }
-      files.forEach((f) => URL.revokeObjectURL(f.preview));
+      uploadAbort.current = null;
+      setUploading(false);
       setPending([]);
     }
-    const next = [...messages, { role: "user", content, attachments }];
+    const next = [...base, { role: "user", content, attachments }];
     setMessages(next);
-    setDraft("");
     setLive({ notes: [], steps: [] });
     const pushNote = (text) => setLive((s) => ({ ...s, notes: [...s.notes, text] }));
     const startTool = (name) =>
@@ -6262,6 +6308,8 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
     } finally {
       setLive({ notes: [], steps: [] });
       setBusy(false);
+      files.forEach((f) => URL.revokeObjectURL(f.preview));
+      if (raw == null && !scope) loadQuota();
       if (inputRef.current) inputRef.current.focus();
     }
   };
@@ -6305,8 +6353,19 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
                 {isAdminMode ? "Admin" : "User"}
               </span>
             )}
+            {!guest && !info.loading && !info.error && !isAdminMode && onOpenReports && (
+              <button type="button" className="cx-ai-report-btn" onClick={() => { setOpen(false); onOpenReports(); }} title="Lihat laporan saya">
+                <FileText size={11} /> Laporan
+              </button>
+            )}
             <button className="cx-icon-btn" onClick={() => setOpen(false)} aria-label="Tutup"><X size={13} /></button>
           </div>
+          {!guest && !info.loading && !info.error && info.available && !isAdminMode && info.reportQuota && (
+            <div className={`cx-ai-quota${info.reportQuota.remaining === 0 || info.reportQuota.waitMin > 0 ? " warn" : ""}`}>
+              <span>Kirim laporan ke admin: <b>{info.reportQuota.remaining}/{info.reportQuota.limit}</b> tersisa (24 jam)</span>
+              {info.reportQuota.waitMin > 0 && <span>· bisa lagi ±{info.reportQuota.waitMin >= 60 ? `${Math.ceil(info.reportQuota.waitMin / 60)} jam` : `${info.reportQuota.waitMin} mnt`}</span>}
+            </div>
+          )}
 
           <div className="cx-ai-body" ref={scroller}>
             {guest ? (
@@ -6378,8 +6437,9 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
                   </div>
                 )}
                 {m.role === "user" && m.attachments && m.attachments.length > 0 && (
-                  <MediaGrid items={m.attachments} className="cx-ai-media" />
+                  <MediaGrid items={m.attachments} className={`cx-ai-media${m.uploading ? " is-uploading" : ""}`} />
                 )}
+                {m.uploading && <small className="cx-ai-upnote"><RefreshCw size={9} className="cx-spin" /> Mengunggah lampiran...</small>}
                 {(m.role === "assistant" || m.content) && <div className="cx-ai-bubble">
                   {m.role === "assistant"
                     ? m.typing
@@ -6395,7 +6455,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
               </div>
             ))}
 
-            {busy && (
+            {busy && !uploading && (
               <div className="cx-ai-msg assistant">
                 {live.notes.map((n, i) => (
                   <div className="cx-ai-bubble" key={`n${i}`}><RichText text={n} /></div>
@@ -6457,9 +6517,15 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
                   maxLength={2000}
                   disabled={busy}
                 />
-                <button type="submit" className="cx-ai-send" disabled={busy || (!draft.trim() && !pending.length)} aria-label="Kirim">
-                  {busy ? <RefreshCw size={13} /> : <Send size={13} />}
-                </button>
+                {uploading ? (
+                  <button type="button" className="cx-ai-send cancel" onClick={cancelUpload} aria-label="Batalkan upload" title="Batalkan upload">
+                    <X size={13} />
+                  </button>
+                ) : (
+                  <button type="submit" className="cx-ai-send" disabled={busy || (!draft.trim() && !pending.length)} aria-label="Kirim">
+                    {busy ? <RefreshCw size={13} className="cx-spin" /> : <Send size={13} />}
+                  </button>
+                )}
               </form>
             </div>
           )}

@@ -1351,11 +1351,23 @@ async function callQwen(payload, cfg) {
   const c = configOf(cfg);
   const key = c.apiKey;
   if (!key) throw new Error("QWEN_API_KEY belum dikonfigurasi");
-  const res = await fetch(`${baseUrl(c)}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  let res;
+  try {
+    res = await fetch(`${baseUrl(c)}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    const err = new Error(e && e.name === "AbortError" ? "Timeout menunggu AI" : (e && e.message) || "fetch gagal");
+    err.status = 504;
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
   const data = await res.json().catch(() => null);
   if (!res.ok || !data || data.error) {
     const message = (data && data.error && data.error.message) || `HTTP ${res.status}`;

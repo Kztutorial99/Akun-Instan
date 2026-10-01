@@ -8,6 +8,9 @@
     },
     "api/topup.js": {
       "maxDuration": 60
+    },
+    "api/assistant.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
