@@ -13,7 +13,7 @@ async function handleNotifications(sql, user, request, response) {
       const rows = await sql`
         SELECT id, type, title, body, link, read_at AS "readAt", created_at AS "createdAt"
         FROM codexa_notifications WHERE user_id = ${user.id}
-        ORDER BY created_at DESC LIMIT 30
+        ORDER BY created_at DESC LIMIT ${request.query && request.query.all ? 200 : 30}
       `;
       const [agg] = await sql`
         SELECT COUNT(*)::int AS unread FROM codexa_notifications

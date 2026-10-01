@@ -23,8 +23,6 @@ const { extraUserTools, extraAdminTools } = require("./_assistant_extra");
 const { escapeHtml, rupiah, waktuWib } = require("./_format");
 
 /* Batas laporan per user supaya tidak spam. */
-const REPORT_LIMIT_PER_DAY = 3;
-const REPORT_COOLDOWN_MIN = 10;
 
 const DEFAULT_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 const MAX_STEPS = 6;
@@ -257,7 +255,7 @@ const userTools = {
     schema: {
       name: "contact_admin",
       description:
-        "Kirim laporan/eskalasi ke menu Data Laporan di admin panel. Ada batas anti-spam (maks 3 laporan/24 jam, jeda 10 menit, laporan serupa yang masih terbuka tidak dibuat ulang); kalau ditolak, jelaskan alasannya ke user dengan sopan. WAJIB dipakai ketika user punya masalah yang tidak bisa kamu selesaikan sendiri: " +
+        "Kirim laporan/eskalasi ke menu Data Laporan di admin panel. User hanya boleh punya 1 laporan aktif; selama laporan sebelumnya belum selesai, info baru ditambahkan ke tiket itu. WAJIB dipakai ketika user punya masalah yang tidak bisa kamu selesaikan sendiri: " +
         "top up tidak masuk, saldo salah, akun terkunci/suspend, komplain produk, permintaan refund, atau apa pun yang butuh keputusan admin. " +
         "Rangkum masalahnya sendiri dari percakapan, jangan menyuruh user mengulang.",
       parameters: {
@@ -284,17 +282,11 @@ const userTools = {
       // Lampiran (screenshot/video) yang dikirim user di percakapan ini ikut ke laporan.
       const media = (Array.isArray(ctx.attachments) ? ctx.attachments : []).slice(-8);
 
-      // Anti-spam: hanya untuk user terdaftar (sesi admin dibebaskan).
+      // Satu laporan aktif per user: laporan baru baru bisa dikirim setelah laporan sebelumnya selesai.
       if (ctx.role !== "admin") {
-        const [st] = await ctx.sql`
-          SELECT
-            COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')::int AS day,
-            MAX(created_at) AS last
-          FROM codexa_reports WHERE user_id = ${ctx.user.id}
-        `;
         const open = await ctx.sql`
           SELECT ticket, summary, status FROM codexa_reports
-          WHERE user_id = ${ctx.user.id} AND category = ${category} AND status IN ('open','in_progress')
+          WHERE user_id = ${ctx.user.id} AND status IN ('open','in_progress')
           ORDER BY created_at DESC LIMIT 1
         `;
         if (open.length) {
@@ -310,16 +302,9 @@ const userTools = {
             WHERE ticket = ${open[0].ticket}
           `;
           return ok({
-            ticket: open[0].ticket, tersimpan: false, duplikat: true,
-            message: `User sudah punya laporan ${category} yang masih ${open[0].status === "open" ? "menunggu" : "diproses"} (tiket ${open[0].ticket}). Info tambahan & lampiran sudah ditambahkan ke tiket itu di Data Laporan admin. Sampaikan nomor tiketnya ke user.`,
+            ticket: open[0].ticket, tersimpan: false, laporanAktif: true,
+            message: `User masih punya laporan aktif (tiket ${open[0].ticket}, status ${open[0].status === "open" ? "menunggu" : "diproses"}). Laporan baru belum bisa dibuat sampai tiket itu selesai. Info tambahan & lampiran sudah ditambahkan ke tiket itu. Sampaikan singkat ke user.`,
           });
-        }
-        if (st && st.day >= REPORT_LIMIT_PER_DAY) {
-          return fail(`Batas laporan tercapai (${REPORT_LIMIT_PER_DAY} laporan per 24 jam). Minta user menunggu balasan admin untuk laporan sebelumnya.`);
-        }
-        if (st && st.last && Date.now() - new Date(st.last).getTime() < REPORT_COOLDOWN_MIN * 60000) {
-          const wait = Math.ceil((REPORT_COOLDOWN_MIN * 60000 - (Date.now() - new Date(st.last).getTime())) / 60000);
-          return fail(`Baru saja mengirim laporan. Bisa kirim laporan baru lagi dalam ${wait} menit.`);
         }
       }
 
@@ -1321,7 +1306,7 @@ function systemPrompt(ctx) {
     "- Setelah terkirim, sampaikan nomor tiketnya ke user dan beri tahu admin akan menindaklanjuti.",
     "- Jangan spam: cukup sekali per masalah dalam satu percakapan.",
     "",
-    "- Laporan tersimpan permanen di database dan langsung tampil di menu Data Laporan admin. Batas: maks 3 laporan per 24 jam, jeda 10 menit, dan laporan kategori sama yang masih terbuka tidak dibuat ulang.",
+    "- Laporan tersimpan permanen di database dan langsung tampil di menu Data Laporan admin. User hanya boleh punya 1 laporan aktif; laporan baru baru bisa dibuat setelah laporan sebelumnya berstatus selesai. Setelah laporan terkirim, jawab singkat 1-2 kalimat saja (nomor tiket + 'cek di menu Laporan').",
     "- Kalau user menanyakan kabar/status laporannya, panggil get_my_reports dan sampaikan status + catatan admin bila ada. Cek juga tool ini sebelum membuat laporan baru supaya tidak dobel.",
     "",
     "ALUR KERJA (wajib untuk permintaan yang butuh aksi/data):",
@@ -1505,8 +1490,12 @@ async function runAssistant({ ctx, history, onEvent }) {
 
     // Catatan singkat model sebelum eksekusi tool → tampilkan ke user sebagai progres,
     // supaya assisten terasa "bekerja" dan bukan diam sampai semuanya selesai.
-    const note = String(message.content || "").trim();
-    if (note) emit({ type: "note", text: note.slice(0, 400) });
+    const note = cleanReply(String(message.content || ""))
+      .replace(/\*\*(Info|Tugas|Hasil)\*\*\s*[—:-]?\s*/gi, "")
+      .replace(/[*_`#>]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (note) emit({ type: "note", text: note.length > 160 ? `${note.slice(0, 157)}...` : note });
 
     messages.push({
       role: "assistant",

@@ -1038,7 +1038,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
 /* ═══════════════════════════════════════════════════
    APP ROOT
 ════════════════════════════════════════════════════ */
-const PAGE_PATHS = ["admin", "katalog", "orders", "reports", "help", "faq", "cara-beli", "account", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
+const PAGE_PATHS = ["admin", "katalog", "orders", "reports", "notifications", "help", "faq", "cara-beli", "account", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 // Halaman publik: bisa dibuka tanpa login dan boleh di-crawl Google.
 export const PUBLIC_PAGES = ["store", "katalog", "custom-email", "help", "faq", "cara-beli", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 const PAGE_LABELS = {
@@ -2076,7 +2076,7 @@ function App() {
   if (activePage === "account") return (
     <div className={shellClass}>
       {topbar}
-      <ProfilePage user={auth.user} onBack={() => navigate("store")} onTopup={() => navigate("topup")} onSaved={(u) => setAuth({ user: u, loading: false })} onNotice={showNotice} />
+      <ProfilePage onNotifications={() => navigate("notifications")} user={auth.user} onBack={() => navigate("store")} onTopup={() => navigate("topup")} onSaved={(u) => setAuth({ user: u, loading: false })} onNotice={showNotice} />
       <StoreFooter navigate={navigate} guest={guest} />
       {tabbar}
       {overlays}
@@ -2094,6 +2094,18 @@ function App() {
   );
 
   /* ── simple pages ── */
+  if (activePage === "notifications") return (
+    <div className={shellClass}>
+      {topbar}
+      <Suspense fallback={<div className="cx-container cx-ur-loading">Memuat notifikasi...</div>}>
+        <UserNotificationsPage guest={guest} onLogin={() => goAuthScreen("login")} navigate={navigate} />
+      </Suspense>
+      <StoreFooter navigate={navigate} guest={guest} />
+      {tabbar}
+      {overlays}
+    </div>
+  );
+
   if (activePage === "reports") return (
     <div className={shellClass}>
       {topbar}
@@ -2929,7 +2941,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
     ["katalog", "Katalog Produk", ShoppingBag],
     ["custom-email", "Custom Email", Mail],
     ["orders", "Pesanan Saya", Package],
-    ...(user ? [["reports", "Laporan", FileText]] : []),
+    ...(user ? [["reports", "Laporan", FileText], ["notifications", "Notifikasi", Bell]] : []),
     ["topup", "Top Up Saldo", CreditCard],
     ["help", "Bantuan", CircleHelp],
   ];
@@ -3006,6 +3018,9 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                   </button>
                   <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("reports"); }}>
                     <FileText size={13} /> Laporan saya
+                  </button>
+                  <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("notifications"); }}>
+                    <Bell size={13} /> Notifikasi
                   </button>
                   <button className="cx-account-item cx-account-item-danger" onClick={onLogout}>
                     <LogOut size={13} /> Keluar
@@ -4430,6 +4445,7 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
 ════════════════════════════════════════════════════ */
 const AdminPage = lazy(() => import("./admin-page.jsx"));
 const UserReportsPage = lazy(() => import("./user-reports-page.jsx"));
+const UserNotificationsPage = lazy(() => import("./user-notifications-page.jsx"));
 
 /* ═══════════════════════════════════════════════════
    WELCOME / LANDING PAGE (entry point untuk guest)
@@ -5247,7 +5263,7 @@ function UserAvatar({ user, className = "" }) {
   return <div className={cls}>{initialsOf(user && user.name)}</div>;
 }
 
-function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
+function ProfilePage({ onNotifications, user, onBack, onTopup, onSaved, onNotice }) {
   const [state] = useTopupData(user);
   const pendingTotal = Number(state.pendingTotal) || 0;
   const [editing, setEditing] = useState(false);
@@ -5405,6 +5421,14 @@ function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
                 </button>
               </div>
             </div>
+          )}
+
+          {onNotifications && (
+            <button type="button" className="cx-profile-notif" onClick={onNotifications}>
+              <span className="cx-profile-notif-ic"><Bell size={14} /></span>
+              <span><b>Notifikasi</b><small>Pesan admin, top up & pesanan</small></span>
+              <ArrowRight size={14} />
+            </button>
           )}
 
           <ul className="cx-profile-list">
@@ -6360,10 +6384,9 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
             )}
             <button className="cx-icon-btn" onClick={() => setOpen(false)} aria-label="Tutup"><X size={13} /></button>
           </div>
-          {!guest && !info.loading && !info.error && info.available && !isAdminMode && info.reportQuota && (
-            <div className={`cx-ai-quota${info.reportQuota.remaining === 0 || info.reportQuota.waitMin > 0 ? " warn" : ""}`}>
-              <span>Kirim laporan ke admin: <b>{info.reportQuota.remaining}/{info.reportQuota.limit}</b> tersisa (24 jam)</span>
-              {info.reportQuota.waitMin > 0 && <span>· bisa lagi ±{info.reportQuota.waitMin >= 60 ? `${Math.ceil(info.reportQuota.waitMin / 60)} jam` : `${info.reportQuota.waitMin} mnt`}</span>}
+          {!guest && !info.loading && !info.error && info.available && !isAdminMode && info.reportQuota && info.reportQuota.canSend === false && (
+            <div className="cx-ai-quota warn">
+              <span>Laporan <b>#{info.reportQuota.ticket}</b> masih {info.reportQuota.status === "open" ? "menunggu" : "diproses"} · laporan baru setelah selesai</span>
             </div>
           )}
 
@@ -6433,7 +6456,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
               <div key={i} className={`cx-ai-msg ${m.role}`}>
                 {m.role === "assistant" && m.notes && m.notes.length > 0 && (
                   <div className="cx-ai-notes">
-                    {m.notes.map((n, j) => <p key={j}><Check size={9} />{n}</p>)}
+                    {m.notes.slice(-1).map((n, j) => <p key={j}><Check size={9} />{String(n).replace(/[*_`#]/g, "")}</p>)}
                   </div>
                 )}
                 {m.role === "user" && m.attachments && m.attachments.length > 0 && (
@@ -6457,9 +6480,9 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
 
             {busy && !uploading && (
               <div className="cx-ai-msg assistant">
-                {live.notes.map((n, i) => (
-                  <div className="cx-ai-bubble" key={`n${i}`}><RichText text={n} /></div>
-                ))}
+                {live.notes.length > 0 && (
+                  <div className="cx-ai-notes"><p><RefreshCw size={9} className="cx-spin" />{String(live.notes[live.notes.length - 1]).replace(/[*_`#]/g, "")}</p></div>
+                )}
                 {live.steps.length > 0 && (
                   <div className="cx-ai-steps">
                     {live.steps.map((st, i) => (
@@ -6559,6 +6582,17 @@ class RootErrorBoundary extends React.Component {
       </div>
     );
   }
+}
+
+/* Semua tombol refresh: ikon berputar saat diklik supaya terasa responsif. */
+if (typeof document !== "undefined" && !window.__cxSpinBound) {
+  window.__cxSpinBound = true;
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest && e.target.closest("button");
+    if (!btn || !btn.querySelector(".lucide-refresh-cw, .lucide-rotate-cw, .lucide-refresh-ccw, .lucide-rotate-ccw")) return;
+    btn.classList.remove("cx-spin-once"); void btn.offsetWidth; btn.classList.add("cx-spin-once");
+    window.setTimeout(() => btn.classList.remove("cx-spin-once"), 900);
+  }, true);
 }
 
 createRoot(document.getElementById("root")).render(<React.StrictMode><RootErrorBoundary><App /></RootErrorBoundary></React.StrictMode>);

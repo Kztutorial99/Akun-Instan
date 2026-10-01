@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star, MonitorPlay, Activity, ClipboardList,
+  ArrowRight, LayoutDashboard, Wallet, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check, CircleHelp, Command, Eye, EyeOff, ChevronDown, FileText, LockKeyhole, LogIn, LogOut, Menu, MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, ShoppingBag, Trash2, X, User, Mail, Copy, Sparkles, TrendingUp, Star, MonitorPlay, Activity, ClipboardList, Send,
 } from "lucide-react";
 import {
   ACCENT_COLORS, ActionBtn, AssistantWidget, agedInfoOf, AGED_DEFAULTS, jsonRequest, CUSTOM_EMAIL_FEE, setCustomEmailFee, CUSTOM_EMAIL_STATUS_LABEL, CUSTOM_GENDER_LABEL, ExpandableText, Field, InputWrap, LOGIN_TYPES, PRODUCT_TEMPLATES, ProductDescription, ProductIcon, ProductTypeIcon, ProviderIcon, RowSkeleton, SessionSplash, Spinner, customEmailsOf, emptyListing, formatBirthDate, formatDate, formatPrice, useConfirmDialog, usePendingActions,
@@ -8,6 +8,7 @@ import {
 import YoutubePromo from "./youtube-promo.jsx";
 import VisitorTraffic from "./visitor-traffic.jsx";
 import ReportsPage from "./reports-page.jsx";
+import AdminNotifyPage from "./admin-notify-page.jsx";
 import "./admin-ui.css";
 
 function AdminPage({ onBack, onNotice }) {
@@ -811,6 +812,7 @@ function AdminPage({ onBack, onNotice }) {
     { label: "Custom Email",shortcut: "⌘E", icon: Mail,           dot: orders.some((o) => customEmailsOf(o).length) },
     { label: "Harga Aged",  shortcut: "⌘G", icon: TrendingUp,     dot: agedCfg && agedCfg.enabled === false },
     { label: "Data Laporan", shortcut: "⌘L", icon: ClipboardList, dot: true },
+    { label: "Send Chat & Notifikasi", shortcut: "⌘N", icon: Send },
     { label: "Assisten",    shortcut: "⌘I", icon: Sparkles,       dot: !(aiCfg && aiCfg.enabled && aiCfg.hasKey) },
     { label: "Ulasan & Rating", shortcut: "⌘R", icon: Star },
     { label: "Inject Data",  shortcut: "⌘J", icon: Plus },
@@ -965,6 +967,8 @@ function AdminPage({ onBack, onNotice }) {
             <YoutubePromo onNotice={onNotice} />
           ) : activeNav === "Visitor Traffic" ? (
             <VisitorTraffic onNotice={onNotice} />
+          ) : activeNav === "Send Chat & Notifikasi" ? (
+            <AdminNotifyPage onNotice={onNotice} />
           ) : activeNav === "Data Laporan" ? (
             <ReportsPage onNotice={onNotice} />
           ) : activeNav === "Harga Aged" ? (

@@ -1,5 +1,6 @@
 const { db, ensureTables, hashPassword, bodyOf, text } = require("../_users");
 const { isAdmin } = require("./_auth");
+const { ensureNotificationTables, createNotification, broadcastNotification } = require("../_notifications");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STATUSES = ["active", "suspended", "banned"];
@@ -10,6 +11,44 @@ module.exports = async function handler(request, response) {
   try {
     const sql = db();
     await ensureTables(sql);
+
+    /* ── SEND CHAT & NOTIFIKASI (admin → user) ── */
+    const notifyAction = request.query && typeof request.query.action === "string" ? request.query.action : "";
+    if (notifyAction === "notify") {
+      await ensureNotificationTables(sql);
+      if (request.method === "GET") {
+        const history = await sql`
+          SELECT title, body, type, link, MIN(created_at) AS "createdAt", COUNT(*)::int AS recipients,
+                 COUNT(read_at)::int AS "readCount",
+                 CASE WHEN COUNT(*) = 1 THEN MAX(u.email) ELSE NULL END AS "toEmail",
+                 CASE WHEN COUNT(*) = 1 THEN MAX(u.name) ELSE NULL END AS "toName"
+          FROM codexa_notifications n LEFT JOIN codexa_users u ON u.id = n.user_id
+          WHERE n.type IN ('admin_msg','admin_info','admin_promo','admin_warn')
+          GROUP BY title, body, type, link, date_trunc('second', n.created_at)
+          ORDER BY MIN(created_at) DESC LIMIT 40
+        `;
+        return response.status(200).json({ history });
+      }
+      if (request.method === "POST") {
+        const body = bodyOf(request);
+        const title = text(body.title, 160);
+        const message = text(body.body, 600);
+        const kind = ["admin_msg", "admin_info", "admin_promo", "admin_warn"].includes(body.type) ? body.type : "admin_msg";
+        const link = ["", "katalog", "topup", "orders", "reports", "notifications"].includes(body.link) ? body.link : "";
+        if (title.length < 2) return response.status(400).json({ error: "Judul wajib diisi" });
+        if (body.target === "all") {
+          const sent = await broadcastNotification(sql, { type: kind, title, body: message, link, statuses: ["active"] });
+          return response.status(200).json({ ok: true, sent });
+        }
+        const ids = (Array.isArray(body.userIds) ? body.userIds : []).map((v) => text(v, 80)).filter(Boolean).slice(0, 200);
+        if (!ids.length) return response.status(400).json({ error: "Pilih minimal 1 user" });
+        const rows = await sql`SELECT id FROM codexa_users WHERE id = ANY(${ids})`;
+        let sent = 0;
+        for (const r of rows) { if (await createNotification(sql, { userId: r.id, type: kind, title, body: message, link })) sent += 1; }
+        return response.status(200).json({ ok: true, sent });
+      }
+      return response.status(405).json({ error: "Method not allowed" });
+    }
 
     /* ── DETAIL (satu user + aktivitas nyata) ── */
     const detailId = request.query && typeof request.query.id === "string" ? request.query.id : "";

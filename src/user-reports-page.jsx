@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileText, RefreshCw, MessageSquareText, Sparkles } from "lucide-react";
+import { FileText, RefreshCw, MessageSquareText, Sparkles, ChevronDown, Paperclip } from "lucide-react";
 import { MediaGrid } from "./media-attach.jsx";
 
 const STATUS = {
@@ -16,12 +16,16 @@ const when = (iso) => {
 export default function UserReportsPage({ guest, onLogin, onAskAssistant }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [openId, setOpenId] = useState("");
   const load = () => {
-    setErr("");
+    setErr(""); setLoading(true);
+    const started = Date.now();
     fetch("/api/assistant?resource=reports", { credentials: "same-origin" })
       .then(async (r) => { const p = await r.json().catch(() => ({})); if (!r.ok) throw new Error(p.error || "Gagal memuat"); return p; })
-      .then(setData).catch((e) => setErr(e.message));
+      .then(setData).catch((e) => setErr(e.message))
+      .finally(() => setTimeout(() => setLoading(false), Math.max(0, 600 - (Date.now() - started))));
   };
   useEffect(() => { if (!guest) load(); }, [guest]);
 
@@ -39,13 +43,14 @@ export default function UserReportsPage({ guest, onLogin, onAskAssistant }) {
   return (
     <main className="cx-container cx-ur">
       <div className="cx-ur-head">
-        <div><h1>Laporan Saya</h1><p>Status laporan yang kamu kirim lewat Assisten dan balasan admin.</p></div>
-        <button className="cx-icon-btn" onClick={load} aria-label="Muat ulang"><RefreshCw size={14} /></button>
+        <div><h1>Laporan Saya</h1><p>Status laporan & balasan admin.</p></div>
+        <button className={`cx-icon-btn${loading ? " is-spinning" : ""}`} onClick={load} disabled={loading} aria-label="Muat ulang"><RefreshCw size={14} /></button>
       </div>
       {q && (
-        <div className={`cx-ur-quota${q.remaining === 0 || q.waitMin > 0 ? " warn" : ""}`}>
-          Sisa kirim laporan: <b>{q.remaining}/{q.limit}</b> (24 jam)
-          {q.waitMin > 0 && <> · bisa lagi ±{q.waitMin >= 60 ? `${Math.ceil(q.waitMin / 60)} jam` : `${q.waitMin} menit`}</>}
+        <div className={`cx-ur-quota${q.canSend ? "" : " warn"}`}>
+          {q.canSend
+            ? <>Kamu bisa kirim laporan baru lewat Assisten.</>
+            : <>Laporan <b>#{q.ticket}</b> masih {q.status === "open" ? "menunggu" : "diproses"} — laporan baru bisa dikirim setelah selesai.</>}
         </div>
       )}
       <div className="cx-ur-filters">
@@ -62,15 +67,26 @@ export default function UserReportsPage({ guest, onLogin, onAskAssistant }) {
       <div className="cx-ur-list">
         {shown.map((r) => {
           const [label, cls] = STATUS[r.status] || [r.status, "open"];
+          const open = openId === r.ticket;
+          const files = Array.isArray(r.attachments) ? r.attachments : [];
           return (
-            <article key={r.ticket} className="cx-ur-card">
-              <div className="cx-ur-top">
-                <b>#{r.ticket}</b><span className={`cx-ur-st ${cls}`}>{label}</span>
-                <small>{when(r.createdAt)}</small>
-              </div>
-              <p className="cx-ur-sum">{r.summary}</p>
-              {r.detail && <p className="cx-ur-detail">{r.detail}</p>}
-              {Array.isArray(r.attachments) && r.attachments.length > 0 && <MediaGrid items={r.attachments} className="cx-ur-media" />}
+            <article key={r.ticket} className={`cx-ur-card${open ? " open" : ""}`}>
+              <button type="button" className="cx-ur-row" onClick={() => setOpenId(open ? "" : r.ticket)} aria-expanded={open}>
+                <div className="cx-ur-top">
+                  <b>#{r.ticket}</b><span className={`cx-ur-st ${cls}`}>{label}</span>
+                  {files.length > 0 && <span className="cx-ur-clip"><Paperclip size={10} />{files.length}</span>}
+                  {r.adminNote && <span className="cx-ur-clip ok"><MessageSquareText size={10} /></span>}
+                  <small>{when(r.createdAt)}</small>
+                </div>
+                <p className="cx-ur-sum">{r.summary}</p>
+                <ChevronDown size={14} className="cx-ur-chev" />
+              </button>
+              {open && (
+                <div className="cx-ur-more">
+                  {r.detail && <p className="cx-ur-detail">{r.detail}</p>}
+                  {files.length > 0 && <MediaGrid items={files} className="cx-ur-media" />}
+                </div>
+              )}
               {r.adminNote && (
                 <div className="cx-ur-reply"><MessageSquareText size={12} /><div><b>Balasan admin</b><p>{r.adminNote}</p></div></div>
               )}

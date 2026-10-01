@@ -93,29 +93,14 @@ async function handleMediaUpload(request, response, role) {
   }
 }
 
-const REPORT_LIMIT = 3;
-const REPORT_COOLDOWN_MIN = 10;
-
 async function reportQuota(sql, user) {
   if (!user) return null;
-  const [st] = await sql`
-    SELECT COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')::int AS day,
-           MAX(created_at) AS last,
-           MIN(created_at) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours') AS first
-    FROM codexa_reports WHERE user_id = ${user.id}
+  const [row] = await sql`
+    SELECT ticket, status FROM codexa_reports
+    WHERE user_id = ${user.id} AND status IN ('open','in_progress')
+    ORDER BY created_at DESC LIMIT 1
   `;
-  const used = (st && st.day) || 0;
-  const now = Date.now();
-  let waitMin = 0;
-  if (st && st.last) {
-    const left = REPORT_COOLDOWN_MIN * 60000 - (now - new Date(st.last).getTime());
-    if (left > 0) waitMin = Math.ceil(left / 60000);
-  }
-  if (used >= REPORT_LIMIT && st && st.first) {
-    const left = 24 * 3600000 - (now - new Date(st.first).getTime());
-    if (left > 0) waitMin = Math.max(waitMin, Math.ceil(left / 60000));
-  }
-  return { limit: REPORT_LIMIT, used, remaining: Math.max(0, REPORT_LIMIT - used), waitMin };
+  return row ? { canSend: false, ticket: row.ticket, status: row.status } : { canSend: true, ticket: null, status: null };
 }
 
 async function handleMyReports(sql, user, response) {
