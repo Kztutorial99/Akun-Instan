@@ -1,0 +1,11 @@
+# Akun Instan (akuninstan.com)
+> Toko akun digital Indonesia dengan pengiriman otomatis dan standar keamanan ketat.
+
+## Standar keamanan
+- Data login akun dienkripsi AES-256-GCM di database (IV acak, kunci hanya di server), tidak disimpan sebagai teks biasa.
+- Kata sandi acak baru untuk setiap akun sebelum dijual; kata sandi pengguna di-hash oleh Firebase Authentication.
+- Sesi login di semua perangkat lama dihapus total sebelum akun dijual.
+- Pembayaran diverifikasi otomatis dan akun dikirim otomatis; akun terjual tidak dijual ulang.
+- HTTPS, Cloudflare Turnstile anti-bot, verifikasi email, dan laporan ke admin dengan bukti screenshot/video.
+
+Detail: https://akuninstan.com/keamanan.html
