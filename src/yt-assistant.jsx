@@ -32,24 +32,38 @@ export default function YtAssistant({ onNotice }) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
 
   const find = async () => {
-    setBusy("find"); setErr("");
+    setBusy("find"); setErr(""); setResults([]);
     try {
       const data = await api("assistant", { method: "POST", body: JSON.stringify({ prompt, count, minViews }) });
-      setResults(data.results || []);
-      setPicked(Object.fromEntries((data.results || []).map((r) => [r.id, true])));
-      if (!(data.results || []).length) setErr("Tidak ada video baru yang cocok. Coba kata kunci lain atau turunkan minimum views.");
-    } catch (e) { setErr(e.message); }
+      const list = (data.results || []).map((r) => ({ ...r, id: "", comment: "", loading: true }));
+      setResults(list);
+      if (!list.length) { setErr("Tidak ada video baru yang cocok. Coba kata kunci lain atau turunkan minimum views."); setBusy(""); return; }
+      const queueList = [...list];
+      const worker = async () => {
+        while (queueList.length) {
+          const r = queueList.shift();
+          let patch;
+          try {
+            const d = await api("assistant-draft", { method: "POST", body: JSON.stringify({ videoId: r.videoId }) });
+            patch = { id: d.id, comment: d.comment, loading: false };
+            setPicked((p) => ({ ...p, [d.id]: true }));
+          } catch (e) { patch = { loading: false, error: e.status === 504 ? "Waktu habis, coba lagi" : e.message }; }
+          setResults((rs) => rs.map((x) => (x.videoId === r.videoId ? { ...x, ...patch } : x)));
+        }
+      };
+      await Promise.all([worker(), worker(), worker()]);
+    } catch (e) { setErr(e.status === 504 ? "Pencarian terlalu lama, coba kurangi kata kunci." : e.message); }
     setBusy("");
   };
 
   const apply = async () => {
-    const items = results.filter((r) => picked[r.id]).map((r) => ({ id: r.id, comment: r.comment }));
+    const items = results.filter((r) => r.id && picked[r.id]).map((r) => ({ id: r.id, comment: r.comment }));
     if (!items.length) return;
     setBusy("apply");
     try {
       const data = await api("queue", { method: "POST", body: JSON.stringify({ items }) });
       onNotice && onNotice(`${data.added} komentar masuk antrian`);
-      setResults((rs) => rs.filter((r) => !picked[r.id]));
+      setResults((rs) => rs.filter((r) => !(r.id && picked[r.id])));
       await loadQueue();
     } catch (e) { setErr(e.message); }
     setBusy("");
@@ -84,7 +98,7 @@ export default function YtAssistant({ onNotice }) {
           <label>Jumlah<select value={count} onChange={(e) => setCount(Number(e.target.value))}>{[3, 5, 8, 10].map((n) => <option key={n}>{n}</option>)}</select></label>
           <label>Min views<input type="number" min="0" value={minViews} onChange={(e) => setMinViews(e.target.value)} /></label>
           <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={find} disabled={busy === "find"}>
-            {busy === "find" ? <Loader2 size={11} className="cx-spin" /> : <Sparkles size={11} />} {busy === "find" ? "Mencari & menulis…" : "Cari & Buat Komentar"}
+            {busy === "find" ? <Loader2 size={11} className="cx-spin" /> : <Sparkles size={11} />} {busy === "find" ? "Memproses…" : "Cari & Buat Komentar"}
           </button>
         </div>
         {err && <div className="cx-yt-alert is-error" style={{ marginTop: 10 }}>{err}</div>}
@@ -93,22 +107,24 @@ export default function YtAssistant({ onNotice }) {
           <>
             <div className="cx-yta-list">
               {results.map((r) => (
-                <div key={r.id} className={`cx-yta-item${picked[r.id] ? " on" : ""}`}>
-                  <input type="checkbox" checked={!!picked[r.id]} onChange={(e) => setPicked({ ...picked, [r.id]: e.target.checked })} />
+                <div key={r.videoId} className={`cx-yta-item${r.id && picked[r.id] ? " on" : ""}`}>
+                  <input type="checkbox" disabled={!r.id} checked={!!(r.id && picked[r.id])} onChange={(e) => setPicked({ ...picked, [r.id]: e.target.checked })} />
                   {r.thumbnail && <img src={r.thumbnail} alt="" loading="lazy" />}
                   <div className="cx-yta-body">
                     <a href={`https://www.youtube.com/watch?v=${r.videoId}`} target="_blank" rel="noopener noreferrer" className="cx-yta-title">
                       {r.title} <ExternalLink size={10} />
                     </a>
                     <span className="cx-yta-meta">{r.channelTitle} · {compact(r.views)} views · relevansi {r.relevance}%</span>
-                    <textarea rows={2} value={r.comment}
-                      onChange={(e) => setResults((rs) => rs.map((x) => (x.id === r.id ? { ...x, comment: e.target.value } : x)))} />
+                    {r.loading && <span className="cx-yta-meta"><Loader2 size={10} className="cx-spin" /> AI menulis komentar…</span>}
+                    {r.error && <span className="cx-yta-meta" style={{ color: "#b91c1c" }}>{r.error}</span>}
+                    {r.id && <textarea rows={2} value={r.comment}
+                      onChange={(e) => setResults((rs) => rs.map((x) => (x.videoId === r.videoId ? { ...x, comment: e.target.value } : x)))} />}
                   </div>
                 </div>
               ))}
             </div>
             <button className="cx-btn cx-btn-primary cx-btn-sm" style={{ marginTop: 10 }} onClick={apply} disabled={busy === "apply"}>
-              {busy === "apply" ? <Loader2 size={11} className="cx-spin" /> : <Check size={11} />} Apply ke Antrian ({results.filter((r) => picked[r.id]).length})
+              {busy === "apply" ? <Loader2 size={11} className="cx-spin" /> : <Check size={11} />} Apply ke Antrian ({results.filter((r) => r.id && picked[r.id]).length})
             </button>
           </>
         )}

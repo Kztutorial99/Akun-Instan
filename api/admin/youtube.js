@@ -191,6 +191,9 @@ module.exports = async function handler(request, response) {
       if (!settings.enabled) return response.status(423).json({ error: "Promosi sedang dihentikan (STOP aktif)." });
       return response.status(200).json(await Q.assistantFind(sql, body()));
     }
+    if (resource === "assistant-draft" && method === "POST") {
+      return response.status(200).json(await Q.assistantDraft(sql, P.trim(body().videoId, 40)));
+    }
     if (resource === "queue" && method === "POST") {
       const added = await Q.enqueue(sql, body().items);
       return response.status(200).json({ ok: true, added });

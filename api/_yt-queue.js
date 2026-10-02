@@ -48,18 +48,18 @@ async function assistantFind(sql, input) {
   const minViews = Math.max(0, Number(input.minViews) || 2000);
   const fromPrompt = String(input.prompt || "")
     .split(/[\n,;]+/).map((s) => P.trim(s, 100)).filter((s) => s.length > 2);
-  const keywords = (fromPrompt.length ? fromPrompt : DEFAULT_KEYWORDS).slice(0, 4);
+  const keywords = (fromPrompt.length ? fromPrompt : DEFAULT_KEYWORDS).slice(0, 3);
 
   const blacklist = await P.readBlacklist(sql);
   const isBlocked = P.blacklistFilter(blacklist);
   const pool = new Map();
-  for (const keyword of keywords) {
+  const found = await Promise.all(keywords.map((keyword) =>
+    yt.searchVideos({ keyword, order: "viewCount", maxResults: 15 })
+      .then((list) => list.map((v) => ({ v, keyword })))
+      .catch(() => [])));
+  for (const { v, keyword } of found.flat()) {
     const category = P.detectCategory(keyword);
-    const [byViews, byRel] = await Promise.all([
-      yt.searchVideos({ keyword, order: "viewCount", maxResults: 15 }),
-      yt.searchVideos({ keyword, order: "relevance", maxResults: 10 }),
-    ]);
-    for (const v of [...byViews, ...byRel]) {
+    {
       if (pool.has(v.videoId) || Number(v.views) < minViews || isBlocked(v)) continue;
       pool.set(v.videoId, { ...v, keyword, category, relevance: P.relevanceScore({ ...v, keyword, category }) });
     }
@@ -70,25 +70,39 @@ async function assistantFind(sql, input) {
     .sort((a, b) => b.relevance - a.relevance || b.views - a.views)
     .slice(0, count);
 
-  const results = await Promise.all(picked.map(async (v) => {
+  for (const v of picked) {
     await sql`
       INSERT INTO codexa_yt_videos (video_id, channel_id, channel_title, title, description, thumbnail, published_at, views, keyword, category, relevance, status, updated_at)
       VALUES (${v.videoId}, ${v.channelId}, ${v.channelTitle}, ${P.trim(v.title, 300)}, ${P.trim(v.description, 1500)},
-              ${v.thumbnail}, ${v.publishedAt}, ${Math.round(Number(v.views) || 0)}, ${v.keyword}, ${v.category}, ${v.relevance}, 'drafted', NOW())
-      ON CONFLICT (video_id) DO UPDATE SET views = EXCLUDED.views, relevance = EXCLUDED.relevance, status = 'drafted', updated_at = NOW()`;
-    const draft = await P.generateDraft(sql, { video: v, keyword: v.keyword, category: v.category, profile: settings.profile });
-    const comment = P.humanizeComment(draft.comment) || draft.comment;
-    const id = P.newId("ytd");
-    await sql`
-      INSERT INTO codexa_yt_drafts (id, video_id, keyword, category, comment, status, source)
-      VALUES (${id}, ${v.videoId}, ${v.keyword}, ${v.category}, ${comment}, 'pending', 'assistant')`;
-    return {
-      id, videoId: v.videoId, title: v.title, channelTitle: v.channelTitle, thumbnail: v.thumbnail,
-      views: v.views, relevance: v.relevance, keyword: v.keyword, comment,
-    };
+              ${v.thumbnail}, ${v.publishedAt}, ${Math.round(Number(v.views) || 0)}, ${v.keyword}, ${v.category}, ${v.relevance}, 'found', NOW())
+      ON CONFLICT (video_id) DO UPDATE SET views = EXCLUDED.views, relevance = EXCLUDED.relevance, updated_at = NOW()`;
+  }
+  const results = picked.map((v) => ({
+    videoId: v.videoId, title: v.title, channelTitle: v.channelTitle, thumbnail: v.thumbnail,
+    views: v.views, relevance: v.relevance, keyword: v.keyword,
   }));
   await P.logActivity(sql, { status: "assistant", detail: `Asisten menemukan ${results.length} video (${keywords.join(", ")})` });
   return { results, keywords, scanned: pool.size };
+}
+
+/** Buat 1 draft komentar untuk 1 video hasil asisten. */
+async function assistantDraft(sql, videoId) {
+  await ensureQueueSchema(sql);
+  const settings = await P.readSettings(sql);
+  const [v] = await sql`
+    SELECT video_id AS "videoId", title, description, channel_title AS "channelTitle", keyword, category
+      FROM codexa_yt_videos WHERE video_id = ${videoId} LIMIT 1`;
+  if (!v) { const e = new Error("Video tidak ditemukan, cari ulang."); e.status = 404; throw e; }
+  const used = await usedVideoIds(sql, [videoId]);
+  if (used.has(videoId)) { const e = new Error("Video ini sudah pernah diproses."); e.status = 409; throw e; }
+  const draft = await P.generateDraft(sql, { video: v, keyword: v.keyword, category: v.category, profile: settings.profile });
+  const comment = P.humanizeComment(draft.comment) || draft.comment;
+  const id = P.newId("ytd");
+  await sql`
+    INSERT INTO codexa_yt_drafts (id, video_id, keyword, category, comment, status, source)
+    VALUES (${id}, ${videoId}, ${v.keyword}, ${v.category}, ${comment}, 'pending', 'assistant')`;
+  await sql`UPDATE codexa_yt_videos SET status = 'drafted', updated_at = NOW() WHERE video_id = ${videoId}`;
+  return { id, comment, source: draft.source };
 }
 
 /** Apply: masukkan draft ke antrian (boleh sekalian edit komentar). */
@@ -189,4 +203,4 @@ async function processQueue(sql, { readAccount, activeAccessToken, accountId }) 
   }
 }
 
-module.exports = { assistantFind, enqueue, queueOverview, processQueue, readState, writeState, ensureQueueSchema, GAP_MINUTES };
+module.exports = { assistantFind, assistantDraft, enqueue, queueOverview, processQueue, readState, writeState, ensureQueueSchema, GAP_MINUTES };
