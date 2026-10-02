@@ -182,6 +182,7 @@ const STATIC_URLS = [
   { loc: "/privacy", changefreq: "yearly", priority: "0.3" },
   { loc: "/refund", changefreq: "yearly", priority: "0.3" },
   { loc: "/disclaimer", changefreq: "yearly", priority: "0.3" },
+  { loc: "/keamanan.html", changefreq: "monthly", priority: "0.8" },
 ];
 
 const BRAND_SLUGS = [
