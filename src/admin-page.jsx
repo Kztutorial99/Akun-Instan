@@ -1204,7 +1204,7 @@ function AdminPage({ onBack, onNotice }) {
                           </Field>
                         </div>
                         <Field label="Maks. Langkah Tool" hint="1 - 10, default 6">
-                          <InputWrap><input type="number" min="1" max="10" value={aiForm.maxSteps} onChange={(e) => updateAiForm("maxSteps", e.target.value)} /></InputWrap>
+                          <InputWrap><input type="number" min="1" max="30" value={aiForm.maxSteps} onChange={(e) => updateAiForm("maxSteps", e.target.value)} /></InputWrap>
                         </Field>
                         <Field label="Temperature" hint="0 = presisi, 1 = kreatif">
                           <InputWrap><input type="number" step="0.1" min="0" max="2" value={aiForm.temperature} onChange={(e) => updateAiForm("temperature", e.target.value)} /></InputWrap>
