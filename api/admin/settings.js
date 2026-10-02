@@ -99,7 +99,7 @@ module.exports = async function handler(request, response) {
     if (typeof body.modelAdmin === "string") patch.modelAdmin = text(body.modelAdmin, 80);
     if (typeof body.modelUser === "string") patch.modelUser = text(body.modelUser, 80);
     if (typeof body.extraPrompt === "string") patch.extraPrompt = text(body.extraPrompt, 2000);
-    if (body.maxSteps !== undefined) patch.maxSteps = clampInt(body.maxSteps, 1, 10, 6);
+    if (body.maxSteps !== undefined) patch.maxSteps = clampInt(body.maxSteps, 1, 30, 20);
     if (body.temperature !== undefined) patch.temperature = clampNum(body.temperature, 0, 2, 0.3);
 
     await writeAssistantSettings(sql, patch);
