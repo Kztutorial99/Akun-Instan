@@ -1437,7 +1437,9 @@ async function runAssistant({ ctx, history, onEvent }) {
   const messages = [{ role: "system", content: prompt }, ...history];
   const actions = [];
   let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-  const steps = Math.min(10, Math.max(1, Number(cfg.maxSteps) || MAX_STEPS));
+  const baseSteps = Math.min(30, Math.max(1, Number(cfg.maxSteps) || MAX_STEPS));
+  // Admin sering butuh banyak query beruntun; beri ruang lebih.
+  const steps = ctx.role === "admin" ? Math.max(baseSteps, 20) : baseSteps;
 
   for (let step = 0; step < steps; step += 1) {
     let data;
@@ -1523,8 +1525,24 @@ async function runAssistant({ ctx, history, onEvent }) {
     }
   }
 
+  // Langkah habis: minta model menyimpulkan dari data yang sudah terkumpul, tanpa tool.
+  let finalReply = "";
+  try {
+    messages.push({ role: "user", content: "Batas langkah tercapai. Jangan panggil tool lagi. Simpulkan jawaban terbaik dari data yang sudah kamu dapat, sebutkan apa yang sudah dikerjakan dan apa yang belum (jika ada)." });
+    const data = await callQwen({ model, messages, temperature: cfg.temperature }, cfg);
+    const m = (data.choices && data.choices[0] && data.choices[0].message) || {};
+    finalReply = cleanReply(m.content);
+    if (data.usage) {
+      usage = {
+        prompt_tokens: usage.prompt_tokens + num(data.usage.prompt_tokens),
+        completion_tokens: usage.completion_tokens + num(data.usage.completion_tokens),
+        total_tokens: usage.total_tokens + num(data.usage.total_tokens),
+      };
+    }
+  } catch (_) { /* fallback di bawah */ }
+  emit({ type: "reply" });
   return {
-    reply: "Permintaan ini butuh terlalu banyak langkah. Coba pecah jadi permintaan yang lebih spesifik.",
+    reply: finalReply || "Permintaan ini butuh terlalu banyak langkah. Coba pecah jadi permintaan yang lebih spesifik.",
     actions,
     usage,
     model,
