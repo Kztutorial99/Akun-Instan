@@ -128,7 +128,7 @@ async function assistantConfig(sql) {
     // database belum siap → tetap jalan pakai env
   }
   const apiKey = trim(saved.apiKey) || trim(process.env.QWEN_API_KEY);
-  const maxSteps = clampInt(saved.maxSteps, 1, 10, 6);
+  const maxSteps = clampInt(saved.maxSteps, 1, 30, 20);
   return {
     enabled: saved.enabled !== false,
     apiKey,
