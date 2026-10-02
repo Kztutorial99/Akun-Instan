@@ -4,11 +4,13 @@ import {
   Settings as SettingsIcon, Sparkles, Trash2, X, MonitorPlay,
 } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
+import YtAssistant from "./yt-assistant.jsx";
 
 const API = "/api/admin/youtube";
 const api = (resource, options = {}) => jsonRequest(`${API}?resource=${resource}`, options);
 
 const TABS = [
+  { key: "assistant", label: "Asisten & Antrian", icon: Sparkles },
   { key: "promo",     label: "YouTube Promotion", icon: Play },
   { key: "account",   label: "Akun YouTube",      icon: Link2 },
   { key: "settings",  label: "Pengaturan Promosi", icon: SettingsIcon },
@@ -50,7 +52,7 @@ const waktu = (date) => {
 };
 
 function YoutubePromo({ onNotice }) {
-  const [tab, setTab]             = useState("promo");
+  const [tab, setTab]             = useState("assistant");
   const [overview, setOverview]   = useState(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState("");
@@ -251,6 +253,8 @@ function YoutubePromo({ onNotice }) {
           </button>
         ))}
       </div>
+
+      {tab === "assistant" && <YtAssistant onNotice={notify} />}
 
       {/* ══ TAB: PROMOTION ══ */}
       {tab === "promo" && (

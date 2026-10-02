@@ -1,0 +1,10 @@
+name: YouTube promo queue
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS "https://akuninstan.com/api/admin/youtube?resource=tick" || true

@@ -11,6 +11,9 @@
     },
     "api/assistant.js": {
       "maxDuration": 60
+    },
+    "api/admin/youtube.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

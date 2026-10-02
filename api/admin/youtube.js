@@ -26,6 +26,7 @@ const { db, bodyOf } = require("../_users");
 const { isAdmin } = require("./_auth");
 const yt = require("../_youtube");
 const P = require("../_yt-promo");
+const Q = require("../_yt-queue");
 
 const ACCOUNT_ID = "primary";
 
@@ -149,6 +150,21 @@ module.exports = async function handler(request, response) {
     }
   }
 
+  /* ── Worker antrian (dipanggil terjadwal tiap 15 menit) ── */
+  if (resource === "tick") {
+    const secret = process.env.CRON_SECRET || "";
+    const given = url.searchParams.get("key") || request.headers["x-cron-key"] || "";
+    if (secret && given !== secret) return response.status(401).json({ error: "unauthorized" });
+    try {
+      const sql = db();
+      await P.ensureYtTables(sql);
+      const result = await Q.processQueue(sql, { readAccount, activeAccessToken, accountId: ACCOUNT_ID });
+      return response.status(200).json(result);
+    } catch (error) {
+      return response.status(500).json({ error: (error && error.message) || "tick gagal" });
+    }
+  }
+
   if (!isAdmin(request)) return response.status(401).json({ error: "Sesi admin tidak valid" });
 
   let sql;
@@ -169,6 +185,31 @@ module.exports = async function handler(request, response) {
   };
 
   try {
+    /* ══ ASISTEN AI + ANTRIAN ══ */
+    if (resource === "assistant" && method === "POST") {
+      const settings = await P.readSettings(sql);
+      if (!settings.enabled) return response.status(423).json({ error: "Promosi sedang dihentikan (STOP aktif)." });
+      return response.status(200).json(await Q.assistantFind(sql, body()));
+    }
+    if (resource === "queue" && method === "POST") {
+      const added = await Q.enqueue(sql, body().items);
+      return response.status(200).json({ ok: true, added });
+    }
+    if (resource === "queue" && method === "GET") {
+      await Q.processQueue(sql, { readAccount, activeAccessToken, accountId: ACCOUNT_ID }).catch(() => null);
+      return response.status(200).json(await Q.queueOverview(sql));
+    }
+    if (resource === "queue" && method === "DELETE") {
+      const id = P.trim(url.searchParams.get("id"), 60);
+      await sql`UPDATE codexa_yt_drafts SET status = 'rejected', updated_at = NOW() WHERE id = ${id} AND status = 'queued'`;
+      return response.status(200).json({ ok: true });
+    }
+    if (resource === "queue-state" && method === "POST") {
+      const paused = Boolean(body().paused);
+      await Q.writeState(sql, { paused, reason: paused ? "Dijeda admin" : "", at: new Date().toISOString() });
+      return response.status(200).json({ ok: true, paused });
+    }
+
     /* ══ OVERVIEW ══ */
     if (resource === "overview" && method === "GET") {
       const [stats, settings, account] = await Promise.all([
