@@ -6387,7 +6387,7 @@ export function AssistantWidget({ open: openProp, onOpenChange, hideFab = false,
           </div>
           {!guest && !info.loading && !info.error && info.available && !isAdminMode && info.reportQuota && info.reportQuota.canSend === false && (
             <div className="cx-ai-quota warn">
-              <span>Laporan <b>#{info.reportQuota.ticket}</b> masih {info.reportQuota.status === "open" ? "menunggu" : "diproses"} · laporan baru setelah selesai</span>
+              <span>Laporan <b>#{info.reportQuota.ticket}</b> sedang di proses · mohon menunggu balasan dari tim support.</span>
             </div>
           )}
 

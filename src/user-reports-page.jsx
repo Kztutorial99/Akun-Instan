@@ -63,7 +63,7 @@ export default function UserReportsPage({ guest, onLogin }) {
       </div>
       {activeTicket && (
         <div className="cx-ur-quota warn" role="status">
-          Laporan <b>#{displayTicket(activeTicket)}</b> sedang di proses, mohon menunggu balasan dari tim kami.
+          Laporan <b>#{displayTicket(activeTicket)}</b> sedang di proses · mohon menunggu balasan dari tim support.
         </div>
       )}
       {sendingComplete && <div className="cx-ur-quota" role="status">Laporan terkirim. Memperbarui status laporan...</div>}

@@ -305,7 +305,7 @@ const userTools = {
         }
       }
 
-      const ticket = `AI-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+      const ticket = `TXT-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
       const id = `rep_${crypto.randomBytes(8).toString("hex")}`;
 
       // user_id hanya diisi kalau memang user terdaftar (sesi admin panel pakai id "admin").
@@ -681,7 +681,7 @@ const adminTools = {
       parameters: {
         type: "object",
         properties: {
-          ticket: { type: "string", description: "Nomor tiket laporan, contoh AI-1A2B3C." },
+          ticket: { type: "string", description: "Nomor tiket laporan, contoh TXT-1A2B3C." },
           status: { type: "string", enum: ["open", "in_progress", "resolved", "closed"] },
           adminNote: { type: "string", description: "Catatan/balasan admin untuk user." },
         },
