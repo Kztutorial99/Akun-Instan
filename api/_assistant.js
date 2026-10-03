@@ -1254,15 +1254,13 @@ function systemPrompt(ctx) {
       "- Hapus riwayat: admin_delete_reports (laporan), admin_delete_topups (top up), admin_purge_table (kosongkan satu tabel).",
       "- Semua aksi penghapusan/perubahan massal WAJIB dikonfirmasi admin dulu. Sebutkan tabel + perkiraan jumlah baris yang kena, baru jalankan dengan confirm=true setelah admin mengiyakan.",
       "",
-      "ALUR KERJA (wajib untuk permintaan yang butuh aksi/data):",
-      "1. INFO — satu baris: apa yang kamu pahami dan apa yang akan kamu lakukan.",
-      "Sebelum memanggil tool, SELALU tulis satu baris singkat berisi apa yang sedang kamu lakukan (contoh: \"Oke, aku cek dulu tabel laporannya...\"). Baris ini langsung tampil ke user sebagai progres.",
-      "2. TUGAS — jalankan tool-nya (boleh beberapa berurutan sampai tuntas). Jangan berhenti setengah jalan atau menyuruh admin melakukannya manual.",
-      "3. HASIL — laporkan hasil nyata dari tool: angka, nama, id, status. Kalau gagal, sebutkan sebabnya.",
-      "Tulis balasan dalam tiga bagian pendek dengan label **Info**, **Tugas**, **Hasil**.",
-      "Untuk obrolan biasa (sapaan, tanya jawab ringan, penjelasan) JANGAN pakai format ini — jawab santai satu-dua baris saja.",
-      "",
-      "GAYA: Bahasa Indonesia, ringkas, langsung ke inti. Format angka rupiah apa adanya dari tool.",
+      "CARA KERJA:",
+    "- Untuk butuh data/aksi: LANGSUNG panggil tool lewat function calling (tool_calls) di giliran yang sama. Jangan cuma bilang 'sedang diproses/mohon tunggu' lalu berhenti.",
+    "- JANGAN PERNAH menulis nama tool, kode, atau sintaks seperti contact_admin(...), get_my_topups, {ticket_id} di balasan. User tidak boleh melihat nama tool.",
+    "- Jangan pakai label Info/Tugas/Hasil. Jawab natural, ringkas, langsung hasil nyata dari tool.",
+    "- Kalau user minta lapor/kirim ke admin: langsung panggil contact_admin tanpa minta konfirmasi lagi, lalu sebut nomor tiket asli dari hasil tool.",
+    "",
+    "GAYA: Bahasa Indonesia, ringkas, langsung ke inti. Format angka rupiah apa adanya dari tool.",
       "",
       "FORMAT JAWABAN (wajib):",
       "- Jawab rapi dan mudah dibaca di chat sempit (HP). Kalimat pendek, satu ide per baris.",
@@ -1405,8 +1403,20 @@ function parseTextToolCalls(content, tools, step) {
       found.push({ name: obj.name, args: typeof a === "string" ? parseArgs(a) : a });
     }
   }
+  for (const n of names) {
+    const reCall = new RegExp(`\\b${n}\\s*\\(([^)]*)\\)`, "g");
+    while ((m = reCall.exec(content))) {
+      const args = {};
+      const kv = /(\w+)\s*[=:]\s*("([^"]*)"|'([^']*)'|[\w.-]+)/g;
+      let k;
+      while ((k = kv.exec(m[1]))) args[k[1]] = k[3] ?? k[4] ?? k[2];
+      found.push({ name: n, args });
+    }
+  }
+  const seen = new Set();
   return found
     .filter((c) => names.has(c.name))
+    .filter((c) => { const key = c.name + JSON.stringify(c.args); if (seen.has(key)) return false; seen.add(key); return true; })
     .map((c, i) => ({
       id: `txtcall_${step}_${i}`,
       type: "function",
@@ -1418,6 +1428,10 @@ function cleanReply(content) {
   return String(content || "")
     .replace(/<function=[\s\S]*?(<\/function>|$)/g, "")
     .replace(/<tool_call>[\s\S]*?(<\/tool_call>|$)/g, "")
+    .replace(/`?\b(contact_admin|get_my_\w+|get_catalog|update_my_profile|admin_\w+)\b(\s*\([^)]*\))?`?/g, "")
+    .replace(/`?\{ticket_id\}`?/g, "")
+    .replace(/^\s*\*\*(Info|Tugas|Hasil)\*\*\s*[—:-]?\s*$/gim, "")
+    .replace(/^\s*[-*]\s*Panggil\s*$/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -1441,6 +1455,7 @@ async function runAssistant({ ctx, history, onEvent }) {
   // Admin sering butuh banyak query beruntun; beri ruang lebih.
   const steps = ctx.role === "admin" ? Math.max(baseSteps, 20) : baseSteps;
 
+  let nudges = 0;
   for (let step = 0; step < steps; step += 1) {
     let data;
     try {
@@ -1476,6 +1491,29 @@ async function runAssistant({ ctx, history, onEvent }) {
         calls = parsed;
         message.content = "";
       }
+    }
+
+    const lastUser = [...history].reverse().find((h) => h.role === "user");
+    const lastUserText = lastUser ? (Array.isArray(lastUser.content) ? lastUser.content.filter((x) => x.type === "text").map((x) => x.text).join(" ") : String(lastUser.content || "")) : "";
+    const reportDone = actions.some((a) => a.startsWith("contact_admin"));
+    const wantsReport = ctx.role === "user" && /(lapor|laporan|kirim.*admin|ke admin|hubungi admin)/i.test(lastUserText);
+    if (!calls.length && nudges < 2 && step < steps - 1) {
+      const txt = String(message.content || "");
+      const stalled = /(sedang diproses|mohon tunggu|tunggu sebentar|aku cek dulu|saya cek dulu|sedang (aku|saya) )/i.test(txt)
+        || (wantsReport && !reportDone && /(terkirim|dikirim|tiket|laporan)/i.test(txt));
+      if (stalled) {
+        nudges += 1;
+        messages.push({ role: "assistant", content: txt });
+        messages.push({ role: "user", content: "[Sistem] Kamu belum memanggil tool. Panggil tool yang dibutuhkan sekarang lewat tool_calls (bukan teks), lalu jawab dengan hasil nyata." });
+        continue;
+      }
+    }
+    if (!calls.length && wantsReport && !reportDone && /(terkirim|berhasil dikirim|dikirim ke admin|nomor tiket)/i.test(String(message.content || ""))) {
+      const r = await runTool("contact_admin", { category: /top ?up/i.test(lastUserText) ? "topup" : /saldo/i.test(lastUserText) ? "saldo" : /login|akun/i.test(lastUserText) ? "akun" : "lainnya", summary: lastUserText.slice(0, 600) || "Laporan dari user via Assisten", urgency: "sedang" }, ctx);
+      actions.push("contact_admin");
+      emit({ type: "reply" });
+      const d = (r && r.data) || r || {};
+      return { reply: d.ticket ? (d.laporanAktif ? `Kamu masih punya laporan aktif (tiket ${d.ticket}). Info barunya sudah aku tambahkan ke tiket itu. Cek di menu Laporan ya.` : `Laporan sudah terkirim ke admin dengan nomor tiket ${d.ticket}. Pantau statusnya di menu Laporan ya.`) : "Maaf, laporan gagal dikirim. Coba lagi atau kirim manual dari menu Bantuan.", actions, usage, model };
     }
 
     if (!calls.length) {
@@ -1551,6 +1589,7 @@ async function runAssistant({ ctx, history, onEvent }) {
 
 module.exports = {
   runAssistant,
+  runTool,
   toolsForRole,
   schemasForRole,
   modelFor,
