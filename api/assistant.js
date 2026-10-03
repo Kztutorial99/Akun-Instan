@@ -163,7 +163,7 @@ module.exports = async function handler(request, response) {
           .filter((a) => a && /^https:\/\//.test(String(a.url || "")))
           .map((a) => ({ url: String(a.url).slice(0, 500), type: String(a.type || "").slice(0, 60), name: String(a.name || "").slice(0, 120), size: Number(a.size) || 0 }));
         const { runTool } = require("./_assistant.js");
-        const r = await runTool("contact_admin", { category: body.category, summary: body.summary, detail: body.detail, urgency: body.urgency },
+        const r = await runTool("contact_admin", { category: body.category, summary: body.summary, detail: body.detail },
           { sql, cfg, role: "user", user, attachments: atts });
         if (!r || r.ok === false) return response.status(400).json({ error: (r && r.error) || "Gagal mengirim laporan" });
         await sql`UPDATE codexa_reports SET source = 'manual' WHERE ticket = ${r.ticket} AND source = 'assistant' AND created_at > NOW() - INTERVAL '1 minute'`.catch(() => {});

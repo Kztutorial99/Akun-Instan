@@ -241,7 +241,6 @@ const userTools = {
           kategori: r.category,
           masalah: r.summary,
           detail: r.detail || "-",
-          urgensi: r.urgency,
           status: r.status,
           balasanAdmin: r.adminNote || "-",
           dibuat: waktuWib(r.createdAt),
@@ -268,7 +267,6 @@ const userTools = {
           },
           summary: { type: "string", description: "Ringkasan masalah dalam 1-3 kalimat, bahasa Indonesia." },
           detail: { type: "string", description: "Detail tambahan: apa yang sudah dicoba, nominal, ID transaksi, dsb." },
-          urgency: { type: "string", enum: ["rendah", "sedang", "tinggi"], description: "Tingkat urgensi. Default sedang." },
         },
         required: ["category", "summary"],
       },
@@ -277,7 +275,6 @@ const userTools = {
       const category = text(args.category, 20) || "lainnya";
       const summary = text(args.summary, 600);
       const detail = text(args.detail, 1200);
-      const urgency = ["rendah", "sedang", "tinggi"].includes(args.urgency) ? args.urgency : "sedang";
       if (summary.length < 5) return fail("Ringkasan masalah terlalu pendek");
       // Lampiran (screenshot/video) yang dikirim user di percakapan ini ikut ke laporan.
       const media = (Array.isArray(ctx.attachments) ? ctx.attachments : []).slice(-8);
@@ -320,7 +317,7 @@ const userTools = {
           (id, ticket, user_id, user_name, user_email, category, summary, detail, urgency, status, source, attachments)
         VALUES
           (${id}, ${ticket}, ${ownerId}, ${ctx.user.name || ""}, ${ctx.user.email || ""},
-           ${category}, ${summary}, ${detail}, ${urgency}, 'open', 'assistant', ${JSON.stringify(media)}::jsonb)
+           ${category}, ${summary}, ${detail}, 'sedang', 'open', 'assistant', ${JSON.stringify(media)}::jsonb)
       `;
 
       return ok({
@@ -625,7 +622,6 @@ const adminTools = {
           AND (${q} = '%%' OR LOWER(user_name) LIKE ${q} OR LOWER(user_email) LIKE ${q}
                OR LOWER(ticket) LIKE ${q} OR LOWER(summary) LIKE ${q} OR LOWER(detail) LIKE ${q})
         ORDER BY (status = 'open') DESC, (status = 'in_progress') DESC,
-                 CASE urgency WHEN 'tinggi' THEN 0 WHEN 'sedang' THEN 1 ELSE 2 END,
                  created_at DESC
         LIMIT ${limit}
       `;
@@ -639,7 +635,6 @@ const adminTools = {
           kategori: r.category,
           masalah: r.summary,
           detail: r.detail || "-",
-          urgensi: r.urgency,
           status: r.status,
           catatanAdmin: r.adminNote || "-",
           dibuat: waktuWib(r.createdAt),
@@ -652,7 +647,7 @@ const adminTools = {
   admin_report_stats: {
     schema: {
       name: "admin_report_stats",
-      description: "Ringkasan laporan user: jumlah per status, per kategori, dan jumlah laporan urgensi tinggi yang belum selesai.",
+      description: "Ringkasan laporan user: jumlah per status dan per kategori.",
       parameters: { type: "object", properties: {}, required: [] },
     },
     handler: async (_args, ctx) => {
@@ -662,7 +657,6 @@ const adminTools = {
                COUNT(*) FILTER (WHERE status = 'in_progress')::int AS proses,
                COUNT(*) FILTER (WHERE status = 'resolved')::int AS selesai,
                COUNT(*) FILTER (WHERE status = 'closed')::int AS ditutup,
-               COUNT(*) FILTER (WHERE urgency = 'tinggi' AND status IN ('open','in_progress'))::int AS mendesak
         FROM codexa_reports
       `;
       const kategori = await ctx.sql`
@@ -671,7 +665,7 @@ const adminTools = {
       return ok({
         laporan: {
           total: s.total, belumDitangani: s.open, sedangDiproses: s.proses,
-          selesai: s.selesai, ditutup: s.ditutup, mendesak: s.mendesak,
+          selesai: s.selesai, ditutup: s.ditutup,
         },
         perKategori: kategori.map((k) => ({ kategori: k.category, total: k.total })),
       });
@@ -1509,7 +1503,7 @@ async function runAssistant({ ctx, history, onEvent }) {
       }
     }
     if (!calls.length && wantsReport && !reportDone && /(terkirim|berhasil dikirim|dikirim ke admin|nomor tiket)/i.test(String(message.content || ""))) {
-      const r = await runTool("contact_admin", { category: /top ?up/i.test(lastUserText) ? "topup" : /saldo/i.test(lastUserText) ? "saldo" : /login|akun/i.test(lastUserText) ? "akun" : "lainnya", summary: lastUserText.slice(0, 600) || "Laporan dari user via Assisten", urgency: "sedang" }, ctx);
+      const r = await runTool("contact_admin", { category: /top ?up/i.test(lastUserText) ? "topup" : /saldo/i.test(lastUserText) ? "saldo" : /login|akun/i.test(lastUserText) ? "akun" : "lainnya", summary: lastUserText.slice(0, 600) || "Laporan dari user via Assisten" }, ctx);
       actions.push("contact_admin");
       emit({ type: "reply" });
       const d = (r && r.data) || r || {};

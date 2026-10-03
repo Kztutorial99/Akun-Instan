@@ -22,13 +22,12 @@ module.exports = async function handler(request, response) {
     if (request.method === "GET") {
       const reports = await sql`
         SELECT r.id, r.ticket, r.user_id AS "userId", r.user_name AS "userName", r.user_email AS "userEmail",
-               r.category, r.summary, r.detail, r.urgency, r.status, r.source, r.admin_note AS "adminNote", r.attachments,
+               r.category, r.summary, r.detail, r.status, r.source, r.admin_note AS "adminNote", r.attachments,
                r.created_at AS "createdAt", r.updated_at AS "updatedAt",
                u.balance AS "userBalance", u.status AS "userStatus", u.phone AS "userPhone",
                (SELECT COUNT(*)::int FROM codexa_reports x WHERE x.user_id = r.user_id) AS "userReportCount"
         FROM codexa_reports r LEFT JOIN codexa_users u ON u.id = r.user_id
         ORDER BY (r.status IN ('open','in_progress')) DESC,
-                 CASE r.urgency WHEN 'tinggi' THEN 0 WHEN 'sedang' THEN 1 ELSE 2 END,
                  r.created_at DESC
         LIMIT 300
       `;
@@ -37,7 +36,6 @@ module.exports = async function handler(request, response) {
                COUNT(*) FILTER (WHERE status = 'open')::int AS open,
                COUNT(*) FILTER (WHERE status = 'in_progress')::int AS "inProgress",
                COUNT(*) FILTER (WHERE status IN ('resolved','closed'))::int AS done,
-               COUNT(*) FILTER (WHERE urgency = 'tinggi' AND status IN ('open','in_progress'))::int AS urgent,
                COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours')::int AS today
         FROM codexa_reports
       `;

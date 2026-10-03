@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AlertTriangle, CheckCircle2, ClipboardList, Clock, Flame, Inbox, Loader2, MessageSquareText, RefreshCw, Search, ShieldAlert, Paperclip, Trash2, User, Wallet,
+  AlertTriangle, CheckCircle2, ClipboardList, Clock, Inbox, Loader2, MessageSquareText, RefreshCw, Search, ShieldAlert, Paperclip, Trash2, User, Wallet,
 } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
 import { MediaGrid } from "./media-attach.jsx";
@@ -105,7 +105,6 @@ export default function ReportsPage({ onNotice }) {
       <div className="cx-rp-cards">
         <Card icon={Inbox} label="Laporan baru" value={st.open} tone="amber" sub={`${st.today || 0} masuk 24 jam`} />
         <Card icon={Clock} label="Diproses" value={st.inProgress} tone="blue" sub="sedang ditangani" />
-        <Card icon={Flame} label="Urgensi tinggi" value={st.urgent} tone="red" sub="belum selesai" />
         <Card icon={CheckCircle2} label="Selesai" value={st.done} tone="green" sub={`dari ${st.total || 0} total`} />
       </div>
 
@@ -166,12 +165,11 @@ export default function ReportsPage({ onNotice }) {
           const s = STATUS[r.status] || STATUS.open;
           const expanded = openId === r.id;
           return (
-            <div key={r.id} className={`cx-rp-item urg-${r.urgency}${expanded ? " open" : ""}`}>
+            <div key={r.id} className={`cx-rp-item${expanded ? " open" : ""}`}>
               <button className="cx-rp-item-head" onClick={() => setOpenId(expanded ? "" : r.id)}>
                 <span className={`cx-rp-badge ${s.cls}`}>{s.label}</span>
                 <code>{r.ticket}</code>
                 <span className="cx-rp-cat">{CAT_LABEL[r.category] || r.category}</span>
-                {r.urgency === "tinggi" && <span className="cx-rp-urg"><Flame size={10} /> Tinggi</span>}
                 {Array.isArray(r.attachments) && r.attachments.length > 0 && <span className="cx-rp-att"><Paperclip size={10} /> {r.attachments.length}</span>}
                 <span className="cx-rp-time">{timeAgo(r.createdAt)}</span>
               </button>
@@ -193,7 +191,6 @@ export default function ReportsPage({ onNotice }) {
                     <span>Saldo: <b>{rupiah(r.userBalance)}</b></span>
                     <span>Status akun: <b>{r.userStatus || "-"}</b></span>
                     <span>Telepon: <b>{r.userPhone || "-"}</b></span>
-                    <span>Urgensi: <b>{r.urgency}</b></span>
                   </div>
                   <textarea
                     rows={2}

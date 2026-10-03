@@ -2,7 +2,7 @@ import { useState } from "react";
 import { uploadMedia, fmtSize, MAX_MEDIA_BYTES, MAX_MEDIA_FILES } from "./media-attach.jsx";
 
 export default function ManualReportForm({ onSubmitted }) {
-  const [f, setF] = useState({ category: "topup", urgency: "sedang", summary: "", detail: "" });
+  const [f, setF] = useState({ category: "topup", summary: "", detail: "" });
   const [files, setFiles] = useState([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -42,11 +42,6 @@ export default function ManualReportForm({ onSubmitted }) {
             <select value={f.category} onChange={set("category")}>
               <option value="topup">Top up</option><option value="saldo">Saldo</option><option value="akun">Akun / login</option>
               <option value="produk">Produk</option><option value="refund">Refund</option><option value="lainnya">Lainnya</option>
-            </select>
-          </label>
-          <label>Urgensi
-            <select value={f.urgency} onChange={set("urgency")}>
-              <option value="rendah">Rendah</option><option value="sedang">Sedang</option><option value="tinggi">Tinggi</option>
             </select>
           </label>
         </div>
