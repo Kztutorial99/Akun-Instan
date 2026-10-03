@@ -5,7 +5,7 @@ import ManualReportForm from "./manual-report-form.jsx";
 import { canCreateReport, displayTicket } from "./report-state.mjs";
 
 const STATUS = {
-  open: ["Menunggu", "open"],
+  open: ["Di proses", "open"],
   in_progress: ["Diproses", "progress"],
   resolved: ["Selesai", "done"],
   closed: ["Ditutup", "closed"],
