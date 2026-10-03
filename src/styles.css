@@ -4318,3 +4318,14 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 .cx-mr-chip button{background:none;border:0;color:inherit;cursor:pointer;font-size:14px}
 .cx-mr-msg{font-size:13px;margin:0;color:#4ade80}.cx-mr-msg.is-err{color:#f87171}
 .cx-mr-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Laporan: form dan riwayat dalam bagian terpisah. */
+.cx-ur-compose{margin:20px 0 24px;padding-bottom:22px;border-bottom:1px solid var(--b1)}
+.cx-ur-compose h2,.cx-ur-history h2{font-size:16px;margin:0 0 14px}
+.cx-ur-compose input:not([type=file]),.cx-ur-compose select,.cx-ur-compose textarea{border-color:var(--b1);background:var(--s1);color:var(--ink);border-radius:8px}
+.cx-ur-compose form{max-width:none}
+.cx-ur-history{margin-top:22px}
+.cx-ur-quota{line-height:1.6;overflow-wrap:anywhere}
+.cx-ur-top{flex-wrap:wrap}
+.cx-ur-compose .cx-mr-chip{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:420px){.cx-ur-compose .cx-mr-row{grid-template-columns:1fr}.cx-ur-top small{margin-left:0}}
