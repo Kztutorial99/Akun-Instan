@@ -117,6 +117,7 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 .cx-kicker { color: var(--faint); font: 500 9px ui-monospace,monospace; letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .cx-kicker::before { content: ""; height: 1px; width: 20px; background: var(--b3); }
 .cx-hero h1 { margin: 0 0 12px; font: 700 clamp(30px,5vw,52px)/.97 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: -.04em; color: var(--ink); }
+.cx-hero h1 span, .cx-hero h1 em { display: block; white-space: nowrap; }
 .cx-hero h1 em { font-style: normal; background: linear-gradient(110deg, var(--indigo3) 20%, var(--indigo2) 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .cx-hero-sub { color: var(--muted); font-size: 14px; line-height: 1.7; max-width: 420px; margin-bottom: 26px; }
 .cx-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -476,7 +477,7 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
   .cx-stat-card { padding: 13px 14px; }
   .cx-stat-value { font-size: 20px; }
   .cx-hero { padding: 40px 0 34px; }
-  .cx-hero h1 { font-size: clamp(28px, 9vw, 40px); line-height: 1.05; }
+  .cx-hero h1 { font-size: 26px; line-height: 1.08; }
   .cx-hero-sub { font-size: 13px; margin-bottom: 22px; }
   .cx-hero-actions { gap: 10px; }
   .cx-hero-actions .cx-btn { flex: 1 1 140px; height: 42px; }

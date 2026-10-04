@@ -939,7 +939,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
               </div>
             </div>
             <div className="cx-kicker">AKUN INSTAN</div>
-            <h1>Marketplace akun digital.<br /><em>Siap pakai.</em></h1>
+            <h1><span>Marketplace akun digital.</span><em>Siap pakai.</em></h1>
             <p className="cx-hero-sub">Jual beli akun Google, Gmail fresh, custom Gmail, dan akun digital lainnya. Pilih dari katalog nyata, bayar, lalu detail login dikirim otomatis.</p>
             <div className="cx-hero-actions">
               <button className="cx-btn cx-btn-primary" onClick={() => navigate("katalog")}>
@@ -1440,10 +1440,36 @@ function App() {
       setActivePage(next);
       setAuthScreen(authScreenFromPath(window.location.pathname));
     };
+    let lastSync = Date.now();
+    let syncing = false;
+    const syncAfterResume = async () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine || syncing) return;
+      if (Date.now() - lastSync < 1500) return;
+      syncing = true;
+      try {
+        await Promise.allSettled([loadSession(), loadCatalog()]);
+        lastSync = Date.now();
+      } finally {
+        syncing = false;
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncAfterResume();
+    };
     window.addEventListener("popstate", pop);
+    window.addEventListener("focus", syncAfterResume);
+    window.addEventListener("pageshow", syncAfterResume);
+    window.addEventListener("online", syncAfterResume);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     loadSession();
     loadCatalog();
-    return () => window.removeEventListener("popstate", pop);
+    return () => {
+      window.removeEventListener("popstate", pop);
+      window.removeEventListener("focus", syncAfterResume);
+      window.removeEventListener("pageshow", syncAfterResume);
+      window.removeEventListener("online", syncAfterResume);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const products = useMemo(() => {
@@ -2378,7 +2404,7 @@ function App() {
             <div className="cx-hero-badge">Berhasil terjual <strong className="cx-num cx-num-sold">{data.loading ? "memuat" : totalSold}</strong> akun</div>
           </div>
           <div className="cx-kicker">AKUN INSTAN</div>
-          <h1>Marketplace akun digital.<br /><em>Siap pakai.</em></h1>
+          <h1><span>Marketplace akun digital.</span><em>Siap pakai.</em></h1>
           <p className="cx-hero-sub">Jual beli akun Google, Gmail fresh, custom Gmail, dan akun digital lainnya. Pilih dari katalog nyata, bayar, lalu detail login dikirim otomatis.</p>
           <div className="cx-hero-actions">
             <button className="cx-btn cx-btn-primary" onClick={() => navigate("katalog")}>
