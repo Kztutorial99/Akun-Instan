@@ -11,7 +11,7 @@ const { bodyOf, text, clientIp, rateLimit } = require("./_users");
 
 const DEFAULTS = {
   enabled: true,
-  rewards: [10, 15, 20, 25, 30, 40, 100],
+  rewards: [100, 150, 200, 250, 300, 400, 1000],
   pointValue: 1, // Rp per poin saat menukar ke produk
   ipDailyLimit: 3,
   redeemEnabled: true,
@@ -64,7 +64,9 @@ const ensureCheckinTables = once(async (sql) => {
 
 function sanitizeSettings(raw) {
   const s = { ...DEFAULTS, ...(raw || {}) };
-  const rewards = Array.isArray(s.rewards) ? s.rewards : DEFAULTS.rewards;
+  let rewards = Array.isArray(s.rewards) ? s.rewards : DEFAULTS.rewards;
+  // Hadiah lama (terlalu kecil) otomatis naik ke hadiah baru.
+  if (rewards.join(",") === "10,15,20,25,30,40,100") rewards = DEFAULTS.rewards;
   return {
     enabled: s.enabled !== false,
     redeemEnabled: s.redeemEnabled !== false,
