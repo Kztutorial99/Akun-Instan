@@ -805,7 +805,6 @@ function PublicTopbar({ navigate, onLogin, onRegister, activePage }) {
             ))}
           </nav>
           <div className="cx-land-top-auth">
-            <InstallAppButton compact label="Install" />
             <button className="cx-btn cx-btn-ghost" onClick={onLogin}><LogIn size={13} /> Masuk</button>
             <button className="cx-btn cx-btn-primary" onClick={onRegister}><UserPlus size={13} /> Daftar</button>
           </div>
@@ -838,8 +837,28 @@ function HomeBannerCarousel() {
   const activeSlide = (position - 1 + HOME_BANNERS.length) % HOME_BANNERS.length;
 
   useEffect(() => {
+    const restoreBanner = () => {
+      if (document.visibilityState !== "visible") return;
+      setAnimated(false);
+      setPosition((current) => ((current - 1 + HOME_BANNERS.length) % HOME_BANNERS.length) + 1);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setAnimated(true));
+      });
+    };
+    window.addEventListener("pageshow", restoreBanner);
+    window.addEventListener("focus", restoreBanner);
+    document.addEventListener("visibilitychange", restoreBanner);
+    return () => {
+      window.removeEventListener("pageshow", restoreBanner);
+      window.removeEventListener("focus", restoreBanner);
+      document.removeEventListener("visibilitychange", restoreBanner);
+    };
+  }, []);
+
+  useEffect(() => {
     if (paused) return undefined;
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       setAnimated(true);
       setPosition((current) => current + 1);
     }, 5000);
