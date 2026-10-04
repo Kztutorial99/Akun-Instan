@@ -630,14 +630,14 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .cx-account-trigger-copy strong { font: 600 11px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cx-account-trigger-copy small { font-size: 9.5px; color: var(--muted); font-family: ui-monospace, monospace; }
 .cx-account-overlay { position: fixed; inset: 0; z-index: 40; }
-.cx-account-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: 250px; background: var(--s1); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 14px 34px rgba(0,0,0,.5); padding: 8px; z-index: 50; color: var(--ink2); }
-.cx-account-head { display: flex; gap: 10px; align-items: center; padding: 8px; }
+.cx-account-dropdown { position: absolute; right: 0; top: calc(100% + 8px); width: 224px; background: var(--s1); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 14px 34px rgba(0,0,0,.5); padding: 8px; z-index: 50; color: var(--ink2); }
+.cx-account-head { display: flex; gap: 8px; align-items: center; padding: 6px; }
 .cx-account-head strong { display: block; font: 600 12px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .cx-account-head small { display: block; font-size: 10px; color: var(--muted); word-break: break-all; }
-.cx-account-balance { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 8px; padding: 9px 10px; border-radius: 6px; background: var(--b1); font-size: 11px; }
+.cx-account-balance { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 6px; padding: 7px 8px; border-radius: 6px; background: var(--b1); font-size: 10.5px; }
 .cx-account-balance span { display: flex; align-items: center; gap: 6px; color: var(--muted); }
 .cx-account-balance strong { font: 600 12.5px ui-monospace, monospace; }
-.cx-account-item { display: flex; align-items: center; gap: 9px; width: 100%; border: 0; background: none; padding: 8px 10px; border-radius: 6px; font: 500 11.5px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink2); cursor: pointer; text-align: left; }
+.cx-account-item { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 7px 9px; border-radius: 6px; font: 500 11px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink2); cursor: pointer; text-align: left; }
 .cx-account-item:hover { background: var(--b1); }
 .cx-account-item-danger { color: var(--red, #c97980); }
 .cx-avatar-lg { width: 36px; height: 36px; font-size: 12px; }
@@ -2479,8 +2479,8 @@ html { scroll-behavior: smooth; }
 .cx-drawer-root{ position:fixed; inset:0; z-index:120; }
 .cx-drawer-root .cx-drawer-backdrop{ position:absolute; inset:0; z-index:0; background:rgba(4,2,12,.66); backdrop-filter:blur(3px); }
 .cx-drawer{
-  position:absolute; z-index:1; top:0; left:0; bottom:0; width:min(84vw,310px);
-  display:flex; flex-direction:column; gap:10px; padding:14px 12px 18px;
+  position:absolute; z-index:1; top:0; left:0; bottom:0; width:min(78vw,272px);
+  display:flex; flex-direction:column; gap:8px; padding:12px 10px 14px;
   overflow-y:auto;
   background:linear-gradient(160deg,#150a2e 0%,#0c0620 46%,#07030f 100%);
   border-right:1px solid color-mix(in srgb, var(--indigo) 34%, transparent);
@@ -2488,19 +2488,19 @@ html { scroll-behavior: smooth; }
   animation:cx-drawer-in .22s ease both;
 }
 @keyframes cx-drawer-in{ from{ transform:translateX(-102%); } to{ transform:translateX(0); } }
-.cx-drawer-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:2px 2px 8px; }
-.cx-drawer-wordmark{ height:20px; width:auto; max-width:150px; object-fit:contain; }
+.cx-drawer-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 2px 6px; }
+.cx-drawer-wordmark{ height:17px; width:auto; max-width:128px; object-fit:contain; }
 
 .cx-drawer-balance{
-  border-radius:14px; padding:12px;
+  border-radius:12px; padding:10px;
   background:linear-gradient(135deg, color-mix(in srgb, var(--indigo) 40%, transparent), rgba(255,255,255,.03));
   border:1px solid color-mix(in srgb, var(--indigo) 40%, transparent);
 }
 .cx-drawer-balance span{ display:flex; align-items:center; gap:6px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
-.cx-drawer-balance strong{ display:block; margin:4px 0 10px; font:600 19px Inter; letter-spacing:-.02em; }
+.cx-drawer-balance strong{ display:block; margin:3px 0 8px; font:600 17px Inter; letter-spacing:-.02em; }
 .cx-drawer-balance-actions{ display:flex; gap:8px; }
 .cx-drawer-balance-actions button{
-  flex:1; padding:7px 0; border-radius:9px; cursor:pointer; font:600 12px Inter;
+  flex:1; padding:6px 0; border-radius:8px; cursor:pointer; font:600 11.5px Inter;
   border:1px solid transparent; background:var(--indigo); color:#fff;
 }
 .cx-drawer-balance-actions button.ghost{
@@ -2508,13 +2508,13 @@ html { scroll-behavior: smooth; }
   border-color:color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
-.cx-drawer-label{ margin:8px 4px 0; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+.cx-drawer-label{ margin:6px 4px 0; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
 .cx-drawer-nav{ display:flex; flex-direction:column; gap:2px; }
 .cx-drawer-nav button{
   display:flex; align-items:center; gap:10px; width:100%;
-  padding:10px 10px; border-radius:10px; cursor:pointer;
+  padding:8px 9px; border-radius:9px; cursor:pointer;
   border:1px solid transparent; background:transparent;
-  color:var(--ink2); font:500 13px Inter; text-align:left;
+  color:var(--ink2); font:500 12.5px Inter; text-align:left;
 }
 .cx-drawer-nav button span{ flex:1; }
 .cx-drawer-arrow{ opacity:.35; }
@@ -2525,8 +2525,8 @@ html { scroll-behavior: smooth; }
 }
 
 .cx-drawer-user{
-  margin-top:auto; display:flex; align-items:center; gap:10px; padding:10px;
-  border-radius:12px; background:rgba(255,255,255,.04);
+  margin-top:auto; display:flex; align-items:center; gap:8px; padding:8px;
+  border-radius:10px; background:rgba(255,255,255,.04);
   border:1px solid color-mix(in srgb, var(--ink) 12%, transparent);
 }
 .cx-drawer-user-copy{ flex:1; min-width:0; }
@@ -4338,7 +4338,7 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 @media(prefers-reduced-motion:reduce){.cx-num-spin{animation:none;border-top-color:currentColor;opacity:.55}}
 
 /* Profil: saldo asli, poin, dan badge notifikasi tetap jelas di menu ringkas. */
-.cx-account-wallets { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr); gap: 7px; margin: 8px 10px; }
+.cx-account-wallets { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr); gap: 6px; margin: 6px 8px; }
 .cx-account-wallets .cx-account-balance { margin: 0; min-width: 0; }
 .cx-account-wallets .cx-account-balance strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cx-account-balance.is-points { background: color-mix(in srgb, var(--amber) 10%, var(--s2)); border-color: color-mix(in srgb, var(--amber) 26%, var(--b2)); }
@@ -4346,7 +4346,7 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 .cx-account-item { position: relative; }
 .cx-account-item > span:first-of-type { min-width: 0; }
 .cx-menu-unread { margin-left: auto; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; flex: none; border-radius: 999px; background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px var(--s1); }
-.cx-drawer-points { display: flex !important; align-items: center; gap: 5px; width: fit-content; margin-top: 4px; padding: 3px 8px; border-radius: 999px; background: rgba(251,191,36,.1); color: var(--amber) !important; font-weight: 700; }
+.cx-drawer-points { display: flex !important; align-items: center; gap: 5px; width: fit-content; margin: 2px 0 10px; padding: 3px 8px; border-radius: 999px; background: rgba(251,191,36,.1); color: var(--amber) !important; font-weight: 700; }
 .cx-drawer-nav .cx-menu-unread { margin-left: auto; }
 .cx-drawer-nav .cx-menu-unread + .cx-drawer-arrow { margin-left: 0; }
 
