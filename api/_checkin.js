@@ -1,7 +1,7 @@
 /* Check-in harian & poin.
    Keamanan:
-   - Hari dihitung di server (WIB, Asia/Jakarta), jam perangkat tidak dipakai.
-   - UNIQUE (user_id, day) → satu klaim per hari walau request dikirim bersamaan.
+   - Siklus 24 jam bergulir dari waktu klaim terakhir (jam server), jam perangkat tidak dipakai.
+   - UNIQUE (user_id, day) + cek last_at → tidak bisa klaim ganda walau request bersamaan.
    - Poin diubah atomik (UPDATE ... WHERE points >= x) dan dicatat di ledger.
    - Batas klaim per IP per hari untuk menahan farming multi-akun.
    - Rate limit per user, akun diblokir admin tidak bisa klaim/menukar. */
@@ -60,6 +60,10 @@ const ensureCheckinTables = once(async (sql) => {
     sql`CREATE INDEX IF NOT EXISTS codexa_checkins_day_idx ON codexa_checkins (day, ip_hash)`,
     sql`CREATE INDEX IF NOT EXISTS codexa_point_ledger_user_idx ON codexa_point_ledger (user_id, created_at DESC)`,
   ]);
+  // Siklus 24 jam bergulir: simpan waktu klaim terakhir (jam server).
+  await sql`ALTER TABLE codexa_points ADD COLUMN IF NOT EXISTS last_at TIMESTAMPTZ`;
+  await sql`UPDATE codexa_points p SET last_at = c.m FROM (SELECT user_id, MAX(created_at) m FROM codexa_checkins GROUP BY user_id) c
+    WHERE p.user_id = c.user_id AND p.last_at IS NULL`;
 });
 
 function sanitizeSettings(raw) {
@@ -94,16 +98,18 @@ async function todayInfo(sql) {
 async function wallet(sql, userId) {
   const rows = await sql`
     SELECT points, streak, best_streak AS "bestStreak", last_day::text AS "lastDay",
+           GREATEST(0, CEIL(EXTRACT(EPOCH FROM (last_at + INTERVAL '24 hours' - NOW()))))::int AS "waitSec",
+           (last_at IS NOT NULL AND NOW() < last_at + INTERVAL '48 hours') AS alive,
            total_checkins AS "totalCheckins", total_earned AS "totalEarned", total_spent AS "totalSpent", blocked
     FROM codexa_points WHERE user_id = ${userId}`;
-  const w = rows[0] || { points: 0, streak: 0, bestStreak: 0, lastDay: null, totalCheckins: 0, totalEarned: 0, totalSpent: 0, blocked: false };
+  const w = rows[0] || { points: 0, streak: 0, bestStreak: 0, lastDay: null, waitSec: 0, alive: false, totalCheckins: 0, totalEarned: 0, totalSpent: 0, blocked: false };
   return { ...w, points: Number(w.points) || 0, totalEarned: Number(w.totalEarned) || 0, totalSpent: Number(w.totalSpent) || 0 };
 }
 
 async function statusPayload(sql, userId) {
   const [settings, t, w] = await Promise.all([readSettings(sql), todayInfo(sql), wallet(sql, userId)]);
-  const claimedToday = w.lastDay === t.today;
-  const alive = claimedToday || w.lastDay === t.yesterday;
+  const claimedToday = w.waitSec > 0;
+  const alive = claimedToday || !!w.alive;
   const streak = alive ? w.streak : 0;
   // Posisi di siklus 7 hari: hari berikutnya yang akan diklaim.
   const cycleDone = streak === 0 ? 0 : ((streak - 1) % 7) + 1;
@@ -117,7 +123,7 @@ async function statusPayload(sql, userId) {
   return {
     settings: { enabled: settings.enabled, redeemEnabled: settings.redeemEnabled, rewards: settings.rewards, pointValue: settings.pointValue },
     today: t.today,
-    secondsLeft: t.secondsLeft,
+    secondsLeft: w.waitSec,
     claimedToday,
     streak,
     cycleDone: claimedToday ? cycleDone : (streak % 7),
@@ -149,7 +155,7 @@ async function handleUserCheckin(sql, user, request, response) {
   if (w.blocked) return response.status(403).json({ error: "Check-in untuk akun ini dibatasi. Hubungi admin." });
 
   const t = await todayInfo(sql);
-  if (w.lastDay === t.today) return response.status(409).json({ error: "Kamu sudah check-in hari ini", code: "ALREADY" });
+  if (w.waitSec > 0) return response.status(409).json({ error: "Check-in berikutnya tersedia 24 jam setelah klaim terakhir", code: "ALREADY", secondsLeft: w.waitSec });
 
   const ip = ipHash(clientIp(request));
   const [{ c }] = await sql`SELECT COUNT(*)::int AS c FROM codexa_checkins WHERE day = ${t.today}::date AND ip_hash = ${ip}`;
@@ -157,7 +163,7 @@ async function handleUserCheckin(sql, user, request, response) {
     return response.status(429).json({ error: "Batas check-in dari jaringan ini sudah tercapai hari ini", code: "IP_LIMIT" });
   }
 
-  const streak = w.lastDay === t.yesterday ? w.streak + 1 : 1;
+  const streak = w.alive ? w.streak + 1 : 1;
   const reward = settings.rewards[(streak - 1) % 7];
   const ua = text(String(request.headers["user-agent"] || ""), 200);
 
@@ -168,11 +174,11 @@ async function handleUserCheckin(sql, user, request, response) {
   if (!inserted) return response.status(409).json({ error: "Kamu sudah check-in hari ini", code: "ALREADY" });
 
   await sql`
-    INSERT INTO codexa_points (user_id, points, streak, best_streak, last_day, total_checkins, total_earned)
-    VALUES (${user.id}, ${reward}, ${streak}, ${streak}, ${t.today}::date, 1, ${reward})
+    INSERT INTO codexa_points (user_id, points, streak, best_streak, last_day, last_at, total_checkins, total_earned)
+    VALUES (${user.id}, ${reward}, ${streak}, ${streak}, ${t.today}::date, NOW(), 1, ${reward})
     ON CONFLICT (user_id) DO UPDATE SET
       points = codexa_points.points + ${reward}, streak = ${streak},
-      best_streak = GREATEST(codexa_points.best_streak, ${streak}), last_day = ${t.today}::date,
+      best_streak = GREATEST(codexa_points.best_streak, ${streak}), last_day = ${t.today}::date, last_at = NOW(),
       total_checkins = codexa_points.total_checkins + 1,
       total_earned = codexa_points.total_earned + ${reward}, updated_at = NOW()`;
   await sql`INSERT INTO codexa_point_ledger (id, user_id, delta, reason, note)
@@ -299,10 +305,10 @@ async function handleAdminCheckin(sql, request, response) {
         (SELECT COALESCE(SUM(reward),0)::bigint FROM codexa_checkins WHERE day = ${t.today}::date) AS "todayPoints",
         (SELECT COALESCE(SUM(points),0)::bigint FROM codexa_points) AS "circulating",
         (SELECT COALESCE(SUM(total_spent),0)::bigint FROM codexa_points) AS "spent",
-        (SELECT COUNT(*)::int FROM codexa_points WHERE last_day >= ${t.yesterday}::date) AS "activeStreaks"`;
+        (SELECT COUNT(*)::int FROM codexa_points WHERE last_at > NOW() - INTERVAL '48 hours') AS "activeStreaks"`;
     const users = await sql`
       SELECT u.id, u.name, u.email, COALESCE(p.points,0)::bigint AS points,
-             CASE WHEN p.last_day >= ${t.yesterday}::date THEN p.streak ELSE 0 END AS streak,
+             CASE WHEN p.last_at > NOW() - INTERVAL '48 hours' THEN p.streak ELSE 0 END AS streak,
              COALESCE(p.best_streak,0) AS "bestStreak", p.last_day::text AS "lastDay",
              COALESCE(p.total_checkins,0) AS "totalCheckins", COALESCE(p.total_earned,0)::bigint AS "totalEarned",
              COALESCE(p.total_spent,0)::bigint AS "totalSpent", COALESCE(p.blocked,false) AS blocked
@@ -353,6 +359,7 @@ async function handleAdminCheckin(sql, request, response) {
       const t = await todayInfo(sql);
       await sql`UPDATE codexa_points SET streak = ${streak}, best_streak = GREATEST(best_streak, ${streak}),
         last_day = CASE WHEN ${streak} = 0 THEN NULL ELSE COALESCE(GREATEST(last_day, ${t.yesterday}::date), ${t.yesterday}::date) END,
+        last_at = CASE WHEN ${streak} = 0 THEN NULL ELSE LEAST(COALESCE(last_at, NOW() - INTERVAL '24 hours'), NOW() - INTERVAL '24 hours') END,
         updated_at = NOW() WHERE user_id = ${userId}`;
       return response.status(200).json({ ok: true });
     }
