@@ -1315,7 +1315,7 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 /* Mobile 360–430px */
 @media (max-width: 719px){
   .cx-hero{ padding:34px 0 28px; }
-  .cx-hero h1{ font-size:clamp(27px,8.8vw,38px); }
+  .cx-hero h1{ font-size:clamp(25px,7.2vw,30px); line-height:1.08; }
   .cx-hero-sub{ font-size:13px; margin-bottom:18px; }
   .cx-kicker{ margin-bottom:12px; }
   .cx-land-section{ margin:22px auto; }
