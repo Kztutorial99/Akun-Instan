@@ -6,13 +6,13 @@ html, body { overflow-x: hidden; max-width: 100%; }
 /* Drawer */
 .cx-drawer-root { z-index: 200; }
 .cx-drawer-root .cx-drawer-backdrop { inset: 0 !important; bottom: 0 !important; background: rgba(4,2,12,.62); backdrop-filter: blur(2px); animation: cxp-fade .2s ease both; }
-.cx-drawer { width: min(86vw, 340px) !important; max-width: 360px; padding: max(14px, env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)) !important; box-shadow: 16px 0 40px rgba(0,0,0,.45) !important; overscroll-behavior: contain; touch-action: pan-y; will-change: transform; transition: transform .2s ease; }
+.cx-drawer { width: min(72vw, 236px) !important; max-width: 236px; padding: max(10px, env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom)) !important; box-shadow: 16px 0 40px rgba(0,0,0,.45) !important; overscroll-behavior: contain; touch-action: pan-y; will-change: transform; transition: transform .2s ease; }
 .cx-drawer .cx-icon-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 .cx-drawer-nav button { min-height: 46px; display: flex; align-items: center; gap: 12px; line-height: 1.2; }
 .cx-drawer-nav button svg { width: 18px; height: 18px; flex: none; }
 .cx-drawer-nav button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cx-menu-unread { flex: none; max-width: 40px; }
-@media (min-width: 768px) { .cx-drawer { width: 340px !important; } }
+@media (min-width: 768px) { .cx-drawer { width: 280px !important; max-width: 280px; } }
 @keyframes cxp-fade { from { opacity: 0 } to { opacity: 1 } }
 
 /* Header */
