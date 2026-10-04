@@ -951,10 +951,10 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
             <div className="cx-hero-badges">
               <div className="cx-hero-badge">
                 <span className="cx-hero-pulse" />
-                Stok tersedia <strong className="cx-num cx-num-stock">{loading ? "…" : totalAccounts}</strong> akun
+                Stok tersedia <strong className="cx-num cx-num-stock">{loading ? <span className="cx-num-spin" aria-label="memuat" /> : totalAccounts}</strong> akun
               </div>
               <div className="cx-hero-badge">
-                Berhasil terjual <strong className="cx-num cx-num-sold">{loading ? "…" : totalSold}</strong> akun
+                Berhasil terjual <strong className="cx-num cx-num-sold">{loading ? <span className="cx-num-spin" aria-label="memuat" /> : totalSold}</strong> akun
               </div>
             </div>
             <div className="cx-kicker">AKUN INSTAN</div>
@@ -2419,8 +2419,8 @@ function App() {
         <div className="cx-hero-glow" aria-hidden="true" />
         <div className="cx-container cx-hero-inner">
           <div className="cx-hero-badges">
-            <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia <strong className="cx-num cx-num-stock">{data.loading ? "…" : totalAccounts}</strong> akun</div>
-            <div className="cx-hero-badge">Berhasil terjual <strong className="cx-num cx-num-sold">{data.loading ? "…" : totalSold}</strong> akun</div>
+            <div className="cx-hero-badge"><span className="cx-hero-pulse" /> Stok tersedia <strong className="cx-num cx-num-stock">{data.loading ? <span className="cx-num-spin" aria-label="memuat" /> : totalAccounts}</strong> akun</div>
+            <div className="cx-hero-badge">Berhasil terjual <strong className="cx-num cx-num-sold">{data.loading ? <span className="cx-num-spin" aria-label="memuat" /> : totalSold}</strong> akun</div>
           </div>
           <div className="cx-kicker">AKUN INSTAN</div>
           <h1><span>Marketplace akun digital.</span><em>Siap pakai.</em></h1>

@@ -4331,3 +4331,8 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 .cx-ur-compose .cx-mr-chip{max-width:100%;overflow-wrap:anywhere}
 @media(max-width:420px){.cx-ur-compose .cx-mr-row{grid-template-columns:1fr}.cx-ur-top small{margin-left:0}}
 @media(max-width:560px){.cx-hero h1{font-size:26px;line-height:1.08}}
+/* Spinner kecil di badge stok/terjual: bulatan berputar, lebar tetap jadi badge tidak turun */
+.cx-hero-badge .cx-num{display:inline-flex;align-items:center;justify-content:center;min-width:13px;height:14px}
+.cx-num-spin{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:cx-num-spin .7s linear infinite}
+@keyframes cx-num-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.cx-num-spin{animation:none;border-top-color:currentColor;opacity:.55}}
