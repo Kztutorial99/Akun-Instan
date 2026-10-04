@@ -29,7 +29,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 /* Profile dropdown */
-.cx-account-dropdown { width: min(264px, calc(100vw - 24px)) !important; max-width: calc(100vw - 24px); max-height: calc(100dvh - 90px); overflow-y: auto; border-radius: 14px !important; border: 1px solid var(--b2); box-shadow: 0 16px 36px rgba(0,0,0,.5) !important; transform-origin: top right; animation: cxp-pop .16s ease both; z-index: 150 !important; }
+.cx-account-dropdown { width: min(232px, calc(100vw - 24px)) !important; max-width: calc(100vw - 24px); max-height: calc(100dvh - 90px); overflow-y: auto; border-radius: 14px !important; border: 1px solid var(--b2); box-shadow: 0 16px 36px rgba(0,0,0,.5) !important; transform-origin: top right; animation: cxp-pop .16s ease both; z-index: 150 !important; }
 .cx-account-dropdown button, .cx-account-dropdown a { min-height: 44px; }
 .cx-account-dropdown small, .cx-account-dropdown strong { overflow-wrap: anywhere; }
 @keyframes cxp-pop { from { opacity: 0; transform: scale(.96) translateY(-4px) } to { opacity: 1; transform: none } }
