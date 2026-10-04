@@ -1298,13 +1298,6 @@ function App() {
     const t = window.setTimeout(() => setWelcomeSplash(false), 1100);
     return () => window.clearTimeout(t);
   }, [welcomeSplash]);
-  // Animasi singkat setiap pindah menu (bukan hanya beranda).
-  const [pageSplash, setPageSplash] = useState(null);
-  useEffect(() => {
-    if (!pageSplash) return;
-    const t = window.setTimeout(() => setPageSplash(null), 520);
-    return () => window.clearTimeout(t);
-  }, [pageSplash]);
   const goAuthScreen = (screen) => {
     if (screen === "login" || screen === "register") {
       setAuthReturn((prev) => (authScreen === "welcome" ? (activePage || pageFromPath(window.location.pathname)) : prev));
@@ -1457,7 +1450,6 @@ function App() {
   useEffect(() => {
     const pop = () => {
       const next = pageFromPath(window.location.pathname);
-      setPageSplash((prev) => prev || next);
       setActivePage(next);
       setAuthScreen(authScreenFromPath(window.location.pathname));
     };
@@ -1568,7 +1560,6 @@ function App() {
       return;
     }
     window.history.pushState({}, "", page === "store" ? "/" : `/${page}`);
-    if (page !== activePage) setPageSplash(page);
     setActivePage(page);
     // Pindah menu harus menutup semua panel yang sedang terbuka.
     setCartOpen(false);
@@ -1784,9 +1775,6 @@ function App() {
   }
   if (welcomeSplash) {
     return <SessionSplash title="Berhasil masuk" subtitle="Mengarahkan kamu ke beranda..." />;
-  }
-  if (pageSplash) {
-    return <SessionSplash title={`Membuka ${PAGE_LABELS[pageSplash] || "halaman"}`} subtitle="Sebentar ya, halaman sedang disiapkan..." />;
   }
   if (!auth.user && !auth.loading) {
     // Layar Masuk/Daftar hanya muncul saat diminta (klik tombol yang butuh login).
@@ -3012,8 +3000,6 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
     ["store", "Beranda", LayoutDashboard],
     ["katalog", "Katalog Produk", ShoppingBag],
     ["custom-email", "Custom Email", Mail],
-    ["orders", "Pesanan Saya", Package],
-    ...(user ? [["reports", "Laporan", FileText], ["notifications", "Notifikasi", Bell], ["checkin", "Check-in Harian", Gift]] : []),
     ["help", "Bantuan", CircleHelp],
   ];
 
