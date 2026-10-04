@@ -9,6 +9,8 @@ const PAGE_SEO = {
   store: {
     path: "/",
     title: "Akun Instan - Marketplace Akun Digital",
+    h1: "Marketplace Akun Digital Siap Pakai",
+    h2: "Jual beli akun Google, Gmail fresh, dan akun digital dengan proses instan",
     description:
       "Jual beli akun Gmail fresh/no-PVA, custom Gmail sesuai nama, dan akun digital lainnya. Proses instan, harga murah, stok real-time, garansi login.",
     keywords:
@@ -17,6 +19,8 @@ const PAGE_SEO = {
   katalog: {
     path: "/katalog",
     title: "Katalog Akun Digital Google, Gmail & Game | Akun Instan",
+    h1: "Katalog Akun Digital Google, Gmail dan Game",
+    h2: "Pilih akun siap pakai dengan stok dan harga yang transparan",
     description:
       "Lihat katalog lengkap akun digital Akun Instan: akun Google/Gmail siap pakai, akun game, dan akun social media. Stok real-time, harga transparan.",
     keywords:
@@ -25,6 +29,8 @@ const PAGE_SEO = {
   "custom-email": {
     path: "/custom-email",
     title: "Custom Gmail Sesuai Nama, Cepat & Murah | Akun Instan",
+    h1: "Custom Gmail Sesuai Nama Sendiri",
+    h2: "Pesan alamat Gmail pilihan yang dibuat dan diperiksa secara manual",
     description:
       "Pesan akun Gmail dengan nama pilihanmu sendiri. Cek ketersediaan nama otomatis, pembuatan dibantu tim Akun Instan, aktif dan siap dipakai.",
     keywords:
@@ -41,41 +47,53 @@ const PAGE_SEO = {
   help: {
     path: "/help",
     title: "Bantuan & FAQ Akun Instan — Cara Beli Akun Digital",
+    h1: "Bantuan Pembelian Akun Digital",
+    h2: "Panduan pembayaran, pengiriman akun, garansi, dan penyelesaian kendala",
     description:
       "Panduan lengkap cara membeli akun Google/Gmail dan akun digital lain di Akun Instan, metode pembayaran, garansi, dan cara klaim bantuan.",
     keywords: "cara beli akun gmail, faq akun instan, bantuan akun digital",
   },
   faq: {
     path: "/faq",
-    title: "FAQ — Pertanyaan Seputar Beli Akun Google & Gmail | Akun Instan",
+    title: "FAQ Beli Akun Google dan Gmail | Akun Instan",
+    h1: "FAQ Pembelian Akun Google dan Gmail",
+    h2: "Jawaban tentang produk, pembayaran, pengiriman, garansi, dan refund",
     description:
       "Kumpulan jawaban lengkap seputar pembelian akun Google/Gmail, pembayaran QRIS & e-wallet, garansi, refund, dan custom email di Akun Instan.",
     keywords: "faq akun instan, pertanyaan beli akun gmail, garansi akun google, refund akun digital",
   },
   "cara-beli": {
     path: "/cara-beli",
-    title: "Cara Beli Akun Google & Gmail di Akun Instan — Panduan Lengkap",
+    title: "Cara Beli Akun Google dan Gmail | Akun Instan",
+    h1: "Cara Beli Akun Google dan Gmail",
+    h2: "Panduan dari pengisian saldo sampai menerima detail login akun",
     description:
       "Panduan langkah demi langkah membeli akun Google/Gmail di Akun Instan: isi saldo, pilih akun, bayar pakai saldo, dan ambil detail login secara instan.",
     keywords: "cara beli akun google, cara beli akun gmail, tutorial beli akun digital",
   },
   "produk/gmail-fresh": {
     path: "/produk/gmail-fresh",
-    title: "Jual Akun Gmail Fresh No-PVA Murah — Harga Mulai Rp5.000 | Akun Instan",
+    title: "Jual Akun Gmail Fresh No-PVA Murah | Akun Instan",
+    h1: "Jual Akun Gmail Fresh No-PVA Murah",
+    h2: "Akun baru siap pakai dengan pengiriman instan dan garansi login",
     description:
       "Jual akun Gmail fresh (no-PVA) baru, belum terikat nomor, dikirim instan. Jumlah akun sesuai jumlah yang dibeli, harga makin murah untuk pembelian banyak.",
     keywords: "jual akun gmail fresh, gmail fresh murah, akun gmail no pva, beli gmail baru, jual email gmail",
   },
   "produk/custom-gmail": {
     path: "/produk/custom-gmail",
-    title: "Custom Gmail Sesuai Nama Sendiri — Cek Nama & Pesan | Akun Instan",
+    title: "Custom Gmail Sesuai Nama Sendiri | Akun Instan",
+    h1: "Custom Gmail Sesuai Nama Sendiri",
+    h2: "Pilih username, cek ketersediaan, dan terima akun siap pakai",
     description:
       "Pesan akun Gmail custom dengan nama atau username pilihanmu. Cek ketersediaan nama otomatis, akun dibuat manual oleh tim Akun Instan dan siap dipakai.",
     keywords: "custom gmail, jual custom gmail, buat gmail sesuai nama, jasa buat akun gmail, gmail nama sendiri",
   },
   "produk/gmail-aged": {
     path: "/produk/gmail-aged",
-    title: "Jual Akun Gmail Aged (Akun Lama) — Harga Sesuai Umur Akun | Akun Instan",
+    title: "Jual Akun Gmail Aged dan Lama | Akun Instan",
+    h1: "Jual Akun Gmail Aged dan Akun Lama",
+    h2: "Umur akun transparan, stok aktual, dan detail login dikirim instan",
     description:
       "Jual akun Gmail aged/tua dengan umur transparan dan harga otomatis mengikuti usia akun. Stok real-time, detail login dikirim instan, garansi login.",
     keywords: "jual gmail aged, akun gmail lama, gmail tua, beli gmail aged, akun gmail berumur",
@@ -83,21 +101,25 @@ const PAGE_SEO = {
   "produk/akun-game": {
     path: "/produk/akun-game",
     title: "Jual Akun Game Murah & Aman — Kirim Instan | Akun Instan",
+    h1: "Jual Akun Game Murah dan Aman",
+    h2: "Akun game siap pakai dengan stok aktual dan detail produk yang jelas",
     description:
       "Jual akun game siap pakai dengan stok real-time, harga transparan, dan detail login dikirim instan setelah pembayaran. Garansi login sesuai kebijakan refund.",
     keywords: "jual akun game, beli akun game murah, akun game siap pakai, jual akun game aman",
   },
   "produk/akun-social-media": {
     path: "/produk/akun-social-media",
-    title: "Jual Akun Social Media Siap Pakai — Harga Murah | Akun Instan",
+    title: "Jual Akun Social Media Siap Pakai | Akun Instan",
+    h1: "Jual Akun Social Media Siap Pakai",
+    h2: "Pilihan akun media sosial untuk promosi dan pengelolaan konten",
     description:
       "Jual akun social media siap pakai untuk promosi dan pengelolaan konten. Keterangan akun jelas, pengiriman instan, harga transparan, garansi login.",
     keywords: "jual akun social media, beli akun sosmed, akun instagram tiktok, jual akun sosmed murah",
   },
-  terms: { path: "/terms", title: "Syarat & Ketentuan | Akun Instan", description: "Syarat dan ketentuan penggunaan layanan Akun Instan." },
-  privacy: { path: "/privacy", title: "Kebijakan Privasi | Akun Instan", description: "Kebijakan privasi dan perlindungan data pengguna Akun Instan." },
-  refund: { path: "/refund", title: "Kebijakan Refund | Akun Instan", description: "Ketentuan pengembalian dana dan garansi produk akun digital Akun Instan." },
-  disclaimer: { path: "/disclaimer", title: "Disclaimer Layanan dan Transaksi Digital | Akun Instan", description: "Disclaimer layanan Akun Instan." },
+  terms: { path: "/terms", title: "Syarat dan Ketentuan Layanan | Akun Instan", description: "Baca syarat penggunaan, ketentuan transaksi, kewajiban pengguna, dan aturan layanan saat membeli akun digital di Akun Instan." },
+  privacy: { path: "/privacy", title: "Kebijakan Privasi dan Data Pengguna | Akun Instan", description: "Pelajari cara Akun Instan mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi pengguna selama memakai layanan." },
+  refund: { path: "/refund", title: "Kebijakan Refund dan Garansi Produk | Akun Instan", description: "Ketahui syarat klaim, batas waktu pelaporan, penggantian akun, serta proses pengembalian saldo untuk produk digital bermasalah." },
+  disclaimer: { path: "/disclaimer", title: "Disclaimer Layanan dan Transaksi Digital | Akun Instan", description: "Baca batasan tanggung jawab, status merek pihak ketiga, ketentuan penggunaan produk, dan informasi layanan digital Akun Instan." },
   orders: { path: "/orders", title: "Pesanan Saya | Akun Instan", description: "Riwayat pesanan akun digital kamu di Akun Instan.", noindex: true },
   notifications: { path: "/notifications", title: "Notifikasi | Akun Instan", description: "Semua notifikasi akun Akun Instan kamu.", noindex: true },
   reports: { path: "/reports", title: "Laporan Saya | Akun Instan", description: "Status laporan dan balasan admin untuk akun Akun Instan kamu.", noindex: true },

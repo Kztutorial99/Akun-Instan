@@ -248,37 +248,10 @@ function urlEntry({ loc, changefreq, priority, lastmod }) {
 }
 
 async function buildSitemap(sql) {
-  let productUrls = [];
-  try {
-    const rows = await sql`
-      SELECT id, title, login_type AS "loginType", stock, status, credential_blob AS "credentialBlob", updated_at AS "updatedAt"
-      FROM codexa_account_listings
-      WHERE status = 'available'
-      ORDER BY created_at DESC
-    `;
-    const visible = rows.filter((row) => {
-      const credentials = decryptCredentials(row.credentialBlob) || {};
-      const accountCount = Array.isArray(credentials.accounts) && credentials.accounts.length
-        ? credentials.accounts.length
-        : (credentials.email || credentials.username || credentials.password ? 1 : 0);
-      const effectiveStock = accountCount || Math.max(0, Number(row.stock) || 0);
-      return effectiveStock > 0;
-    });
-    productUrls = assignSlugs(visible).map((p) => ({
-      loc: `/produk/akun/${p.slug}`,
-      changefreq: "daily",
-      priority: "0.8",
-      lastmod: p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined,
-    }));
-  } catch (error) {
-    console.error("sitemap: gagal membaca produk", error);
-  }
-
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...STATIC_URLS.map(urlEntry),
-    ...productUrls.map(urlEntry),
     "</urlset>",
     "",
   ].join("\n");

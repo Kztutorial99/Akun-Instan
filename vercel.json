@@ -2,6 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.akuninstan.com" }],
+      "destination": "https://akuninstan.com/:path*",
+      "permanent": true
+    }
+  ],
   "functions": {
     "api/orders.js": {
       "maxDuration": 60
@@ -70,6 +78,38 @@
       "destination": "/"
     },
     {
+      "source": "/notifications",
+      "destination": "/"
+    },
+    {
+      "source": "/reports",
+      "destination": "/"
+    },
+    {
+      "source": "/login",
+      "destination": "/"
+    },
+    {
+      "source": "/register",
+      "destination": "/"
+    },
+    {
+      "source": "/email-verifikasi",
+      "destination": "/"
+    },
+    {
+      "source": "/status-verifikasi",
+      "destination": "/"
+    },
+    {
+      "source": "/lupa-password",
+      "destination": "/"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/"
+    },
+    {
       "source": "/katalog",
       "destination": "/_seo/katalog.html"
     },
@@ -126,7 +166,7 @@
       "destination": "/_seo/disclaimer.html"
     },
     {
-      "source": "/((?!api/|assets/)[^.]*)",
+      "source": "/produk/akun/:slug",
       "destination": "/"
     }
   ],

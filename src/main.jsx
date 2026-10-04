@@ -939,8 +939,8 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
               </div>
             </div>
             <div className="cx-kicker">AKUN INSTAN</div>
-            <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
-            <p className="cx-hero-sub">Pilih akun dari katalog nyata, bayar, dan detail login dikirim otomatis setelah pembayaran berhasil.</p>
+            <h1>Marketplace akun digital.<br /><em>Siap pakai.</em></h1>
+            <p className="cx-hero-sub">Jual beli akun Google, Gmail fresh, custom Gmail, dan akun digital lainnya. Pilih dari katalog nyata, bayar, lalu detail login dikirim otomatis.</p>
             <div className="cx-hero-actions">
               <button className="cx-btn cx-btn-primary" onClick={() => navigate("katalog")}>
                 Lihat Katalog <ArrowRight size={13} />
@@ -952,8 +952,6 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
           </div>
         </section>
         <HomeBannerCarousel />
-        <h1 className="cx-seo-only">Akun Instan — akun digital siap pakai dan Custom Gmail</h1>
-        <p className="cx-seo-only">Jual beli akun Gmail fresh (no-PVA), custom Gmail sesuai nama, akun Google, dan akun digital lainnya dengan harga murah dan proses instan.</p>
 
         <section className="cx-container cx-land-section" aria-labelledby="layanan">
           <h2 id="layanan" className="cx-land-h2">Layanan Akun Instan</h2>
@@ -2380,9 +2378,8 @@ function App() {
             <div className="cx-hero-badge">Berhasil terjual <strong className="cx-num cx-num-sold">{data.loading ? "memuat" : totalSold}</strong> akun</div>
           </div>
           <div className="cx-kicker">AKUN INSTAN</div>
-          <h1>Akun digital.<br /><em>Siap pakai.</em></h1>
-            <p className="cx-seo-only">Jual beli akun Gmail fresh (no-PVA), custom Gmail sesuai nama, akun Google, dan akun digital lainnya dengan harga murah dan proses instan.</p>
-          <p className="cx-hero-sub">Pilih akun dari katalog nyata, bayar, dan detail login dikirim otomatis setelah pembayaran berhasil.</p>
+          <h1>Marketplace akun digital.<br /><em>Siap pakai.</em></h1>
+          <p className="cx-hero-sub">Jual beli akun Google, Gmail fresh, custom Gmail, dan akun digital lainnya. Pilih dari katalog nyata, bayar, lalu detail login dikirim otomatis.</p>
           <div className="cx-hero-actions">
             <button className="cx-btn cx-btn-primary" onClick={() => navigate("katalog")}>
               Lihat Katalog <ArrowRight size={13} />
