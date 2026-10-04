@@ -16,7 +16,7 @@ const PAGE_SEO = {
   },
   katalog: {
     path: "/katalog",
-    title: "Katalog Akun Digital — Google, Gmail, Game & Social Media | Akun Instan",
+    title: "Katalog Akun Digital Google, Gmail & Game | Akun Instan",
     description:
       "Lihat katalog lengkap akun digital Akun Instan: akun Google/Gmail siap pakai, akun game, dan akun social media. Stok real-time, harga transparan.",
     keywords:
@@ -24,7 +24,7 @@ const PAGE_SEO = {
   },
   "custom-email": {
     path: "/custom-email",
-    title: "Custom Email Gmail Sesuai Nama Sendiri — Cek Ketersediaan | Akun Instan",
+    title: "Custom Gmail Sesuai Nama, Cepat & Murah | Akun Instan",
     description:
       "Pesan akun Gmail dengan nama pilihanmu sendiri. Cek ketersediaan nama otomatis, pembuatan dibantu tim Akun Instan, aktif dan siap dipakai.",
     keywords:
@@ -97,7 +97,7 @@ const PAGE_SEO = {
   terms: { path: "/terms", title: "Syarat & Ketentuan | Akun Instan", description: "Syarat dan ketentuan penggunaan layanan Akun Instan." },
   privacy: { path: "/privacy", title: "Kebijakan Privasi | Akun Instan", description: "Kebijakan privasi dan perlindungan data pengguna Akun Instan." },
   refund: { path: "/refund", title: "Kebijakan Refund | Akun Instan", description: "Ketentuan pengembalian dana dan garansi produk akun digital Akun Instan." },
-  disclaimer: { path: "/disclaimer", title: "Disclaimer | Akun Instan", description: "Disclaimer layanan Akun Instan." },
+  disclaimer: { path: "/disclaimer", title: "Disclaimer Layanan dan Transaksi Digital | Akun Instan", description: "Disclaimer layanan Akun Instan." },
   orders: { path: "/orders", title: "Pesanan Saya | Akun Instan", description: "Riwayat pesanan akun digital kamu di Akun Instan.", noindex: true },
   notifications: { path: "/notifications", title: "Notifikasi | Akun Instan", description: "Semua notifikasi akun Akun Instan kamu.", noindex: true },
   reports: { path: "/reports", title: "Laporan Saya | Akun Instan", description: "Status laporan dan balasan admin untuk akun Akun Instan kamu.", noindex: true },
