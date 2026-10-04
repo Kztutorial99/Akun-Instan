@@ -286,7 +286,84 @@ async function buildSitemap(sql) {
   return xml;
 }
 
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Webhook WhatsApp Cloud API (Meta) — diakses lewat /api/data?wa=webhook
+   (digabung ke file ini karena paket Vercel Hobby membatasi 12 fungsi).
+
+   GET  : verifikasi langganan (hub.verify_token = env WHATSAPP_VERIFY_TOKEN)
+   POST : simpan semua notifikasi pesan masuk & status kirim ke tabel
+          whatsapp_events, selalu balas 200 agar Meta terus mengirim event.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+function whatsappPhoneId(body) {
+  try {
+    for (const e of (body && Array.isArray(body.entry) ? body.entry : [])) {
+      for (const c of (Array.isArray(e.changes) ? e.changes : [])) {
+        const value = c.value || {};
+        if (value.metadata && value.metadata.phone_number_id) {
+          return String(value.metadata.phone_number_id);
+        }
+      }
+    }
+  } catch (_) {}
+  return "";
+}
+
+async function handleWhatsappWebhook(request, response) {
+  const url = new URL(request.url, "http://localhost");
+
+  if (request.method === "GET") {
+    const mode = url.searchParams.get("hub.mode");
+    const token = url.searchParams.get("hub.verify_token");
+    const challenge = url.searchParams.get("hub.challenge");
+    const expected = process.env.WHATSAPP_VERIFY_TOKEN || "";
+    if (mode === "subscribe" && token && expected && token === expected) {
+      return response.status(200).send(challenge || "");
+    }
+    return response.status(403).send("Forbidden");
+  }
+
+  if (request.method !== "POST") {
+    return response.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    let body = bodyOf(request);
+    if (!body || typeof body !== "object") body = {};
+    if (!process.env.DATABASE_URL) return response.status(200).json({ received: true });
+    const sql = neon(process.env.DATABASE_URL);
+    await sql`
+      CREATE TABLE IF NOT EXISTS whatsapp_events (
+        id BIGSERIAL PRIMARY KEY,
+        event_kind TEXT NOT NULL DEFAULT '',
+        phone_number_id TEXT NOT NULL DEFAULT '',
+        payload JSONB NOT NULL,
+        received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        processed_at TIMESTAMPTZ,
+        processing_error TEXT
+      )
+    `;
+    const kind = body && body.object ? String(body.object) : "";
+    await sql`
+      INSERT INTO whatsapp_events (event_kind, phone_number_id, payload)
+      VALUES (${kind}, ${whatsappPhoneId(body)}, ${JSON.stringify(body)}::jsonb)
+    `;
+  } catch (error) {
+    console.error("whatsapp-webhook: gagal menyimpan event", error && error.message);
+    /* Tetap 200: kalau sering gagal, Meta bisa berhenti mengirim webhook. */
+  }
+
+  return response.status(200).json({ received: true });
+}
+
 module.exports = async function handler(request, response) {
+  /* ?wa=webhook = Webhook WhatsApp (Meta): verifikasi + pesan masuk. */
+  if (request.query && request.query.wa === "webhook") {
+    return handleWhatsappWebhook(request, response);
+  }
+
+
   /* POST ?resource=visit = catat kunjungan halaman (Visitor Traffic, tanpa login). */
   if (request.method === "POST" && request.query && request.query.resource === "visit") {
     response.setHeader("Cache-Control", "no-store");
