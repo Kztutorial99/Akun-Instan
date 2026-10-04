@@ -6,15 +6,15 @@ const { handleStream } = require("./_stream");
 const wijayapay = require("./_wijayapay");
 const { once } = require("./_schema");
 
-const MIN_TOPUP = 10000;
+const MIN_TOPUP = 5000;
 /* Bonus saldo per nominal top up (mengikuti tampilan halaman Top Up). */
 const TOPUP_BONUS_TIERS = [
-  { amount: 10000, bonus: 0 },
-  { amount: 25000, bonus: 2000 },
-  { amount: 50000, bonus: 4000 },
-  { amount: 100000, bonus: 8000 },
-  { amount: 250000, bonus: 20000 },
-  { amount: 500000, bonus: 45000 },
+  { amount: 5000, bonus: 0 },
+  { amount: 15000, bonus: 2500 },
+  { amount: 50000, bonus: 5000 },
+  { amount: 100000, bonus: 10000 },
+  { amount: 250000, bonus: 25000 },
+  { amount: 500000, bonus: 50000 },
 ];
 const topupBonus = (value) => {
   const v = Math.round(Number(value) || 0);

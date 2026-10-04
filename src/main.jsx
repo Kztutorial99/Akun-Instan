@@ -5230,15 +5230,15 @@ const QRIS_NAME    = "KZ.TUTORIAL";
 const QRIS_NMID    = "ID1026476486182";
 const WA_NUMBER    = "62895325844493";
 const TG_USERNAME  = "Kztutorial";
-const TOPUP_MIN = 10000;
+const TOPUP_MIN = 5000;
 /* Fallback lokal — sumber kebenaran tetap dari server (GET /api/topup → bonusTiers). */
 const TOPUP_PRESETS = [
-  { amount: 10000, bonus: 0 },
-  { amount: 25000, bonus: 2000 },
-  { amount: 50000, bonus: 4000 },
-  { amount: 100000, bonus: 8000 },
-  { amount: 250000, bonus: 20000 },
-  { amount: 500000, bonus: 45000 },
+  { amount: 5000, bonus: 0 },
+  { amount: 15000, bonus: 2500 },
+  { amount: 50000, bonus: 5000 },
+  { amount: 100000, bonus: 10000 },
+  { amount: 250000, bonus: 25000 },
+  { amount: 500000, bonus: 50000 },
 ];
 /* Bonus saldo mengikuti nominal terbesar yang tercapai (juga untuk nominal custom). */
 const topupBonus = (value, tiers) => {
@@ -5873,7 +5873,7 @@ function TopUpPage({ user, onBack, onNotice, onRefresh }) {
               <div className="nk-custom-input">
                 <span className="nk-custom-rp">Rp</span>
                 <input
-                  type="number" min="10000" step="500" value={custom} inputMode="numeric" placeholder="10000"
+                  type="number" min="5000" step="500" value={custom} inputMode="numeric" placeholder="5000"
                   onChange={(e) => setCustom(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); openConfirm(custom); } }}
                 />
