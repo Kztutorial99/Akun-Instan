@@ -29,8 +29,10 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 /* Profile dropdown */
-.cx-account-dropdown { width: min(232px, calc(100vw - 24px)) !important; max-width: calc(100vw - 24px); max-height: calc(100dvh - 90px); overflow-y: auto; border-radius: 14px !important; border: 1px solid var(--b2); box-shadow: 0 16px 36px rgba(0,0,0,.5) !important; transform-origin: top right; animation: cxp-pop .16s ease both; z-index: 150 !important; }
-.cx-account-dropdown button, .cx-account-dropdown a { min-height: 44px; }
+.cx-account-dropdown { width: min(236px, calc(100vw - 24px)) !important; padding: 6px !important; max-width: calc(100vw - 24px); max-height: calc(100dvh - 90px); overflow-y: auto; border-radius: 14px !important; border: 1px solid var(--b2); box-shadow: 0 16px 36px rgba(0,0,0,.5) !important; transform-origin: top right; animation: cxp-pop .16s ease both; z-index: 150 !important; }
+.cx-account-dropdown button, .cx-account-dropdown a { min-height: 36px; }
+.cx-account-dropdown .cx-account-item { padding: 5px 8px !important; font-size: 12px !important; gap: 8px; }
+.cx-account-dropdown .cx-account-head { padding: 4px 6px 6px !important; }
 .cx-account-dropdown small, .cx-account-dropdown strong { overflow-wrap: anywhere; }
 @keyframes cxp-pop { from { opacity: 0; transform: scale(.96) translateY(-4px) } to { opacity: 1; transform: none } }
 
@@ -54,8 +56,10 @@ html, body { overflow-x: hidden; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
 /* Fix dari screenshot: saldo/poin terpotong, badge melebar, spacing drawer */
-.cx-account-wallets { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
-.cx-account-balance { display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 3px; min-width: 0; padding: 10px 12px !important; }
+.cx-account-wallets { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--b2); border-radius: 10px; overflow: hidden; margin: 4px 0 6px; }
+.cx-account-wallets .cx-account-balance { border-radius: 0 !important; border: 0 !important; background: transparent !important; margin: 0 !important; }
+.cx-account-wallets .cx-account-balance + .cx-account-balance { border-left: 1px solid var(--b2) !important; }
+.cx-account-balance { display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 2px; min-width: 0; padding: 8px 10px !important; }
 .cx-account-balance span { display: flex; align-items: center; gap: 5px; font-size: 11px; white-space: nowrap; }
 .cx-account-balance strong { font-size: 15px !important; white-space: nowrap; overflow: visible !important; text-overflow: clip !important; max-width: 100%; }
 .cx-account-balance.is-points strong { color: var(--amber, #fbbf24); }
