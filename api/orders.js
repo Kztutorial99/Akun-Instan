@@ -3,6 +3,7 @@ const { db, ensureTables, currentUser, bodyOf } = require("./_users");
 const { createNotification } = require("./_notifications");
 const { isAdmin } = require("./admin/_auth");
 const { once } = require("./_schema");
+const { spendPoints, refundPoints } = require("./_checkin");
 const { effectiveAccountPrice, agedInfo, readAgedConfig, DEFAULT_AGED_CONFIG } = require("./_aged");
 
 /* ── enkripsi kredensial (format sama dengan api/admin/products.js) ── */
@@ -863,7 +864,8 @@ module.exports = async function handler(request, response) {
     const customEmailFee = customEmails.length ? await readCustomEmailFee(sql, { fresh: true }) : 0;
     total += customEmails.length * customEmailFee;
 
-    if (total > user.balance) {
+    const payWithPoints = bodyOf(request).payWith === "points";
+    if (!payWithPoints && total > user.balance) {
       return response.status(402).json({
         error: `Saldo tidak cukup. Butuh Rp${total.toLocaleString("id-ID")}, saldo kamu Rp${user.balance.toLocaleString("id-ID")}`,
         needTopup: true,
@@ -961,12 +963,25 @@ module.exports = async function handler(request, response) {
       reserved.push({ id: reserveId, requested, profile: profileMap.get(requested) || null });
     }
 
-    // Akun & nama sudah dikunci untuk pembeli ini, baru potong saldo.
-    const [debited] = await sql`
-      UPDATE codexa_users SET balance = balance - ${total}
-      WHERE id = ${user.id} AND balance >= ${total}
-      RETURNING balance
-    `;
+    // Akun & nama sudah dikunci untuk pembeli ini, baru potong saldo / poin.
+    let debited;
+    let pointsSpent = 0;
+    if (payWithPoints) {
+      const spend = await spendPoints(sql, user.id, total, `Tukar poin untuk pesanan Rp${total.toLocaleString("id-ID")}`);
+      if (spend.error) {
+        await releaseReserved();
+        await rollbackClaims();
+        return response.status(402).json({ error: spend.error });
+      }
+      pointsSpent = spend.spent;
+      debited = { balance: user.balance };
+    } else {
+      [debited] = await sql`
+        UPDATE codexa_users SET balance = balance - ${total}
+        WHERE id = ${user.id} AND balance >= ${total}
+        RETURNING balance
+      `;
+    }
     if (!debited) {
       await releaseReserved();
       await rollbackClaims();
@@ -984,7 +999,8 @@ module.exports = async function handler(request, response) {
       `;
     } catch (error) {
       // Pesanan gagal dicatat → kembalikan saldo, nama, dan akun.
-      await sql`UPDATE codexa_users SET balance = balance + ${total} WHERE id = ${user.id}`;
+      if (pointsSpent) await refundPoints(sql, user.id, pointsSpent);
+      else await sql`UPDATE codexa_users SET balance = balance + ${total} WHERE id = ${user.id}`;
       await releaseReserved();
       await rollbackClaims();
       throw error;
@@ -1046,6 +1062,7 @@ module.exports = async function handler(request, response) {
         customEmailStatus: customEmail ? "pending" : "",
       },
       balance: Number(debited.balance) || 0,
+      pointsSpent,
     });
   } catch (error) {
     console.error("Checkout failure", error && error.message);

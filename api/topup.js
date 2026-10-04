@@ -5,6 +5,7 @@ const { handleNotifications } = require("./_notifications_handler");
 const { handleStream } = require("./_stream");
 const wijayapay = require("./_wijayapay");
 const { once } = require("./_schema");
+const { handleUserCheckin } = require("./_checkin");
 
 const MIN_TOPUP = 5000;
 /* Bonus saldo per nominal top up (mengikuti tampilan halaman Top Up). */
@@ -121,6 +122,7 @@ module.exports = async function handler(request, response) {
     const user = await currentUser(sql, request);
     if (!user) return response.status(401).json({ error: "Silakan masuk terlebih dahulu" });
 
+    if (resource === "checkin") return handleUserCheckin(sql, user, request, response);
     if (resource === "notifications") return handleNotifications(sql, user, request, response);
 
     // Saluran dorong real-time (SSE) untuk lonceng, saldo, dan status top up.

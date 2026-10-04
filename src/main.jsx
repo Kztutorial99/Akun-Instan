@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
 import { MediaGrid, uploadMedia, isVideo, fmtSize, MAX_MEDIA_BYTES, MAX_MEDIA_FILES } from "./media-attach.jsx";
 import {
-  ArrowRight, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check,
+  Gift, ArrowRight, ArrowUpRight, ArrowDownRight, BadgeCheck, Bell, Check,
   CircleHelp, Command, Copy, CreditCard, Eye, EyeOff, ChevronDown,
   FileText, Home, LayoutDashboard, LockKeyhole, LogIn, LogOut, Menu,
   MoreHorizontal, Package, PanelLeft, Pencil, Plus, RefreshCw, QrCode, Download,
@@ -12,6 +12,7 @@ import {
   Star, ImagePlus, Play,
 } from "lucide-react";
 import "./styles.css";
+import { CheckinPage, CheckinProfileCard, PointsPayButton } from "./checkin.jsx";
 import { applySeo, applyProductSchema, applyProductSeo } from "./seo.js";
 import { CategoryPage, CATEGORY_PAGES, CATEGORY_SLUGS } from "./category-pages.jsx";
 import { signInWithGoogle, consumeGoogleRedirect, signOutGoogle } from "./google-signin.js";
@@ -1055,7 +1056,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
 /* ═══════════════════════════════════════════════════
    APP ROOT
 ════════════════════════════════════════════════════ */
-const PAGE_PATHS = ["admin", "katalog", "orders", "reports", "notifications", "help", "faq", "cara-beli", "account", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
+const PAGE_PATHS = ["admin", "katalog", "orders", "reports", "notifications", "help", "faq", "cara-beli", "account", "checkin", "topup", "custom-email", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 // Halaman publik: bisa dibuka tanpa login dan boleh di-crawl Google.
 export const PUBLIC_PAGES = ["store", "katalog", "custom-email", "help", "faq", "cara-beli", "terms", "privacy", "refund", "disclaimer", ...CATEGORY_SLUGS];
 const PAGE_LABELS = {
@@ -1705,7 +1706,8 @@ function App() {
     }).filter(Boolean));
     showNotice("1 akun dihapus dari keranjang");
   };
-  const doCheckout = async () => {
+  const doCheckout = async (payWith) => {
+    const usePoints = payWith === "points";
     if (checkout.loading) return;
     if (requireLogin()) return;
     const wantCustom = customEmails.length;
@@ -1720,7 +1722,7 @@ function App() {
     }
     // Validasi saldo di klien; server tetap memvalidasi ulang secara atomik.
     const balanceNow = Number(auth.user && auth.user.balance) || 0;
-    if (cartTotal > balanceNow) {
+    if (!usePoints && cartTotal > balanceNow) {
       setCheckout({
         loading: false,
         order: null,
@@ -1735,6 +1737,7 @@ function App() {
         body: JSON.stringify({
           items,
           customEmails,
+          payWith: usePoints ? "points" : "balance",
           customProfiles: customEmails.map((value) => ({ email: value, ...(customProfiles[value] || {}) })),
         }),
       });
@@ -1750,6 +1753,7 @@ function App() {
       loadCatalog();
       loadCustomStatus();
       window.dispatchEvent(new Event("codexa:notify"));
+      window.dispatchEvent(new Event("codexa:points"));
       showNotice(wantCustom && !items.length
         ? "Permintaan custom email berhasil dibayar"
         : "Pembayaran berhasil, detail akun sudah terbuka");
@@ -2056,10 +2060,11 @@ function App() {
                   </div>
                 )}
                 {checkout.error && <p className="cx-field-error" style={{ margin: "0 0 8px" }}>{checkout.error}</p>}
+                {auth.user && <PointsPayButton total={cartTotal} loading={checkout.loading} onPay={() => doCheckout("points")} />}
                 <button
                   className="cx-btn cx-btn-primary cx-btn-full"
                   disabled={checkout.loading || insufficientBalance}
-                  onClick={doCheckout}
+                  onClick={() => doCheckout()}
                 >
                   {checkout.loading
                     ? <><Spinner size={13} /> Memproses pembayaran...</>
@@ -2127,7 +2132,17 @@ function App() {
   if (activePage === "account") return (
     <div className={shellClass}>
       {topbar}
-      <ProfilePage user={auth.user} onBack={() => navigate("store")} onTopup={() => navigate("topup")} onSaved={(u) => setAuth({ user: u, loading: false })} onNotice={showNotice} />
+      <ProfilePage user={auth.user} onOpenCheckin={() => navigate("checkin")} onBack={() => navigate("store")} onTopup={() => navigate("topup")} onSaved={(u) => setAuth({ user: u, loading: false })} onNotice={showNotice} />
+      <StoreFooter navigate={navigate} guest={guest} />
+      {tabbar}
+      {overlays}
+    </div>
+  );
+
+  if (activePage === "checkin") return (
+    <div className={shellClass}>
+      {topbar}
+      {auth.user ? <CheckinPage onBack={() => navigate("account")} onNotice={showNotice} navigate={navigate} /> : <div className="cx-container" style={{ padding: 40, textAlign: "center" }}>Silakan masuk untuk check-in harian.</div>}
       <StoreFooter navigate={navigate} guest={guest} />
       {tabbar}
       {overlays}
@@ -2991,7 +3006,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
     ["katalog", "Katalog Produk", ShoppingBag],
     ["custom-email", "Custom Email", Mail],
     ["orders", "Pesanan Saya", Package],
-    ...(user ? [["reports", "Laporan", FileText], ["notifications", "Notifikasi", Bell]] : []),
+    ...(user ? [["reports", "Laporan", FileText], ["notifications", "Notifikasi", Bell], ["checkin", "Check-in Harian", Gift]] : []),
     ["help", "Bantuan", CircleHelp],
   ];
 
@@ -5313,7 +5328,7 @@ function UserAvatar({ user, className = "" }) {
   return <div className={cls}>{initialsOf(user && user.name)}</div>;
 }
 
-function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
+function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }) {
   const [state] = useTopupData(user);
   const pendingTotal = Number(state.pendingTotal) || 0;
   const [editing, setEditing] = useState(false);
@@ -5409,6 +5424,7 @@ function ProfilePage({ user, onBack, onTopup, onSaved, onNotice }) {
     <div className="cx-container cx-account-page">
 
       <div className="cx-account-grid">
+<CheckinProfileCard onOpen={onOpenCheckin} onNotice={onNotice} />
         <div className="cx-panel cx-profile-card">
           <div className="cx-profile-head">
             <UserAvatar user={editing ? { name: form.name, avatar } : user} className="cx-avatar-xl" />

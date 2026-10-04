@@ -1,5 +1,6 @@
 const { db, ensureTables, hashPassword, bodyOf, text } = require("../_users");
 const { isAdmin } = require("./_auth");
+const { handleAdminCheckin } = require("../_checkin");
 const { ensureNotificationTables, createNotification, broadcastNotification } = require("../_notifications");
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -14,6 +15,7 @@ module.exports = async function handler(request, response) {
 
     /* ── SEND CHAT & NOTIFIKASI (admin → user) ── */
     const notifyAction = request.query && typeof request.query.action === "string" ? request.query.action : "";
+    if (notifyAction === "checkin") return handleAdminCheckin(sql, request, response);
     if (notifyAction === "notify") {
       await ensureNotificationTables(sql);
       if (request.method === "GET") {

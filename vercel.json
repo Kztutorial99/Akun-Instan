@@ -5,7 +5,12 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.akuninstan.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.akuninstan.com"
+        }
+      ],
       "destination": "https://akuninstan.com/:path*",
       "permanent": true
     }
@@ -25,6 +30,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/checkin",
+      "destination": "/"
+    },
     {
       "source": "/api/youtube/callback",
       "destination": "/api/admin/youtube?resource=callback"
