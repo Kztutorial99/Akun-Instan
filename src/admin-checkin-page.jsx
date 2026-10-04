@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, Search, ShieldAlert, Save, Ban, Check, Plus, Minus, History, Flame, Users } from "lucide-react";
+import { RefreshCw, Search, ShieldAlert, Save, Ban, Check, Plus, Minus, History, Flame, Users, Sparkles } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
 import { CoinIcon, FlameIcon } from "./checkin.jsx";
 import "./checkin.css";
@@ -58,6 +58,17 @@ export default function AdminCheckinPage({ onNotice }) {
     setModal({ user: u, ledger: null });
     try { const r = await post({ op: "ledger", userId: u.id }); setModal({ user: u, ledger: r.ledger }); }
     catch (e) { onNotice && onNotice(e.message, "error"); setModal(null); }
+  };
+
+  const analyze = async (u) => {
+    setModal({ user: u, ledger: null, ai: { loading: true } });
+    try {
+      const [l, a] = await Promise.all([post({ op: "ledger", userId: u.id }), post({ op: "analyze", userId: u.id })]);
+      setModal({ user: u, ledger: l.ledger, ai: a });
+    } catch (e) {
+      setModal((m) => m && { ...m, ai: { error: e.message || "Analisis AI gagal" } });
+      try { const l = await post({ op: "ledger", userId: u.id }); setModal((m) => m && { ...m, ledger: l.ledger }); } catch (_) {}
+    }
   };
 
   const adjust = (u, sign) => {
@@ -160,6 +171,7 @@ export default function AdminCheckinPage({ onNotice }) {
                       <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Kurangi poin" onClick={() => adjust(u, -1)}><Minus size={11} /></button>
                       <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Atur streak" onClick={() => setStreak(u)}><Flame size={11} /></button>
                       <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Riwayat" onClick={() => openLedger(u)}><History size={11} /></button>
+                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Analisis AI pola mencurigakan" onClick={() => analyze(u)}><Sparkles size={11} color="#c084fc" /></button>
                       <button className={`cx-btn cx-btn-sm ${u.blocked ? "cx-btn-secondary" : "cx-btn-danger"}`} title={u.blocked ? "Buka blokir" : "Blokir check-in"}
                         onClick={() => act({ op: "block", userId: u.id, blocked: !u.blocked }, u.blocked ? "Blokir dibuka" : "User diblokir dari check-in")}>
                         {u.blocked ? <Check size={11} /> : <Ban size={11} />}
@@ -188,7 +200,25 @@ export default function AdminCheckinPage({ onNotice }) {
       {modal && (
         <div className="ci-admin-modal" onClick={() => setModal(null)}>
           <div onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginTop: 0 }}>Riwayat poin · {modal.user.email}</h3>
+            <h3 style={{ marginTop: 0 }}>{modal.ai ? "Analisis AI" : "Riwayat poin"} · {modal.user.email}</h3>
+            {modal.ai && (
+              <div className="ci-ai-box">
+                {modal.ai.loading ? <p><Sparkles size={12} className="cx-spin" /> AI sedang menilai riwayat check-in & poin...</p>
+                  : modal.ai.error ? <p style={{ color: "#fda4af" }}>{modal.ai.error}</p>
+                  : (
+                    <>
+                      <div className="ci-ai-head">
+                        <span className="ci-ai-score">{modal.ai.analysis.score}/100</span>
+                        <span className={`ci-ai-risk ${modal.ai.analysis.risk}`}>Risiko {({ low: "rendah", medium: "sedang", high: "tinggi" })[modal.ai.analysis.risk]}</span>
+                        <small style={{ color: "var(--muted)" }}>{modal.ai.stats.checkins} check-in · {modal.ai.stats.activities} aktivitas poin dinilai</small>
+                      </div>
+                      <p>{modal.ai.analysis.summary}</p>
+                      <ul>{modal.ai.analysis.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
+                      <p><strong>Saran:</strong> {modal.ai.analysis.recommendation}</p>
+                    </>
+                  )}
+              </div>
+            )}
             {!modal.ledger ? <p>Memuat...</p> : !modal.ledger.length ? <p style={{ color: "var(--muted)" }}>Belum ada riwayat</p> : (
               <table className="ci-admin-table"><tbody>
                 {modal.ledger.map((l, i) => (

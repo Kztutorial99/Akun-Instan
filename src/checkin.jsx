@@ -267,3 +267,37 @@ export function PointsPayButton({ total, disabled, loading, onPay }) {
     </button>
   );
 }
+
+/* Pengingat dalam aplikasi: muncul saat check-in hari ini tersedia,
+   dan otomatis muncul lagi tepat saat hari berganti (00:00 WIB). */
+export function CheckinReminder({ enabled, activePage, navigate }) {
+  const [{ data }, , load] = useCheckin(enabled);
+  const [dismissed, setDismissed] = useState("");
+  useEffect(() => {
+    try { setDismissed(localStorage.getItem("codexa:ci-reminder") || ""); } catch (_) {}
+  }, []);
+  useEffect(() => {
+    if (!enabled || !data || !data.claimedToday) return;
+    // Jadwalkan muat ulang tepat setelah reset harian agar pengingat muncul lagi.
+    const ms = Math.max(5, Number(data.secondsLeft) || 60) * 1000 + 3000;
+    const t = setTimeout(load, Math.min(ms, 2147483000));
+    return () => clearTimeout(t);
+  }, [enabled, data, load]);
+  if (!enabled || !data || !data.settings || !data.settings.enabled || data.blocked) return null;
+  if (data.claimedToday || activePage === "checkin" || activePage === "admin" || dismissed === data.today) return null;
+  const close = () => {
+    setDismissed(data.today);
+    try { localStorage.setItem("codexa:ci-reminder", data.today); } catch (_) {}
+  };
+  return (
+    <div className="ci-reminder" role="status">
+      <span className="ci-reminder-icon"><FlameIcon size={22} /></span>
+      <div className="ci-reminder-text">
+        <strong>Check-in harian tersedia!</strong>
+        <small>Klaim +{fmt(data.nextReward)} poin{data.streak > 0 ? ` · jaga streak ${data.streak} hari` : ""}</small>
+      </div>
+      <button className="ci-reminder-go" onClick={() => { close(); navigate("checkin"); }}>Klaim</button>
+      <button className="ci-reminder-x" aria-label="Tutup pengingat" onClick={close}>×</button>
+    </div>
+  );
+}

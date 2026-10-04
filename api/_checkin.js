@@ -200,6 +200,91 @@ async function refundPoints(sql, userId, amount) {
     VALUES (${crypto.randomUUID()}, ${userId}, ${amount}, 'refund', 'Pengembalian poin pesanan gagal')`;
 }
 
+
+/* Analisis pola mencurigakan dengan AI (Lovable AI Gateway, Responses API, streaming). */
+const AI_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["score", "risk", "summary", "reasons", "recommendation"],
+  properties: {
+    score: { type: "integer", description: "0-100, makin tinggi makin mencurigakan" },
+    risk: { type: "string", enum: ["low", "medium", "high"] },
+    summary: { type: "string" },
+    reasons: { type: "array", items: { type: "string" } },
+    recommendation: { type: "string" },
+  },
+};
+
+async function callGateway(payload) {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return { status: 500, error: "LOVABLE_API_KEY belum diatur di server" };
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "X-Lovable-AIG-SDK": "fetch" },
+    body: JSON.stringify({
+      model: "openai/gpt-6-astra", stream: true, store: false,
+      reasoning: { effort: "low" },
+      instructions: "Kamu analis anti-fraud untuk program check-in harian & poin sebuah toko akun digital. Nilai apakah pola user mencurigakan (multi-akun satu jaringan, farming poin, check-in jam yang terlalu teratur seperti bot, banyak user-agent, penyesuaian admin janggal, penukaran poin cepat setelah dikumpulkan). Jangan menuduh tanpa bukti; jika data sedikit, risiko rendah. Jawab dalam Bahasa Indonesia singkat dan jelas. Alasan maksimal 5 butir dan sebutkan data konkret.",
+      input: [{ role: "user", content: JSON.stringify(payload) }],
+      text: { format: { type: "json_schema", name: "fraud_assessment", strict: true, schema: AI_SCHEMA } },
+    }),
+  });
+  if (!res.ok) {
+    let msg = "";
+    try { const j = await res.json(); msg = (j.error && (j.error.message || j.error)) || j.message || ""; } catch (_) {}
+    if (res.status === 402) msg = msg || "Kredit AI habis. Tambahkan kredit untuk memakai analisis AI.";
+    if (res.status === 429) msg = msg || "Terlalu banyak permintaan AI, coba lagi sebentar.";
+    return { status: res.status, error: String(msg || `AI gagal (${res.status})`) };
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", out = "", failed = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith("data:")) continue;
+      const d = line.slice(5).trim();
+      if (!d || d === "[DONE]") continue;
+      try {
+        const ev = JSON.parse(d);
+        if (ev.type === "response.output_text.delta") out += ev.delta || "";
+        else if (ev.type === "response.refusal.delta") failed = "AI menolak menganalisis data ini.";
+        else if (ev.type === "error" || ev.type === "response.failed") failed = (ev.error && ev.error.message) || (ev.response && ev.response.error && ev.response.error.message) || "AI gagal";
+      } catch (_) {}
+    }
+  }
+  if (failed) return { status: 502, error: failed };
+  try { return { status: 200, result: JSON.parse(out) }; }
+  catch (_) { return { status: 502, error: "Jawaban AI tidak bisa dibaca" }; }
+}
+
+async function analyzeUser(sql, userId) {
+  const [user] = await sql`SELECT id, name, email, created_at AS "createdAt" FROM codexa_users WHERE id = ${userId}`;
+  const w = await wallet(sql, userId);
+  const checkins = await sql`SELECT day::text AS day, reward, streak, ip_hash, ua,
+      to_char(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS at
+    FROM codexa_checkins WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 60`;
+  const ledger = await sql`SELECT delta, reason, note, to_char(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI') AS at
+    FROM codexa_point_ledger WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 80`;
+  const shared = await sql`SELECT c.ip_hash, COUNT(DISTINCT c.user_id)::int AS accounts
+    FROM codexa_checkins c WHERE c.ip_hash IN (SELECT ip_hash FROM codexa_checkins WHERE user_id = ${userId} AND ip_hash <> '')
+    GROUP BY c.ip_hash`;
+  const ipIds = {}; let n = 0;
+  const ipLabel = (h) => (ipIds[h] ||= `jaringan-${++n}`);
+  const uas = [...new Set(checkins.map((c) => c.ua))];
+  return {
+    user: { name: user.name, accountCreated: user.createdAt },
+    wallet: w,
+    checkins: checkins.map((c) => ({ day: c.day, at: c.at, reward: Number(c.reward), streak: c.streak, network: ipLabel(c.ip_hash), device: `ua-${uas.indexOf(c.ua) + 1}` })),
+    distinctUserAgents: uas.length,
+    networksSharedWithOtherAccounts: shared.map((s) => ({ network: ipLabel(s.ip_hash), accountsOnThisNetwork: s.accounts })),
+    pointActivity: ledger.map((l) => ({ ...l, delta: Number(l.delta) })),
+  };
+}
+
 /* ── Admin ── */
 async function handleAdminCheckin(sql, request, response) {
   await ensureCheckinTables(sql);
@@ -273,6 +358,14 @@ async function handleAdminCheckin(sql, request, response) {
       await sql`UPDATE codexa_points SET blocked = ${!!body.blocked}, updated_at = NOW() WHERE user_id = ${userId}`;
       return response.status(200).json({ ok: true });
     }
+    if (body.op === "analyze") {
+      const rl = await rateLimit(sql, { key: "checkin-ai", limit: 20, windowSec: 60 });
+      if (!rl.allowed) return response.status(429).json({ error: "Terlalu sering, coba lagi sebentar" });
+      const data = await analyzeUser(sql, userId);
+      const r = await callGateway(data);
+      if (r.error) return response.status(r.status).json({ error: r.error });
+      return response.status(200).json({ analysis: r.result, stats: { checkins: data.checkins.length, activities: data.pointActivity.length } });
+    }
     if (body.op === "ledger") {
       const ledger = await sql`SELECT delta, reason, note, created_at AS "createdAt" FROM codexa_point_ledger
         WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`;
@@ -283,4 +376,4 @@ async function handleAdminCheckin(sql, request, response) {
   return response.status(405).json({ error: "Metode tidak didukung" });
 }
 
-module.exports = { handleUserCheckin, handleAdminCheckin, spendPoints, refundPoints, readSettings };
+module.exports = { callGateway, handleUserCheckin, handleAdminCheckin, spendPoints, refundPoints, readSettings };

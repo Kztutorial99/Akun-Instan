@@ -12,7 +12,7 @@ import {
   Star, ImagePlus, Play,
 } from "lucide-react";
 import "./styles.css";
-import { CheckinPage, CheckinProfileCard, PointsPayButton } from "./checkin.jsx";
+import { CheckinPage, CheckinProfileCard, PointsPayButton, CheckinReminder } from "./checkin.jsx";
 import { applySeo, applyProductSchema, applyProductSeo } from "./seo.js";
 import { CategoryPage, CATEGORY_PAGES, CATEGORY_SLUGS } from "./category-pages.jsx";
 import { signInWithGoogle, consumeGoogleRedirect, signOutGoogle } from "./google-signin.js";
@@ -1902,6 +1902,7 @@ function App() {
      asisten, dan toast tetap bisa dibuka dari menu mana pun. */
   const overlays = (
     <>
+      <CheckinReminder enabled={!!auth.user} activePage={activePage} navigate={navigate} />
       {/* Buy modal */}
       {buyItem && (
         <div className="cx-modal-backdrop" onClick={() => setBuyItem(null)}>
