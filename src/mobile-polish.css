@@ -7,7 +7,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .cx-drawer-root { z-index: 200; }
 .cx-drawer-root .cx-drawer-backdrop { inset: 0 !important; bottom: 0 !important; background: rgba(4,2,12,.62); backdrop-filter: blur(2px); animation: cxp-fade .2s ease both; }
 .cx-drawer { width: min(72vw, 236px) !important; max-width: 236px; padding: max(10px, env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom)) !important; box-shadow: 16px 0 40px rgba(0,0,0,.45) !important; overscroll-behavior: contain; touch-action: pan-y; will-change: transform; transition: transform .2s ease; }
-.cx-drawer .cx-icon-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.cx-drawer .cx-icon-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; padding: 0; display: grid; place-items: center; border-radius: 10px; }
+.cx-drawer-head { min-height: 42px; padding: 0 2px 4px !important; }
+.cx-drawer-wordmark { width: auto !important; height: 14px !important; max-width: 104px !important; }
 .cx-drawer-nav button { min-height: 46px; display: flex; align-items: center; gap: 12px; line-height: 1.2; }
 .cx-drawer-nav button svg { width: 18px; height: 18px; flex: none; }
 .cx-drawer-nav button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -17,15 +19,20 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
 /* Header */
 @media (max-width: 767px) {
-  .cx-topbar-inner, .cx-topbar > div:first-child { min-width: 0; gap: clamp(4px, 1.6vw, 10px); }
-  .cx-topbar-actions { gap: clamp(2px, 1vw, 8px); flex: none; }
+  .cx-topbar-inner, .cx-topbar > div:first-child { min-width: 0; gap: 6px; padding-inline: 12px; }
+  .cx-topbar-actions { gap: 5px; flex: none; }
   .cx-topbar-actions > *, .cx-burger { flex: none; }
-  .cx-burger, .cx-topbar-actions .cx-icon-btn, .cx-topbar-actions > button { min-width: 44px; min-height: 44px; }
-  .cx-topbar img[alt="Akun Instan"] { max-width: clamp(96px, 32vw, 150px); height: auto; min-width: 0; }
+  .cx-burger, .cx-notif-trigger, .cx-cart-btn, .cx-account-trigger { width: 42px !important; height: 42px !important; min-width: 42px !important; min-height: 42px !important; padding: 0 !important; border-radius: 11px !important; justify-content: center; }
+  .cx-burger svg, .cx-notif-trigger svg, .cx-cart-btn svg { width: 17px; height: 17px; }
+  .cx-account-trigger .cx-avatar { width: 32px !important; height: 32px !important; }
+  .cx-account-trigger-copy, .cx-account-trigger > svg { display: none !important; }
+  .cx-cart-label { display: none !important; }
+  .cx-topbar img[alt="Akun Instan"] { max-width: clamp(96px, 29vw, 128px); height: auto; min-width: 0; }
 }
 @media (max-width: 340px) {
-  .cx-topbar img[alt="Akun Instan"] { max-width: 88px; }
-  .cx-burger, .cx-topbar-actions .cx-icon-btn, .cx-topbar-actions > button { min-width: 40px; }
+  .cx-topbar-inner, .cx-topbar > div:first-child { padding-inline: 8px; gap: 4px; }
+  .cx-topbar img[alt="Akun Instan"] { max-width: 82px; }
+  .cx-burger, .cx-notif-trigger, .cx-cart-btn, .cx-account-trigger { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
 }
 
 /* Profile dropdown */
