@@ -2992,7 +2992,6 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
     ["custom-email", "Custom Email", Mail],
     ["orders", "Pesanan Saya", Package],
     ...(user ? [["reports", "Laporan", FileText], ["notifications", "Notifikasi", Bell]] : []),
-    ["topup", "Top Up Saldo", CreditCard],
     ["help", "Bantuan", CircleHelp],
   ];
 
