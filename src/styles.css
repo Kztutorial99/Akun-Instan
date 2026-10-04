@@ -4330,3 +4330,4 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 .cx-ur-top{flex-wrap:wrap}
 .cx-ur-compose .cx-mr-chip{max-width:100%;overflow-wrap:anywhere}
 @media(max-width:420px){.cx-ur-compose .cx-mr-row{grid-template-columns:1fr}.cx-ur-top small{margin-left:0}}
+@media(max-width:560px){.cx-hero h1{font-size:26px;line-height:1.08}}
