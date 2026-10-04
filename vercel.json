@@ -50,10 +50,6 @@
       "destination": "/api/topup?resource=callback"
     },
     {
-      "source": "/custom-email",
-      "destination": "/"
-    },
-    {
       "source": "/admin",
       "destination": "/"
     },
@@ -74,28 +70,60 @@
       "destination": "/"
     },
     {
+      "source": "/katalog",
+      "destination": "/_seo/katalog.html"
+    },
+    {
+      "source": "/custom-email",
+      "destination": "/_seo/custom-email.html"
+    },
+    {
       "source": "/help",
-      "destination": "/"
+      "destination": "/_seo/help.html"
+    },
+    {
+      "source": "/faq",
+      "destination": "/_seo/faq.html"
+    },
+    {
+      "source": "/cara-beli",
+      "destination": "/_seo/cara-beli.html"
+    },
+    {
+      "source": "/produk/gmail-fresh",
+      "destination": "/_seo/produk-gmail-fresh.html"
+    },
+    {
+      "source": "/produk/custom-gmail",
+      "destination": "/_seo/produk-custom-gmail.html"
+    },
+    {
+      "source": "/produk/gmail-aged",
+      "destination": "/_seo/produk-gmail-aged.html"
+    },
+    {
+      "source": "/produk/akun-game",
+      "destination": "/_seo/produk-akun-game.html"
+    },
+    {
+      "source": "/produk/akun-social-media",
+      "destination": "/_seo/produk-akun-social-media.html"
     },
     {
       "source": "/terms",
-      "destination": "/"
+      "destination": "/_seo/terms.html"
     },
     {
       "source": "/privacy",
-      "destination": "/"
+      "destination": "/_seo/privacy.html"
     },
     {
       "source": "/refund",
-      "destination": "/"
+      "destination": "/_seo/refund.html"
     },
     {
       "source": "/disclaimer",
-      "destination": "/"
-    },
-    {
-      "source": "/katalog",
-      "destination": "/"
+      "destination": "/_seo/disclaimer.html"
     },
     {
       "source": "/((?!api/|assets/)[^.]*)",

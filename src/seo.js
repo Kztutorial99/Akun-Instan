@@ -8,7 +8,7 @@ export const SITE_NAME = "Akun Instan";
 const PAGE_SEO = {
   store: {
     path: "/",
-    title: "Jual Akun Gmail Fresh & Custom Gmail Murah | Akun Instan",
+    title: "Akun Instan - Marketplace Akun Digital",
     description:
       "Jual beli akun Gmail fresh/no-PVA, custom Gmail sesuai nama, dan akun digital lainnya. Proses instan, harga murah, stok real-time, garansi login.",
     keywords:
