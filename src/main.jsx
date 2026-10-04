@@ -12,7 +12,7 @@ import {
   Star, ImagePlus, Play,
 } from "lucide-react";
 import "./styles.css";
-import { CheckinPage, CheckinProfileCard, PointsPayButton, CheckinReminder } from "./checkin.jsx";
+import { CheckinPage, CheckinProfileCard, PointsPayButton, CheckinReminder, useCheckin } from "./checkin.jsx";
 import { applySeo, applyProductSchema, applyProductSeo } from "./seo.js";
 import { CategoryPage, CATEGORY_PAGES, CATEGORY_SLUGS } from "./category-pages.jsx";
 import { signInWithGoogle, consumeGoogleRedirect, signOutGoogle } from "./google-signin.js";

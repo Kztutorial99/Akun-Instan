@@ -160,12 +160,12 @@ export default function AdminCheckinPage({ onNotice }) {
             <tbody>
               {users.slice(0, 200).map((u) => (
                 <tr key={u.id} className={u.blocked ? "is-blocked" : ""}>
-                  <td className="ci-admin-user"><strong>{u.name}</strong><small>{u.email}</small></td>
-                  <td><strong style={{ color: "#fde68a" }}>{fmt(u.points)}</strong></td>
-                  <td><span className="ci-pill"><Flame size={10} /> {u.streak} <small>(best {u.bestStreak})</small></span></td>
-                  <td>{u.lastDay || "-"}</td>
-                  <td><small>{fmt(u.totalCheckins)}x · +{fmt(u.totalEarned)} / -{fmt(u.totalSpent)}</small></td>
-                  <td>
+                  <td className="ci-admin-user" data-label="User"><strong>{u.name}</strong><small>{u.email}</small></td>
+                  <td data-label="Poin"><strong className="ci-admin-points">{fmt(u.points)}</strong></td>
+                  <td data-label="Streak"><span className="ci-pill"><Flame size={10} /> {u.streak} <small>(terbaik {u.bestStreak})</small></span></td>
+                  <td data-label="Terakhir">{u.lastDay || "-"}</td>
+                  <td data-label="Aktivitas"><small>{fmt(u.totalCheckins)}x · +{fmt(u.totalEarned)} / -{fmt(u.totalSpent)}</small></td>
+                  <td data-label="Aksi">
                     <div className="ci-admin-actions">
                       <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Tambah poin" onClick={() => adjust(u, 1)}><Plus size={11} /></button>
                       <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Kurangi poin" onClick={() => adjust(u, -1)}><Minus size={11} /></button>
