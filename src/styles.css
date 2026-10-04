@@ -4336,3 +4336,20 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 .cx-num-spin{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:cx-num-spin .7s linear infinite}
 @keyframes cx-num-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.cx-num-spin{animation:none;border-top-color:currentColor;opacity:.55}}
+
+/* Profil: saldo asli, poin, dan badge notifikasi tetap jelas di menu ringkas. */
+.cx-account-wallets { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, .85fr); gap: 7px; margin: 8px 10px; }
+.cx-account-wallets .cx-account-balance { margin: 0; min-width: 0; }
+.cx-account-wallets .cx-account-balance strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-account-balance.is-points { background: color-mix(in srgb, var(--amber) 10%, var(--s2)); border-color: color-mix(in srgb, var(--amber) 26%, var(--b2)); }
+.cx-account-balance.is-points strong { color: var(--amber); }
+.cx-account-item { position: relative; }
+.cx-account-item > span:first-of-type { min-width: 0; }
+.cx-menu-unread { margin-left: auto; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; flex: none; border-radius: 999px; background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; line-height: 1; box-shadow: 0 0 0 2px var(--s1); }
+.cx-drawer-points { display: flex !important; align-items: center; gap: 5px; width: fit-content; margin-top: 4px; padding: 3px 8px; border-radius: 999px; background: rgba(251,191,36,.1); color: var(--amber) !important; font-weight: 700; }
+.cx-drawer-nav .cx-menu-unread { margin-left: auto; }
+.cx-drawer-nav .cx-menu-unread + .cx-drawer-arrow { margin-left: 0; }
+
+@media (max-width: 380px) {
+  .cx-account-wallets { grid-template-columns: 1fr; }
+}

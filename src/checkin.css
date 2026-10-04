@@ -122,3 +122,40 @@
 .ci-ai-risk.low{background:rgba(34,197,94,.15);color:#86efac}.ci-ai-risk.medium{background:rgba(250,204,21,.15);color:#fde68a}.ci-ai-risk.high{background:rgba(244,63,94,.18);color:#fda4af}
 .ci-ai-box ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.5}
 .ci-ai-box p{font-size:12.5px;margin:6px 0}
+
+/* Admin Check-in: tata letak padat, terbaca, dan mudah disentuh di mobile. */
+.ci-admin-points { color: #fde68a; }
+@media (max-width: 640px) {
+  .ci-admin { gap: 10px; min-width: 0; }
+  .ci-admin .cx-admin-top { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; }
+  .ci-admin .cx-admin-top h1 { font-size: 18px; }
+  .ci-admin .cx-admin-date { font-size: 10px; line-height: 1.35; }
+  .ci-admin-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  .ci-admin-kpi { min-width: 0; padding: 10px; }
+  .ci-admin-kpi:last-child { grid-column: 1 / -1; }
+  .ci-admin-kpi strong { font-size: 16px; }
+  .ci-admin-kpi small { display: block; line-height: 1.3; }
+  .ci-admin-box { min-width: 0; padding: 11px; overflow: hidden; }
+  .ci-admin-rewards { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  .ci-admin-rewards label:last-child { grid-column: 1 / -1; }
+  .ci-admin-row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .ci-admin-row label, .ci-admin-row > .cx-btn { width: 100%; min-width: 0; }
+  .ci-admin-toggle { min-height: 40px; padding: 8px 10px; border: 1px solid var(--b2); border-radius: 8px; justify-content: flex-start; }
+  .ci-admin-actions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .ci-admin-actions::-webkit-scrollbar { display: none; }
+  .ci-admin-actions .cx-btn { flex: 0 0 auto; }
+  .ci-admin-progress-scroll { overflow: visible; }
+  .ci-admin-progress-table, .ci-admin-progress-table tbody, .ci-admin-progress-table tr, .ci-admin-progress-table td { display: block; width: 100%; }
+  .ci-admin-progress-table thead { display: none; }
+  .ci-admin-progress-table tr { margin-bottom: 9px; padding: 11px; border: 1px solid var(--b2); border-radius: 10px; background: rgba(255,255,255,.02); }
+  .ci-admin-progress-table td { display: grid; grid-template-columns: 76px minmax(0,1fr); align-items: center; gap: 8px; padding: 5px 0; border: 0; overflow-wrap: anywhere; }
+  .ci-admin-progress-table td::before { content: attr(data-label); color: var(--faint); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .ci-admin-progress-table .ci-admin-user { padding-bottom: 9px; margin-bottom: 3px; border-bottom: 1px solid var(--b1); }
+  .ci-admin-progress-table td:last-child { grid-template-columns: 1fr; padding-top: 9px; }
+  .ci-admin-progress-table td:last-child::before { display: none; }
+  .ci-admin-progress-table td:last-child .ci-admin-actions { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); overflow: visible; }
+  .ci-admin-progress-table td:last-child .cx-btn { width: 100%; min-width: 0; padding: 0; }
+  .ci-admin-recent-table { min-width: 560px; }
+  .ci-admin-modal { align-items: end; padding: 8px 0 0; }
+  .ci-admin-modal > div { width: 100%; max-height: calc(92dvh - env(safe-area-inset-top)); border-radius: 16px 16px 0 0; padding: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+}

@@ -2768,7 +2768,7 @@ const NOTIF_TONE = {
 };
 
 /* Lonceng notifikasi: dorongan real-time dari server (SSE), tanpa jeda tetap. */
-function NotificationBell({ navigate, activePage }) {
+function NotificationBell({ navigate, activePage, onUnreadChange }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -2859,6 +2859,9 @@ function NotificationBell({ navigate, activePage }) {
       window.removeEventListener("codexa:notify", onFocus);
     };
   }, []);
+
+  // Sinkronkan jumlah belum dibaca ke menu profil dan sidebar.
+  useEffect(() => { if (onUnreadChange) onUnreadChange(unread); }, [unread, onUnreadChange]);
 
   // Panel notifikasi ikut tertutup begitu user pindah menu.
   useEffect(() => { setOpen(false); }, [activePage]);
@@ -2983,6 +2986,8 @@ function NotificationBell({ navigate, activePage }) {
 
 function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, setMenuOpen, onLogout, onLogin }) {
   const accountRef = useRef(null);
+  const [menuUnread, setMenuUnread] = useState(0);
+  const [{ data: checkinData }] = useCheckin(Boolean(user));
   // Klik/tap di mana pun di luar kartu profil harus menutup menunya.
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -3033,7 +3038,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
           </button>
         </nav>
         <div className="cx-topbar-actions">
-          <NotificationBell navigate={navigate} activePage={activePage} />
+          <NotificationBell navigate={navigate} activePage={activePage} onUnreadChange={setMenuUnread} />
           <button className="cx-cart-btn" onClick={onCartOpen}>
             <ShoppingBag size={13} />
             {cart.length > 0 && <b>{cart.length}</b>}
@@ -3068,15 +3073,21 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                       <small>{user && user.email}</small>
                     </div>
                   </div>
-                  <div className="cx-account-balance">
-                    <span><Wallet size={12} /> Saldo</span>
-                    <strong>{formatPrice(user ? user.balance : 0)}</strong>
+                  <div className="cx-account-wallets">
+                    <div className="cx-account-balance">
+                      <span><Wallet size={12} /> Saldo asli</span>
+                      <strong>{formatPrice(user ? user.balance : 0)}</strong>
+                    </div>
+                    <div className="cx-account-balance is-points">
+                      <span><Gift size={12} /> Poin</span>
+                      <strong>{Number(checkinData?.points || 0).toLocaleString("id-ID")}</strong>
+                    </div>
                   </div>
                   <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("account"); }}>
                     <User size={13} /> Profil saya
                   </button>
-                  <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("topup"); }}>
-                    <CreditCard size={13} /> Top up saldo
+                  <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("checkin"); }}>
+                    <Gift size={13} /> Check-in Harian
                   </button>
                   <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("orders"); }}>
                     <Package size={13} /> Pesanan saya
@@ -3085,7 +3096,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                     <FileText size={13} /> Laporan saya
                   </button>
                   <button className="cx-account-item" onClick={() => { setMenuOpen(false); navigate("notifications"); }}>
-                    <Bell size={13} /> Notifikasi
+                    <Bell size={13} /> <span>Notifikasi</span>{menuUnread > 0 && <span className="cx-menu-unread" aria-label={`${menuUnread} notifikasi belum dibaca`}>{menuUnread > 9 ? "9+" : menuUnread}</span>}
                   </button>
                   <button className="cx-account-item cx-account-item-danger" onClick={onLogout}>
                     <LogOut size={13} /> Keluar
@@ -3107,8 +3118,9 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
             </div>
 
             <div className="cx-drawer-balance">
-              <span><Wallet size={12} /> Saldo kamu</span>
+              <span><Wallet size={12} /> Saldo asli</span>
               <strong>{formatPrice(user ? user.balance : 0)}</strong>
+              <span className="cx-drawer-points"><Gift size={11} /> {Number(checkinData?.points || 0).toLocaleString("id-ID")} poin</span>
               <div className="cx-drawer-balance-actions">
                 <button onClick={() => goto("topup")}>Top Up</button>
                 <button className="ghost" onClick={() => goto("orders")}>Riwayat</button>
@@ -3124,6 +3136,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                   onClick={() => goto(page)}
                 >
                   <Icon size={15} /> <span>{label}</span>
+                  {page === "notifications" && menuUnread > 0 && <span className="cx-menu-unread">{menuUnread > 9 ? "9+" : menuUnread}</span>}
                   <ArrowRight size={12} className="cx-drawer-arrow" />
                 </button>
               ))}

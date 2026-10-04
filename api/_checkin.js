@@ -13,7 +13,8 @@ const DEFAULTS = {
   enabled: true,
   rewards: [100, 150, 200, 250, 300, 400, 1000],
   pointValue: 1, // Rp per poin saat menukar ke produk
-  ipDailyLimit: 3,
+  ipDailyLimit: 1,
+  securityVersion: 2,
   redeemEnabled: true,
 };
 
@@ -67,6 +68,7 @@ const ensureCheckinTables = once(async (sql) => {
 });
 
 function sanitizeSettings(raw) {
+  const isLegacySecurity = !raw || Number(raw.securityVersion || 0) < 2;
   const s = { ...DEFAULTS, ...(raw || {}) };
   let rewards = Array.isArray(s.rewards) ? s.rewards : DEFAULTS.rewards;
   // Hadiah lama (terlalu kecil) otomatis naik ke hadiah baru.
@@ -76,7 +78,9 @@ function sanitizeSettings(raw) {
     redeemEnabled: s.redeemEnabled !== false,
     rewards: Array.from({ length: 7 }, (_, i) => Math.max(0, Math.min(100000, Math.floor(Number(rewards[i]) || 0)))),
     pointValue: Math.max(0.01, Math.min(1000, Number(s.pointValue) || 1)),
-    ipDailyLimit: Math.max(1, Math.min(50, Math.floor(Number(s.ipDailyLimit) || 3))),
+    // Konfigurasi lama memakai batas 3. Versi keamanan baru otomatis memakai 1 akun per jaringan per 24 jam.
+    ipDailyLimit: isLegacySecurity ? 1 : Math.max(1, Math.min(50, Math.floor(Number(s.ipDailyLimit) || 1))),
+    securityVersion: 2,
   };
 }
 

@@ -121,7 +121,7 @@ export default function AdminCheckinPage({ onNotice }) {
             <label>Nilai 1 poin (Rp)
               <input type="number" min="0.01" step="0.01" value={settings.pointValue} onChange={(e) => setSettings((s) => ({ ...s, pointValue: e.target.value }))} />
             </label>
-            <label>Maks check-in per jaringan/hari
+            <label>Maks check-in per jaringan/24 jam
               <input type="number" min="1" value={settings.ipDailyLimit} onChange={(e) => setSettings((s) => ({ ...s, ipDailyLimit: e.target.value }))} />
             </label>
             <label className="ci-admin-toggle"><input type="checkbox" checked={settings.enabled} onChange={(e) => setSettings((s) => ({ ...s, enabled: e.target.checked }))} /> Check-in aktif</label>
@@ -154,8 +154,8 @@ export default function AdminCheckinPage({ onNotice }) {
             ))}
           </div>
         </div>
-        <div className="ci-admin-scroll">
-          <table className="ci-admin-table">
+        <div className="ci-admin-scroll ci-admin-progress-scroll">
+          <table className="ci-admin-table ci-admin-progress-table">
             <thead><tr><th>User</th><th>Poin</th><th>Streak</th><th>Terakhir</th><th>Total</th><th>Aksi</th></tr></thead>
             <tbody>
               {users.slice(0, 200).map((u) => (
@@ -189,11 +189,11 @@ export default function AdminCheckinPage({ onNotice }) {
       {data && (
         <div className="ci-admin-box">
           <h3>Check-in terbaru</h3>
-          <table className="ci-admin-table"><tbody>
+          <div className="ci-admin-scroll"><table className="ci-admin-table ci-admin-recent-table"><tbody>
             {data.recent.map((r, i) => (
               <tr key={i}><td className="ci-admin-user"><strong>{r.name}</strong><small>{r.email}</small></td><td>Hari ke-{r.streak}</td><td style={{ color: "#86efac" }}>+{fmt(r.reward)}</td><td><small>{new Date(r.createdAt).toLocaleString("id-ID")}</small></td></tr>
             ))}
-          </tbody></table>
+          </tbody></table></div>
         </div>
       )}
 

@@ -269,7 +269,7 @@ export function PointsPayButton({ total, disabled, loading, onPay }) {
 }
 
 /* Pengingat dalam aplikasi: muncul saat check-in hari ini tersedia,
-   dan otomatis muncul lagi tepat saat hari berganti (00:00 WIB). */
+   dan otomatis muncul lagi tepat 24 jam setelah klaim terakhir. */
 export function CheckinReminder({ enabled, activePage, navigate }) {
   const [{ data }, , load] = useCheckin(enabled);
   const [dismissed, setDismissed] = useState("");
@@ -278,7 +278,7 @@ export function CheckinReminder({ enabled, activePage, navigate }) {
   }, []);
   useEffect(() => {
     if (!enabled || !data || !data.claimedToday) return;
-    // Jadwalkan muat ulang tepat setelah reset harian agar pengingat muncul lagi.
+    // Jadwalkan muat ulang tepat setelah jeda 24 jam selesai agar pengingat muncul lagi.
     const ms = Math.max(5, Number(data.secondsLeft) || 60) * 1000 + 3000;
     const t = setTimeout(load, Math.min(ms, 2147483000));
     return () => clearTimeout(t);
