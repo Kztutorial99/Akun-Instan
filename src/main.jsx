@@ -5890,21 +5890,6 @@ function TopUpPage({ user, onBack, onNotice, onRefresh }) {
               )}
             </div>
 
-            <div className="cx-pay-apps">
-              <div className="cx-pay-apps-head">
-                <strong>Bisa Bayar dari Aplikasi</strong>
-                <small>Didukung platform WijayaPay</small>
-              </div>
-              <div className="cx-app-grid">
-                {QRIS_APPS.map((a) => (
-                  <div key={a.id} className="cx-app-tile is-static">
-                    <AppLogo app={a.id} size={20} />
-                    <span>{a.id.replace("QRIS ", "")}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="cx-secured" role="note">
               <span className="cx-secured-icon"><ShieldCheck size={18} /></span>
               <div className="cx-secured-copy">
