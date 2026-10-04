@@ -60,12 +60,26 @@ const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const rp = (n) => `Rp${fmt(n)}`;
 const REASON = { checkin: "Check-in", redeem: "Tukar produk", refund: "Pengembalian", admin: "Admin" };
 
+let checkinCache = null;
+let checkinRequest = null;
+
+async function loadCheckinData() {
+  if (checkinRequest) return checkinRequest;
+  checkinRequest = jsonRequest("/api/topup?resource=checkin")
+    .then((data) => {
+      checkinCache = data;
+      return data;
+    })
+    .finally(() => { checkinRequest = null; });
+  return checkinRequest;
+}
+
 export function useCheckin(enabled = true) {
-  const [state, setState] = useState({ loading: true, data: null, error: "" });
+  const [state, setState] = useState(() => ({ loading: enabled && !checkinCache, data: checkinCache, error: "" }));
   const load = useCallback(async () => {
     if (!enabled) return;
     try {
-      const data = await jsonRequest("/api/topup?resource=checkin");
+      const data = await loadCheckinData();
       setState({ loading: false, data, error: "" });
     } catch (e) { setState((s) => ({ ...s, loading: false, error: e.message })); }
   }, [enabled]);
@@ -149,6 +163,7 @@ function useClaim(setState, onNotice) {
     setBusy(true);
     try {
       const data = await jsonRequest("/api/topup?resource=checkin", { method: "POST", body: "{}" });
+      checkinCache = data;
       setState({ loading: false, data, error: "" });
       setBurst(data.earned || 0);
       setTimeout(() => setBurst(0), 2200);
