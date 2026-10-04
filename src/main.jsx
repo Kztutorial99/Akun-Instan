@@ -12,6 +12,7 @@ import {
   Star, ImagePlus, Play,
 } from "lucide-react";
 import "./styles.css";
+import "./mobile-polish.css";
 import { CheckinPage, CheckinProfileCard, PointsPayButton, CheckinReminder, useCheckin } from "./checkin.jsx";
 import { applySeo, applyProductSchema, applyProductSeo } from "./seo.js";
 import { CategoryPage, CATEGORY_PAGES, CATEGORY_SLUGS } from "./category-pages.jsx";
@@ -3111,7 +3112,10 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
       {drawerOpen && createPortal(
         <div className="cx-drawer-root">
           <div className="cx-drawer-backdrop" onClick={() => setDrawerOpen(false)} />
-          <aside className="cx-drawer" role="dialog" aria-label="Menu layanan">
+          <aside className="cx-drawer" role="dialog" aria-modal="true" aria-label="Menu layanan"
+            onTouchStart={(e) => { const el = e.currentTarget; el.dataset.sx = e.touches[0].clientX; el.dataset.dx = "0"; }}
+            onTouchMove={(e) => { const el = e.currentTarget; const dx = Math.min(0, e.touches[0].clientX - Number(el.dataset.sx || 0)); el.dataset.dx = dx; el.style.transform = `translateX(${dx}px)`; }}
+            onTouchEnd={(e) => { const el = e.currentTarget; const dx = Number(el.dataset.dx || 0); el.style.transform = ""; if (dx < -70) setDrawerOpen(false); }}>
             <div className="cx-drawer-head">
               <img className="cx-drawer-wordmark" src="/akun-instan-wordmark.webp" alt="Akun Instan" width="132" height="20" decoding="async" />
               <button className="cx-icon-btn" onClick={() => setDrawerOpen(false)} aria-label="Tutup menu"><X size={14} /></button>

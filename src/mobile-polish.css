@@ -1,0 +1,54 @@
+/* Mobile UI polish layer — loaded last; visual only */
+html, body { overflow-x: hidden; max-width: 100%; }
+.cx-app { overflow-x: clip; }
+:where(button, a, [role="button"]):focus-visible { outline: 2px solid var(--indigo2, #a78bfa); outline-offset: 2px; border-radius: 10px; }
+
+/* Drawer */
+.cx-drawer-root { z-index: 200; }
+.cx-drawer-root .cx-drawer-backdrop { inset: 0 !important; bottom: 0 !important; background: rgba(4,2,12,.62); backdrop-filter: blur(2px); animation: cxp-fade .2s ease both; }
+.cx-drawer { width: min(86vw, 340px) !important; max-width: 360px; padding: max(14px, env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom)) !important; box-shadow: 16px 0 40px rgba(0,0,0,.45) !important; overscroll-behavior: contain; touch-action: pan-y; will-change: transform; transition: transform .2s ease; }
+.cx-drawer .cx-icon-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.cx-drawer-nav button { min-height: 46px; display: flex; align-items: center; gap: 12px; line-height: 1.2; }
+.cx-drawer-nav button svg { width: 18px; height: 18px; flex: none; }
+.cx-drawer-nav button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-menu-unread { flex: none; max-width: 40px; }
+@media (min-width: 768px) { .cx-drawer { width: 340px !important; } }
+@keyframes cxp-fade { from { opacity: 0 } to { opacity: 1 } }
+
+/* Header */
+@media (max-width: 767px) {
+  .cx-topbar-inner, .cx-topbar > div:first-child { min-width: 0; gap: clamp(4px, 1.6vw, 10px); }
+  .cx-topbar-actions { gap: clamp(2px, 1vw, 8px); flex: none; }
+  .cx-topbar-actions > *, .cx-burger { flex: none; }
+  .cx-burger, .cx-topbar-actions .cx-icon-btn, .cx-topbar-actions > button { min-width: 44px; min-height: 44px; }
+  .cx-topbar img[alt="Akun Instan"] { max-width: clamp(96px, 32vw, 150px); height: auto; min-width: 0; }
+}
+@media (max-width: 340px) {
+  .cx-topbar img[alt="Akun Instan"] { max-width: 88px; }
+  .cx-burger, .cx-topbar-actions .cx-icon-btn, .cx-topbar-actions > button { min-width: 40px; }
+}
+
+/* Profile dropdown */
+.cx-account-dropdown { width: min(300px, calc(100vw - 24px)) !important; max-width: calc(100vw - 24px); max-height: calc(100dvh - 90px); overflow-y: auto; border-radius: 14px !important; border: 1px solid var(--b2); box-shadow: 0 16px 36px rgba(0,0,0,.5) !important; transform-origin: top right; animation: cxp-pop .16s ease both; z-index: 150 !important; }
+.cx-account-dropdown button, .cx-account-dropdown a { min-height: 44px; }
+.cx-account-dropdown small, .cx-account-dropdown strong { overflow-wrap: anywhere; }
+@keyframes cxp-pop { from { opacity: 0; transform: scale(.96) translateY(-4px) } to { opacity: 1; transform: none } }
+
+/* Bottom nav */
+@media (max-width: 767px) {
+  .cx-tabbar { padding-bottom: env(safe-area-inset-bottom) !important; z-index: 90; }
+  .cx-tabbar-item, .cx-tabbar-center { min-height: 48px; min-width: 44px; }
+  .cx-tabbar-center-btn { box-shadow: 0 6px 16px rgba(124,58,237,.35) !important; }
+  .cx-app:not(.cx-land) main { padding-bottom: calc(var(--tab-h, 62px) + 20px + env(safe-area-inset-bottom)); }
+}
+
+/* Profile & cards: no overflow from long data */
+.cx-profile-list li, .cx-profile-list span, .cx-profile-list strong, .cx-profile-head-copy * { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+.cx-panel, .ci-card, [class*="-card"] { min-width: 0; max-width: 100%; }
+@media (max-width: 640px) {
+  .cx-panel { padding: 16px; border-radius: 16px; }
+  .cx-profile-card { padding: 16px !important; }
+  h1 { font-size: clamp(22px, 6.6vw, 28px); }
+  h2 { font-size: clamp(17px, 5vw, 20px); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
