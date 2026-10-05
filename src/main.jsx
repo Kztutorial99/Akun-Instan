@@ -568,6 +568,44 @@ function prettyTitle(value) {
     .toLowerCase()
     .replace(/(^|\s|\()([a-z0-9])/g, (m, a, b) => a + b.toUpperCase());
 }
+function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
+  const [st, setSt] = useState(null);
+  const [busy, setBusy] = useState("");
+  const qs = `orderId=${encodeURIComponent(orderId || "")}&product=${encodeURIComponent(product || "")}&accountEmail=${encodeURIComponent(accountEmail || "")}`;
+  const load = () => jsonRequest(`/api/data?resource=google-handover&${qs}`).then(setSt).catch(() => {});
+  useEffect(() => { if (orderId) load(); }, [orderId]);
+  const act = async (action) => {
+    if (action === "done" && !window.confirm("Yakin semua langkah sudah selesai dan akun sudah aman? (password, email & nomor pemulihan sudah diganti, perangkat lain dikeluarkan)")) return;
+    setBusy(action);
+    try {
+      const r = await jsonRequest("/api/data?resource=google-handover", { method: "POST", body: JSON.stringify({ orderId, product, accountEmail, action }) });
+      setSt(r); if (onNotice) onNotice(action === "done" ? "Akun dinyatakan aman" : "Permintaan kode dikirim ke admin");
+    } catch (e) { if (onNotice) onNotice(e.message || "Gagal"); }
+    setBusy("");
+  };
+  if (!orderId) return null;
+  if (st && st.secured) return <div className="cx-panel" style={{ marginTop: 8, padding: 10, fontSize: 12, color: "#22c55e", display: "flex", gap: 6, alignItems: "center" }}><ShieldCheck size={13} /> Akun sudah kamu nyatakan aman.</div>;
+  const cr = st && st.codeRequest;
+  const waiting = cr && ["open", "in_progress"].includes(cr.status);
+  return (
+    <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
+      <strong style={{ fontSize: 12 }}>Serah terima akun Google</strong>
+      <small style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>Diminta kode verifikasi saat login? Minta kode ke admin — kode dikirim Google ke email pemulihan toko untuk akun <b>{accountEmail || "ini"}</b>. Setelah login, ganti email pemulihan ke milikmu.</small>
+      {cr && (
+        <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+          Tiket <b>{cr.ticket}</b> — {waiting ? "menunggu admin mengirim kode..." : "dibalas admin"}
+          {cr.adminNote && <div style={{ marginTop: 4, padding: 8, borderRadius: 8, background: "var(--surface-2, rgba(124,58,237,.12))", whiteSpace: "pre-wrap" }}>{cr.adminNote}</div>}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={!!busy || waiting} onClick={() => act("request-code")}>{busy === "request-code" ? "Mengirim..." : waiting ? "Kode sedang diminta" : cr ? "Minta kode lagi" : "Minta kode login"}</button>
+        {waiting && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={load}>Cek balasan</button>}
+        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={!!busy} onClick={() => act("done")}>{busy === "done" ? "Menyimpan..." : "Selesai, akun aman"}</button>
+      </div>
+      <small style={{ color: "var(--faint)", fontSize: 10 }}>Wajib klik <b>Selesai</b> setelah semua langkah pengamanan beres.</small>
+    </div>
+  );
+}
 function GoogleHelpBox({ orderId, product, accountEmail }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -2751,6 +2789,7 @@ function OrderItems({ items, onNotice, orderId }) {
             />
           ))}
           {item.deliveryDetails && <DeliveryNote className="cx-order-note" text={item.deliveryDetails} />}
+          {/google|gmail/i.test(`${item.title || ""} ${item.loginType || ""}`) && <GoogleHandover orderId={orderId} product={item.title} accountEmail={(item.accounts || [])[0]?.email || ""} onNotice={onNotice} />}
           {/google|gmail/i.test(`${item.title || ""} ${item.loginType || ""}`) && <GoogleHelpBox orderId={orderId} product={item.title} accountEmail={(item.accounts || [])[0]?.email || ""} />}
         </div>
       ))}

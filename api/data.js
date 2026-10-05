@@ -394,6 +394,53 @@ module.exports = async function handler(request, response) {
     } catch (e) { console.error("google-escalate", e && e.message); return response.status(500).json({ error: "Gagal meneruskan ke admin" }); }
   }
 
+  /* ?resource=google-handover = status serah terima akun Google per pesanan:
+     GET ?orderId= → { secured, codeRequest }; POST { orderId, action: "request-code" | "done" }. */
+  if (request.query && request.query.resource === "google-handover" && (request.method === "GET" || request.method === "POST")) {
+    response.setHeader("Cache-Control", "no-store");
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const user = await currentUser(sql, request).catch(() => null);
+      if (!user) return response.status(401).json({ error: "Login dulu" });
+      await sql`CREATE TABLE IF NOT EXISTS codexa_google_handover (
+        order_id TEXT PRIMARY KEY, user_id TEXT NOT NULL, secured_at TIMESTAMPTZ, code_ticket TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+      const body = request.method === "POST" ? (bodyOf(request) || {}) : { orderId: request.query.orderId, ...(request.query || {}) };
+      const order = await ownOrder(sql, user, body);
+      if (!order) return response.status(404).json({ error: "Pesanan tidak ditemukan" });
+      const read = async () => {
+        const [h] = await sql`SELECT secured_at AS "securedAt", code_ticket AS "codeTicket" FROM codexa_google_handover WHERE order_id = ${order.id}`;
+        let codeRequest = null;
+        if (h && h.codeTicket) {
+          const [r] = await sql`SELECT ticket, status, admin_note AS "adminNote", created_at AS "createdAt" FROM codexa_reports WHERE ticket = ${h.codeTicket}`;
+          if (r) codeRequest = r;
+        }
+        return { secured: !!(h && h.securedAt), securedAt: h ? h.securedAt : null, codeRequest };
+      };
+      if (request.method === "GET") return response.status(200).json(await read());
+      const action = String(body.action || "");
+      if (action === "done") {
+        await sql`INSERT INTO codexa_google_handover (order_id, user_id, secured_at) VALUES (${order.id}, ${user.id}, NOW())
+          ON CONFLICT (order_id) DO UPDATE SET secured_at = COALESCE(codexa_google_handover.secured_at, NOW()), updated_at = NOW()`;
+        return response.status(200).json(await read());
+      }
+      if (action === "request-code") {
+        const cur = await read();
+        if (cur.secured) return response.status(400).json({ error: "Akun sudah dinyatakan aman" });
+        if (cur.codeRequest && ["open", "in_progress"].includes(cur.codeRequest.status)) return response.status(200).json(cur);
+        const ticket = `TXT-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+        const acct = order.email || "-";
+        const detail = `PERMINTAAN KODE VERIFIKASI LOGIN\nEmail akun yang minta kode: ${acct}\nPembeli: ${user.name || "-"} (${user.email || "-"})\nPesanan: ${order.id}\nProduk: ${order.product}\nTanggal beli: ${order.createdAt}\n\nCek kotak masuk email pemulihan toko untuk akun ${acct}, lalu balas kodenya di laporan ini (pembeli dapat notifikasi).`;
+        await sql`INSERT INTO codexa_reports (id, ticket, user_id, user_name, user_email, category, summary, detail, urgency, status, source, attachments)
+          VALUES (${"rep_" + crypto.randomBytes(8).toString("hex")}, ${ticket}, ${user.id}, ${user.name || ""}, ${user.email || ""},
+            'kode_login', ${("Minta kode login: " + acct).slice(0, 160)}, ${detail}, 'tinggi', 'open', 'order', '[]'::jsonb)`;
+        await sql`INSERT INTO codexa_google_handover (order_id, user_id, code_ticket) VALUES (${order.id}, ${user.id}, ${ticket})
+          ON CONFLICT (order_id) DO UPDATE SET code_ticket = ${ticket}, updated_at = NOW()`;
+        return response.status(200).json(await read());
+      }
+      return response.status(400).json({ error: "Aksi tidak dikenal" });
+    } catch (e) { console.error("google-handover", e && e.message); return response.status(500).json({ error: "Gagal memproses" }); }
+  }
+
   /* POST ?resource=visit = catat kunjungan halaman (Visitor Traffic, tanpa login). */
   if (request.method === "POST" && request.query && request.query.resource === "visit") {
     response.setHeader("Cache-Control", "no-store");
