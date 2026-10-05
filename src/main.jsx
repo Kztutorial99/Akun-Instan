@@ -1033,7 +1033,6 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
             <div className="cx-footer-brand">
               <img className="cx-brand-wordmark cx-brand-wordmark-footer" src="/akun-instan-wordmark.webp" alt="Akun Instan" width="132" height="20" loading="lazy" decoding="async" />
               <p>Marketplace akun digital &amp; Custom Email.</p>
-              <a className="cx-footer-security" href="/keamanan.html">Standar Keamanan</a>
             </div>
             <nav className="cx-footer-col" aria-label="Navigasi">
               <strong>Navigasi</strong>
@@ -1048,7 +1047,7 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
               <button onClick={() => navigate("refund")}>Kebijakan Refund</button>
             </nav>
           </div>
-          <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman</p>
+          <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman · <a href="/keamanan.html">Standar Keamanan</a></p>
         </div>
       </footer>
     </div>
@@ -3076,11 +3075,11 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
                   </div>
                   <div className="cx-account-wallets">
                     <div className="cx-account-balance">
-                      <span><Wallet size={12} /> Saldo:</span>
+                      <span><Wallet size={12} /> Saldo asli</span>
                       <strong>{formatPrice(user ? user.balance : 0)}</strong>
                     </div>
                     <div className="cx-account-balance is-points">
-                      <span><Gift size={12} /> Poin:</span>
+                      <span><Gift size={12} /> Poin</span>
                       <strong>{Number(checkinData?.points || 0).toLocaleString("id-ID")}</strong>
                     </div>
                   </div>
@@ -3122,7 +3121,7 @@ function StoreTopbar({ activePage, navigate, cart, onCartOpen, user, menuOpen, s
             </div>
 
             <div className="cx-drawer-balance">
-              <span><Wallet size={12} /> Saldo</span>
+              <span><Wallet size={12} /> Saldo asli</span>
               <strong>{formatPrice(user ? user.balance : 0)}</strong>
               <span className="cx-drawer-points"><Gift size={11} /> {Number(checkinData?.points || 0).toLocaleString("id-ID")} poin</span>
               <div className="cx-drawer-balance-actions">
@@ -4020,7 +4019,6 @@ function StoreFooter({ navigate, guest }) {
               <img className="cx-brand-wordmark cx-brand-wordmark-footer" src="/akun-instan-wordmark.webp" alt="Akun Instan" width="132" height="20" loading="lazy" decoding="async" />
             </button>
             <p>Marketplace akun digital &amp; Custom Email.</p>
-            <a className="cx-footer-security" href="/keamanan.html">Standar Keamanan</a>
           </div>
           <nav className="cx-footer-col" aria-label="Navigasi">
             <strong>Navigasi</strong>
@@ -4035,7 +4033,7 @@ function StoreFooter({ navigate, guest }) {
             <button onClick={() => navigate("refund")}>Kebijakan Refund</button>
           </nav>
         </div>
-        <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman</p>
+        <p className="cx-footer-copy">© 2026 Akun Instan. Semua transaksi diproses dengan aman · <a href="/keamanan.html">Standar Keamanan</a></p>
       </div>
     </footer>
   );

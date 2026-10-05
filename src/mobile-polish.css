@@ -66,9 +66,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .cx-account-wallets { display: grid !important; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--b2); border-radius: 10px; overflow: hidden; margin: 4px 0 6px; }
 .cx-account-wallets .cx-account-balance { border-radius: 0 !important; border: 0 !important; background: transparent !important; margin: 0 !important; }
 .cx-account-wallets .cx-account-balance + .cx-account-balance { border-top: 1px solid var(--b2) !important; }
-.cx-account-balance { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 8px; min-width: 0; padding: 8px 10px !important; }
+.cx-account-balance { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 5px; min-width: 0; padding: 8px 10px !important; }
 .cx-account-balance span { display: flex; align-items: center; gap: 5px; font-size: 11px; white-space: nowrap; }
-.cx-account-balance strong { min-width: 0; font-size: 14px !important; white-space: nowrap; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 58%; text-align: right; }
+.cx-account-balance strong { min-width: 0; font-size: 14px !important; white-space: nowrap; overflow: hidden !important; text-overflow: ellipsis !important; max-width: none; text-align: left; }
 .cx-account-balance.is-points strong { color: var(--amber, #fbbf24); }
 .cx-drawer-nav button span.cx-menu-unread { flex: none !important; width: auto; min-width: 20px; max-width: 34px; height: 20px; padding: 0 6px; font-size: 11px; overflow: visible; }
 .cx-drawer-balance { margin-bottom: 10px; }
