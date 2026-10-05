@@ -1528,7 +1528,10 @@ function App() {
     const ready = [];
     const out = [];
     for (const p of list) (stockOf(p) > 0 && p.status !== "sold" ? ready : out).push(p);
-    return [...ready, ...out.sort((a, b) => (Number(b.soldCount) || 0) - (Number(a.soldCount) || 0))];
+    const isDemoP = (p) => p.demo === true || /^(etl-|demo-)/.test(String(p.id || ""));
+    const ordered = [...ready, ...out.sort((a, b) => (Number(b.soldCount) || 0) - (Number(a.soldCount) || 0))];
+    /* Produk asli selalu di atas, produk etalase di paling bawah. */
+    return [...ordered.filter((p) => !isDemoP(p)), ...ordered.filter(isDemoP)];
 
   }, [data.products, search, sortBy, ageFilter, categoryFilter, platform]);
 
@@ -2318,9 +2321,8 @@ function App() {
               {CATALOG_PLATFORMS.map((pl) => {
                 const items = data.products.filter((p) => productPlatformKey(p) === pl.key);
                 const n = items.length;
-                const avail = items.filter((p) => (Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold").length;
                 return (
-                  <button key={pl.key} type="button" className={`cx-plat-item${!data.loading && avail === 0 ? " is-empty" : ""}`} onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
+                  <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
                     <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
                     <span className="cx-plat-name">{pl.label}</span>
                     {!data.loading && <span className="cx-plat-count">{n > 0 ? `${n} produk` : "Kosong"}</span>}
@@ -2348,7 +2350,7 @@ function App() {
           </div>
         )}
 
-        {(platform || search.trim()) && data.loading && (
+        {data.loading && (
           <div className="cx-grid">
             {[1,2,3,4,5,6].map((i) => (
               <div key={i} style={{ border: "1px solid var(--b1)", borderRadius: 4, overflow: "hidden" }}>
@@ -2372,7 +2374,7 @@ function App() {
           </div>
         )}
 
-        {(platform || search.trim()) && !data.loading && !data.error && products.length === 0 && (
+        {!data.loading && !data.error && products.length === 0 && (
           <div className="cx-empty">
             <Package size={28} />
             <h3>Belum ada akun tersedia</h3>
@@ -2380,11 +2382,7 @@ function App() {
           </div>
         )}
 
-        {(platform || search.trim()) && !data.loading && products.length > 0 && (() => {
-          const isOut = (p) => !((Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold");
-          const ready = products.filter((p) => !isOut(p));
-          const out = products.filter(isOut);
-          const groups = [{ label: "", items: ready }];
+        {!data.loading && products.length > 0 && (() => {
           const card = (p, i) => (
             <ProductCard
               key={p.id || i}
@@ -2395,26 +2393,11 @@ function App() {
             />
           );
           return (
-            <>
-              {ready.length > 0 && (
-                <>
-                  <div className="cx-cat-count">{ready.length} produk tersedia</div>
-                  {groups.filter((group) => group.items.length).map((group) => (
-                    <section className="cx-cat-group" key={group.label} aria-label={group.label}>
-                      <div className="cx-grid">{group.items.map(card)}</div>
-                    </section>
-                  ))}
-                </>
-              )}
-              {out.length > 0 && (
-                <>
-                  <div className="cx-cat-divider">
-                    <span>Stok habis · {out.length} produk</span><small>Urut terlaris</small>
-                  </div>
-                  <div className="cx-grid cx-grid-out">{out.map(card)}</div>
-                </>
-              )}
-            </>
+            <section className="cx-cat-group" aria-label="Produk">
+              {!platform && !search.trim() && <h2 className="cx-plat-title" style={{ marginTop: 22 }}>Semua Produk</h2>}
+              <div className="cx-cat-count">{products.length} produk</div>
+              <div className="cx-grid">{products.map(card)}</div>
+            </section>
           );
         })()}
 
