@@ -10,6 +10,7 @@ import {
   Search, Settings, ShieldCheck, Lock, ShoppingBag, Trash2, X,
   User, UserPlus, Wallet, Mail, Phone, Clock, Sparkles, Send, Zap, KeyRound,
   Star, ImagePlus, Play,
+  ArrowLeft,
 } from "lucide-react";
 import "./styles.css";
 import "./mobile-polish.css";
@@ -361,6 +362,23 @@ export function productCategoryKey(product) {
     return /\bpva\b/.test(text) && !/\b(no[ -]?pva|non[ -]?pva)\b/.test(text) ? "google-pva" : "google-basic";
   }
   for (const [category, words] of CATEGORY_MATCHERS) if (words.some((word) => text.includes(word))) return category;
+  return "other";
+}
+
+/* Platform utama untuk halaman Katalog ("Pilih Platform" dulu, baru produk). */
+export const CATALOG_PLATFORMS = [
+  { key: "google", label: "Google", icon: "google" },
+  { key: "tiktok", label: "TikTok", icon: "tiktok" },
+  { key: "instagram", label: "Instagram", icon: "instagram" },
+  { key: "mobile-legends", label: "Mobile Legends", icon: "mobile-legends" },
+  { key: "freefire", label: "Free Fire", icon: "freefire" },
+  { key: "other", label: "Lainnya", icon: "game-lain" },
+];
+export function productPlatformKey(product) {
+  const cat = productCategoryKey(product);
+  if (cat === "google-basic" || cat === "google-pva") return "google";
+  const icon = productIconKey(product);
+  if (["google", "tiktok", "instagram", "mobile-legends", "freefire"].includes(icon)) return icon;
   return "other";
 }
 
@@ -1253,6 +1271,7 @@ function App() {
   const [sortBy, setSortBy]   = useState("default");
   const [ageFilter, setAgeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [platform, setPlatform] = useState("");
   const [notice, setNotice]   = useState("");
   const [noticeError, setNoticeError] = useState(false);
   // Isi keranjang disimpan di perangkat agar tidak hilang saat halaman di-refresh.
@@ -1498,6 +1517,7 @@ function App() {
     }
     if (ageFilter !== "all") list = list.filter((p) => p.ageInfo.kind === ageFilter);
     if (categoryFilter !== "all") list = list.filter((p) => productCategoryKey(p) === categoryFilter);
+    if (platform && !q) list = list.filter((p) => productPlatformKey(p) === platform);
     const priceOf = (p) => Number(p.price) || 0;
     const stockOf = (p) => Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0);
     if (sortBy === "price-asc") list = [...list].sort((a, b) => priceOf(a) - priceOf(b));
@@ -1511,7 +1531,7 @@ function App() {
     for (const p of list) (stockOf(p) > 0 && p.status !== "sold" ? ready : out).push(p);
     return [...ready, ...out.sort((a, b) => (Number(b.soldCount) || 0) - (Number(a.soldCount) || 0))];
 
-  }, [data.products, search, sortBy, ageFilter, categoryFilter]);
+  }, [data.products, search, sortBy, ageFilter, categoryFilter, platform]);
 
   // Pindah halaman selalu mulai dari paling atas (window + container scroll).
   const scrollTop = () => {
@@ -2288,53 +2308,46 @@ function App() {
           </div>
           <div className="cx-search">
             <Search size={13} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari akun, fresh, aged..." />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari akun, platform..." />
           </div>
         </div>
 
-        {/* Filter katalog: status akun, urutan, dan kategori */}
-        <div className="cx-filterbar">
-          <div className="cx-filter-chips" role="group" aria-label="Filter umur akun">
-            {CATALOG_AGES.map((a) => (
-              <button
-                key={a.key}
-                type="button"
-                className={`cx-filter-chip${ageFilter === a.key ? " is-active" : ""}`}
-                onClick={() => setAgeFilter(a.key)}
-              >
-                {a.label}
-              </button>
-            ))}
+        {!search.trim() && !platform && (
+          <section className="cx-plat-section" aria-label="Pilih Platform">
+            <h2 className="cx-plat-title">Pilih Platform</h2>
+            <div className="cx-plat-grid">
+              {CATALOG_PLATFORMS.map((pl) => {
+                const n = data.products.filter((p) => productPlatformKey(p) === pl.key).length;
+                return (
+                  <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
+                    <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
+                    <span className="cx-plat-name">{pl.label}</span>
+                    {!data.loading && <span className="cx-plat-count">{n} produk</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {(platform && !search.trim()) && (
+          <div className="cx-plat-head">
+            <button type="button" className="cx-plat-back" onClick={() => { setPlatform(""); setAgeFilter("all"); }}>
+              <ArrowLeft size={14} /> Kembali
+            </button>
+            <div className="cx-plat-headrow">
+              <span className="cx-plat-icon is-sm"><ProductIcon icon={(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).icon} label={platform} size={22} /></span>
+              <h2>{(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).label}</h2>
+            </div>
+            <div className="cx-filter-chips" role="group" aria-label="Filter umur akun">
+              {CATALOG_AGES.map((a) => (
+                <button key={a.key} type="button" className={`cx-filter-chip${ageFilter === a.key ? " is-active" : ""}`} onClick={() => setAgeFilter(a.key)}>{a.label}</button>
+              ))}
+            </div>
           </div>
-          <div className="cx-filter-selects">
-            <label className="cx-filter-select">
-              <span className="cx-filter-label">Urutkan</span>
-              <select aria-label="Urutkan produk" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                {CATALOG_SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-              </select>
-            </label>
-            <label className="cx-filter-select">
-              <span className="cx-filter-label">Kategori</span>
-              <select aria-label="Filter kategori" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                {CATALOG_CATEGORIES.map((category) => <option key={category.key} value={category.key}>{category.label}</option>)}
-              </select>
-            </label>
-            {(ageFilter !== "all" || categoryFilter !== "all" || sortBy !== "default" || search) && (
-              <button
-                type="button"
-                className="cx-filter-reset"
-                onClick={() => { setAgeFilter("all"); setCategoryFilter("all"); setSortBy("default"); setSearch(""); }}
-              >
-                Reset filter
-              </button>
-            )}
-          </div>
-        </div>
+        )}
 
-
-
-
-        {data.loading && (
+        {(platform || search.trim()) && data.loading && (
           <div className="cx-grid">
             {[1,2,3,4,5,6].map((i) => (
               <div key={i} style={{ border: "1px solid var(--b1)", borderRadius: 4, overflow: "hidden" }}>
@@ -2358,7 +2371,7 @@ function App() {
           </div>
         )}
 
-        {!data.loading && !data.error && products.length === 0 && (
+        {(platform || search.trim()) && !data.loading && !data.error && products.length === 0 && (
           <div className="cx-empty">
             <Package size={28} />
             <h3>Belum ada akun tersedia</h3>
@@ -2366,18 +2379,11 @@ function App() {
           </div>
         )}
 
-        {!data.loading && products.length > 0 && (() => {
+        {(platform || search.trim()) && !data.loading && products.length > 0 && (() => {
           const isOut = (p) => !((Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold");
           const ready = products.filter((p) => !isOut(p));
           const out = products.filter(isOut);
-          const googleBasic = ready.filter((p) => productCategoryKey(p) === "google-basic");
-          const googlePva = ready.filter((p) => productCategoryKey(p) === "google-pva");
-          const others = ready.filter((p) => !["google-basic", "google-pva"].includes(productCategoryKey(p)));
-          const groups = [
-            { label: "Google Biasa", items: googleBasic },
-            { label: "Google PVA", items: googlePva },
-            { label: "Akun lainnya", items: others },
-          ];
+          const groups = [{ label: "", items: ready }];
           const card = (p, i) => (
             <ProductCard
               key={p.id || i}
@@ -2391,10 +2397,9 @@ function App() {
             <>
               {ready.length > 0 && (
                 <>
-                  <div className="cx-cat-count">Tersedia · {ready.length} produk</div>
+                  <div className="cx-cat-count">{ready.length} produk tersedia</div>
                   {groups.filter((group) => group.items.length).map((group) => (
                     <section className="cx-cat-group" key={group.label} aria-label={group.label}>
-                      <div className="cx-cat-group-head"><h2>{group.label}</h2><span>{group.items.length} produk</span></div>
                       <div className="cx-grid">{group.items.map(card)}</div>
                     </section>
                   ))}
@@ -2413,7 +2418,8 @@ function App() {
         })()}
 
       </main>
-      <StoreFooter navigate={navigate} guest={guest} />
+      <div className="cx-cat-footer-wrap"><StoreFooter navigate={navigate} guest={guest} /></div>
+      <footer className="cx-cat-minifoot">© Akun Instan · <button type="button" onClick={() => navigate("help")}>Bantuan</button> · <button type="button" onClick={() => navigate("terms")}>Syarat</button></footer>
       {tabbar}
       {overlays}
     </div>
