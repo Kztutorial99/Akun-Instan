@@ -1950,3 +1950,9 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-pd-sec{margin-top:14px;}
 .cx-pd-sec h4{margin:0 0 8px;font-size:14px;font-weight:700;}
 .ci-hero-top{justify-content:flex-end;}
+
+/* Ulasan gabungan platform: pemilih produk + label produk di tiap ulasan */
+.cx-rev-target{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 10px}
+.cx-rev-target button{border:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,rgba(255,255,255,.04));color:var(--ink2,inherit);border-radius:999px;padding:6px 12px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+.cx-rev-target button.is-on{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.1)}
+.cx-review-prod{display:inline-block;margin-top:6px;font:600 10.5px Inter,system-ui,sans-serif;color:var(--muted,rgba(255,255,255,.55));background:var(--panel,rgba(255,255,255,.05));border-radius:6px;padding:2px 7px}
