@@ -1006,6 +1006,11 @@ module.exports = async function handler(request, response) {
       throw error;
     }
 
+    /* Akun Google yang terhubung ke checker → otomatis SOLD + token checker dicabut. */
+    try {
+      await require("./_google-checker").markSoldByEmails(sql, orderItems.flatMap((i) => i.accounts.map((a) => a.email)));
+    } catch (error) { console.error("Google checker sold sync failed", error && error.message); }
+
     // Nama yang sudah dikunci ditempelkan ke pesanan yang baru dibuat.
     const customRecords = [];
     for (const r of reserved) {

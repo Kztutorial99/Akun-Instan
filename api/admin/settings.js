@@ -54,12 +54,17 @@ module.exports = async function handler(request, response) {
       const body = request.method === "GET" ? {} : bodyOf(request);
       if (request.method === "GET" && resource === "gchecker") {
         const c = GC.creds();
-        return response.status(200).json({ configured: Boolean(c.id && c.secret), accounts: await GC.list(sql) });
+        return response.status(200).json({ configured: Boolean(c.id && c.secret), accounts: await GC.list(sql), listings: await GC.googleListings(sql).catch(() => []) });
       }
       if (request.method === "POST" && resource === "gchecker-connect") return response.status(200).json({ url: GC.authUrl(request) });
       if (request.method === "POST" && resource === "gchecker-check") {
         const checked = await GC.checkAll(sql, body.id ? String(body.id) : undefined);
         return response.status(200).json({ ok: true, checked, accounts: await GC.list(sql) });
+      }
+      if (request.method === "POST" && resource === "gchecker-stock") {
+        try { await GC.addToStock(sql, { id: String(body.id || ""), password: body.password, listingId: body.listingId, price: body.price }); }
+        catch (e) { return response.status(400).json({ error: e.message }); }
+        return response.status(200).json({ ok: true, accounts: await GC.list(sql), listings: await GC.googleListings(sql) });
       }
       if (request.method === "POST" && resource === "gchecker-sold") {
         await GC.markSold(sql, String(body.id || ""));
