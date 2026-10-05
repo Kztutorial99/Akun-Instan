@@ -1,45 +1,55 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw, Search, ShieldAlert, Save, Ban, Check, Plus, Minus, History, Flame, Users, Sparkles } from "lucide-react";
+import { RefreshCw, Search, ShieldAlert, Save, Ban, Check, History, Users, Sparkles, X, RotateCcw, Pencil, Settings2, Trash2, TrendingUp } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
 import { CoinIcon, FlameIcon } from "./checkin.jsx";
 import "./checkin.css";
 
 const fmt = (n) => Number(n || 0).toLocaleString("id-ID");
 const API = "/api/admin/users?action=checkin";
+const initial = (s) => String(s || "?").trim().charAt(0).toUpperCase();
 
 export default function AdminCheckinPage({ onNotice }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [modal, setModal] = useState(null);
+  const [edit, setEdit] = useState(null);
+  const [busy, setBusy] = useState(false);
 
+  const notice = (m, t) => onNotice && onNotice(m, t);
   const load = async () => {
     setLoading(true);
-    try {
-      const res = await jsonRequest(API, { method: "GET" });
-      setData(res);
-      setSettings(res.settings);
-    } catch (e) { onNotice && onNotice(e.message || "Gagal memuat", "error"); }
+    try { const res = await jsonRequest(API, { method: "GET" }); setData(res); setSettings(res.settings); }
+    catch (e) { notice(e.message || "Gagal memuat", "error"); }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
   const post = (body) => jsonRequest(API, { method: "POST", body: JSON.stringify(body) });
+  const act = async (body, msg, close) => {
+    setBusy(true);
+    try { await post(body); notice(msg); if (close) setEdit(null); await load(); }
+    catch (e) { notice(e.message, "error"); }
+    setBusy(false);
+  };
 
   const saveSettings = async () => {
     setSaving(true);
-    try { await post({ op: "settings", settings }); onNotice && onNotice("Pengaturan check-in disimpan"); load(); }
-    catch (e) { onNotice && onNotice(e.message, "error"); }
+    try { await post({ op: "settings", settings }); notice("Pengaturan check-in disimpan"); load(); }
+    catch (e) { notice(e.message, "error"); }
     setSaving(false);
   };
 
-  const act = async (body, msg) => {
-    try { await post(body); onNotice && onNotice(msg); load(); }
-    catch (e) { onNotice && onNotice(e.message, "error"); }
-  };
+  // Sinkronkan data user di modal edit setelah reload.
+  useEffect(() => {
+    if (!edit || !data) return;
+    const u = data.users.find((x) => x.id === edit.user.id);
+    if (u && u !== edit.user) setEdit((e) => e && { ...e, user: u });
+  }, [data]);
 
   const users = useMemo(() => {
     if (!data) return [];
@@ -54,153 +64,209 @@ export default function AdminCheckinPage({ onNotice }) {
     });
   }, [data, q, filter]);
 
-  const openLedger = async (u) => {
-    setModal({ user: u, ledger: null });
-    try { const r = await post({ op: "ledger", userId: u.id }); setModal({ user: u, ledger: r.ledger }); }
-    catch (e) { onNotice && onNotice(e.message, "error"); setModal(null); }
-  };
-
-  const analyze = async (u) => {
-    setModal({ user: u, ledger: null, ai: { loading: true } });
+  const openLedger = async (u, withAi) => {
+    setModal({ user: u, ledger: null, ai: withAi ? { loading: true } : null });
     try {
-      const [l, a] = await Promise.all([post({ op: "ledger", userId: u.id }), post({ op: "analyze", userId: u.id })]);
-      setModal({ user: u, ledger: l.ledger, ai: a });
-    } catch (e) {
-      setModal((m) => m && { ...m, ai: { error: e.message || "Analisis AI gagal" } });
-      try { const l = await post({ op: "ledger", userId: u.id }); setModal((m) => m && { ...m, ledger: l.ledger }); } catch (_) {}
-    }
+      const l = await post({ op: "ledger", userId: u.id });
+      setModal((m) => m && { ...m, ledger: l.ledger });
+      if (withAi) {
+        try { const a = await post({ op: "analyze", userId: u.id }); setModal((m) => m && { ...m, ai: a }); }
+        catch (e) { setModal((m) => m && { ...m, ai: { error: e.message || "Analisis AI gagal" } }); }
+      }
+    } catch (e) { notice(e.message, "error"); setModal(null); }
   };
 
-  const adjust = (u, sign) => {
-    const v = window.prompt(`${sign > 0 ? "Tambah" : "Kurangi"} poin untuk ${u.email}:`, "100");
-    if (!v) return;
-    const n = Math.abs(parseInt(v, 10));
-    if (!n) return;
-    const note = window.prompt("Catatan (opsional):", sign > 0 ? "Bonus dari admin" : "Koreksi admin") || "";
-    act({ op: "adjust", userId: u.id, delta: n * sign, note }, "Poin diperbarui");
-  };
-  const setStreak = (u) => {
-    const v = window.prompt(`Atur streak ${u.email}:`, String(u.streak));
-    if (v === null) return;
-    act({ op: "streak", userId: u.id, streak: parseInt(v, 10) || 0 }, "Streak diperbarui");
-  };
+  const openEdit = (u) => setEdit({ user: u, points: String(u.points), amount: "100", streak: String(u.streak), note: "" });
+
+  const confirmDo = (msg, body, ok) => { if (window.confirm(msg)) act(body, ok); };
+
+  const kpis = data ? [
+    { icon: <Users size={18} />, tone: "violet", v: data.stats.todayCount, l: "Check-in hari ini" },
+    { icon: <CoinIcon size={18} />, tone: "gold", v: data.stats.todayPoints, l: "Poin dibagikan hari ini" },
+    { icon: <FlameIcon size={18} />, tone: "orange", v: data.stats.activeStreaks, l: "Streak aktif" },
+    { icon: <TrendingUp size={18} />, tone: "blue", v: data.stats.circulating, l: "Poin beredar" },
+    { icon: <Check size={18} />, tone: "green", v: data.stats.spent, l: "Poin ditukar" },
+  ] : [];
 
   return (
-    <div className="ci-admin">
-      <div className="cx-admin-top">
-        <div>
-          <div className="cx-admin-date">Pantau check-in harian & poin user {data ? `· ${data.today} WIB` : ""}</div>
+    <div className="ci-admin cia">
+      <header className="cia-hero">
+        <div className="cia-hero-text">
+          <span className="cia-eyebrow"><Sparkles size={11} /> Program loyalitas</span>
           <h1>Check-in Point</h1>
+          <p>{data ? `Data per ${data.today} WIB · ${fmt(data.users.length)} user` : "Memuat data..."}</p>
         </div>
-        <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={load} disabled={loading}>
-          <RefreshCw size={12} className={loading ? "cx-spin" : ""} /> Muat ulang
-        </button>
-      </div>
+        <div className="cia-hero-actions">
+          <button className="cia-icon-btn" onClick={() => setShowSettings((v) => !v)} title="Pengaturan"><Settings2 size={16} /></button>
+          <button className="cia-icon-btn" onClick={load} disabled={loading} title="Muat ulang"><RefreshCw size={16} className={loading ? "cx-spin" : ""} /></button>
+        </div>
+      </header>
 
       {data && (
-        <div className="ci-admin-kpis">
-          <div className="ci-admin-kpi"><Users size={20} color="#c084fc" /><div><strong>{fmt(data.stats.todayCount)}</strong><small>Check-in hari ini</small></div></div>
-          <div className="ci-admin-kpi"><CoinIcon size={22} /><div><strong>{fmt(data.stats.todayPoints)}</strong><small>Poin dibagikan hari ini</small></div></div>
-          <div className="ci-admin-kpi"><FlameIcon size={22} /><div><strong>{fmt(data.stats.activeStreaks)}</strong><small>Streak aktif</small></div></div>
-          <div className="ci-admin-kpi"><CoinIcon size={22} /><div><strong>{fmt(data.stats.circulating)}</strong><small>Poin beredar</small></div></div>
-          <div className="ci-admin-kpi"><Check size={20} color="#86efac" /><div><strong>{fmt(data.stats.spent)}</strong><small>Poin ditukar</small></div></div>
+        <div className="cia-kpis">
+          {kpis.map((k, i) => (
+            <div key={i} className={`cia-kpi tone-${k.tone}`}>
+              <span className="cia-kpi-icon">{k.icon}</span>
+              <strong>{fmt(k.v)}</strong>
+              <small>{k.l}</small>
+            </div>
+          ))}
         </div>
       )}
 
-      {settings && (
-        <div className="ci-admin-box">
-          <h3>Hadiah & aturan</h3>
-          <div className="ci-admin-rewards">
+      {settings && showSettings && (
+        <section className="cia-card">
+          <div className="cia-card-head"><h3><Settings2 size={14} /> Hadiah & aturan</h3></div>
+          <div className="cia-rewards">
             {settings.rewards.map((r, i) => (
-              <label key={i}>Hari {i + 1}
+              <label key={i} className={i === 6 ? "is-big" : ""}><span>Hari {i + 1}</span>
                 <input type="number" min="0" value={r} onChange={(e) => setSettings((s) => ({ ...s, rewards: s.rewards.map((x, j) => (j === i ? e.target.value : x)) }))} />
               </label>
             ))}
           </div>
-          <div className="ci-admin-row">
-            <label>Nilai 1 poin (Rp)
+          <div className="cia-settings-grid">
+            <label className="cia-field"><span>Nilai 1 poin (Rp)</span>
               <input type="number" min="0.01" step="0.01" value={settings.pointValue} onChange={(e) => setSettings((s) => ({ ...s, pointValue: e.target.value }))} />
             </label>
-            <label>Maks check-in per jaringan/24 jam
+            <label className="cia-field"><span>Maks akun per jaringan / 24 jam</span>
               <input type="number" min="1" value={settings.ipDailyLimit} onChange={(e) => setSettings((s) => ({ ...s, ipDailyLimit: e.target.value }))} />
             </label>
-            <label className="ci-admin-toggle"><input type="checkbox" checked={settings.enabled} onChange={(e) => setSettings((s) => ({ ...s, enabled: e.target.checked }))} /> Check-in aktif</label>
-            <label className="ci-admin-toggle"><input type="checkbox" checked={settings.redeemEnabled} onChange={(e) => setSettings((s) => ({ ...s, redeemEnabled: e.target.checked }))} /> Tukar poin aktif</label>
-            <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={saveSettings} disabled={saving}><Save size={12} /> {saving ? "Menyimpan..." : "Simpan"}</button>
+            <label className="cia-switch"><input type="checkbox" checked={settings.enabled} onChange={(e) => setSettings((s) => ({ ...s, enabled: e.target.checked }))} /><i /> Check-in aktif</label>
+            <label className="cia-switch"><input type="checkbox" checked={settings.redeemEnabled} onChange={(e) => setSettings((s) => ({ ...s, redeemEnabled: e.target.checked }))} /><i /> Tukar poin aktif</label>
           </div>
-        </div>
+          <button className="cia-btn primary block" onClick={saveSettings} disabled={saving}><Save size={14} /> {saving ? "Menyimpan..." : "Simpan pengaturan"}</button>
+        </section>
       )}
 
       {data && data.suspicious.length > 0 && (
-        <div className="ci-admin-box">
-          <h3><ShieldAlert size={13} color="#fda4af" /> Deteksi multi-akun (7 hari)</h3>
-          <table className="ci-admin-table"><tbody>
-            {data.suspicious.map((s) => (
-              <tr key={s.ipHash}><td><span className="ci-pill warn">{s.accounts} akun · 1 jaringan</span></td><td>{(s.emails || []).join(", ")}</td></tr>
-            ))}
-          </tbody></table>
-        </div>
+        <section className="cia-card cia-alert">
+          <div className="cia-card-head"><h3><ShieldAlert size={14} /> Deteksi multi-akun (7 hari)</h3></div>
+          {data.suspicious.map((s) => (
+            <div key={s.ipHash} className="cia-alert-row"><span className="cia-tag warn">{s.accounts} akun · 1 jaringan</span><small>{(s.emails || []).join(", ")}</small></div>
+          ))}
+        </section>
       )}
 
-      <div className="ci-admin-box">
-        <h3>Progres user</h3>
-        <div className="ci-admin-row" style={{ marginTop: 0, marginBottom: 10 }}>
-          <label style={{ flex: 2 }}><span style={{ display: "flex", gap: 4, alignItems: "center" }}><Search size={10} /> Cari</span>
-            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nama atau email" />
-          </label>
-          <div className="ci-admin-actions">
-            {[["all", "Semua"], ["today", "Hari ini"], ["streak", "Streak aktif"], ["points", "Punya poin"], ["blocked", "Diblokir"]].map(([k, l]) => (
-              <button key={k} className={`cx-btn cx-btn-sm ${filter === k ? "cx-btn-primary" : "cx-btn-ghost"}`} onClick={() => setFilter(k)}>{l}</button>
-            ))}
-          </div>
+      <section className="cia-card">
+        <div className="cia-card-head"><h3><Users size={14} /> Progres user</h3><span className="cia-count">{fmt(users.length)}</span></div>
+        <div className="cia-search"><Search size={14} /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama atau email" /></div>
+        <div className="cia-chips">
+          {[["all", "Semua"], ["today", "Hari ini"], ["streak", "Streak aktif"], ["points", "Punya poin"], ["blocked", "Diblokir"]].map(([k, l]) => (
+            <button key={k} className={`cia-chip${filter === k ? " is-on" : ""}`} onClick={() => setFilter(k)}>{l}</button>
+          ))}
         </div>
-        <div className="ci-admin-scroll ci-admin-progress-scroll">
-          <table className="ci-admin-table ci-admin-progress-table">
-            <thead><tr><th>User</th><th>Poin</th><th>Streak</th><th>Terakhir</th><th>Total</th><th>Aksi</th></tr></thead>
-            <tbody>
-              {users.slice(0, 200).map((u) => (
-                <tr key={u.id} className={u.blocked ? "is-blocked" : ""}>
-                  <td className="ci-admin-user" data-label="User"><strong>{u.name}</strong><small>{u.email}</small></td>
-                  <td data-label="Poin"><strong className="ci-admin-points">{fmt(u.points)}</strong></td>
-                  <td data-label="Streak"><span className="ci-pill"><Flame size={10} /> {u.streak} <small>(terbaik {u.bestStreak})</small></span></td>
-                  <td data-label="Terakhir">{u.lastDay || "-"}</td>
-                  <td data-label="Aktivitas"><small>{fmt(u.totalCheckins)}x · +{fmt(u.totalEarned)} / -{fmt(u.totalSpent)}</small></td>
-                  <td data-label="Aksi">
-                    <div className="ci-admin-actions">
-                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Tambah poin" onClick={() => adjust(u, 1)}><Plus size={11} /></button>
-                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Kurangi poin" onClick={() => adjust(u, -1)}><Minus size={11} /></button>
-                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Atur streak" onClick={() => setStreak(u)}><Flame size={11} /></button>
-                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Riwayat" onClick={() => openLedger(u)}><History size={11} /></button>
-                      <button className="cx-btn cx-btn-ghost cx-btn-sm" title="Analisis AI pola mencurigakan" onClick={() => analyze(u)}><Sparkles size={11} color="#c084fc" /></button>
-                      <button className={`cx-btn cx-btn-sm ${u.blocked ? "cx-btn-secondary" : "cx-btn-danger"}`} title={u.blocked ? "Buka blokir" : "Blokir check-in"}
-                        onClick={() => act({ op: "block", userId: u.id, blocked: !u.blocked }, u.blocked ? "Blokir dibuka" : "User diblokir dari check-in")}>
-                        {u.blocked ? <Check size={11} /> : <Ban size={11} />}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!users.length && <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)" }}>{loading ? "Memuat..." : "Tidak ada data"}</td></tr>}
-            </tbody>
-          </table>
+        <div className="cia-users">
+          {users.slice(0, 200).map((u) => (
+            <article key={u.id} className={`cia-user${u.blocked ? " is-blocked" : ""}`}>
+              <div className="cia-user-top">
+                <span className="cia-avatar">{initial(u.name || u.email)}</span>
+                <div className="cia-user-id"><strong>{u.name || "-"}</strong><small>{u.email}</small></div>
+                {u.blocked && <span className="cia-tag danger">Diblokir</span>}
+              </div>
+              <div className="cia-user-stats">
+                <div><CoinIcon size={14} /><b>{fmt(u.points)}</b><small>poin</small></div>
+                <div><FlameIcon size={14} /><b>{u.streak}</b><small>streak · top {u.bestStreak}</small></div>
+                <div><Check size={13} /><b>{fmt(u.totalCheckins)}x</b><small>{u.lastDay || "belum"}</small></div>
+              </div>
+              <div className="cia-progress"><span style={{ width: `${u.streak ? ((((u.streak - 1) % 7) + 1) / 7) * 100 : 0}%` }} /></div>
+              <div className="cia-user-actions">
+                <button className="cia-btn primary" onClick={() => openEdit(u)}><Pencil size={13} /> Kelola</button>
+                <button className="cia-btn ghost" title="Riwayat" onClick={() => openLedger(u)}><History size={14} /></button>
+                <button className="cia-btn ghost" title="Analisis AI" onClick={() => openLedger(u, true)}><Sparkles size={14} /></button>
+                <button className={`cia-btn ${u.blocked ? "ghost" : "danger"}`} title={u.blocked ? "Buka blokir" : "Blokir"}
+                  onClick={() => act({ op: "block", userId: u.id, blocked: !u.blocked }, u.blocked ? "Blokir dibuka" : "User diblokir dari check-in")}>
+                  {u.blocked ? <Check size={14} /> : <Ban size={14} />}
+                </button>
+              </div>
+            </article>
+          ))}
+          {!users.length && <div className="cia-empty">{loading ? "Memuat..." : "Tidak ada data"}</div>}
         </div>
-      </div>
+      </section>
 
       {data && (
-        <div className="ci-admin-box">
-          <h3>Check-in terbaru</h3>
-          <div className="ci-admin-scroll"><table className="ci-admin-table ci-admin-recent-table"><tbody>
+        <section className="cia-card">
+          <div className="cia-card-head"><h3><History size={14} /> Check-in terbaru</h3></div>
+          <div className="cia-feed">
             {data.recent.map((r, i) => (
-              <tr key={i}><td className="ci-admin-user"><strong>{r.name}</strong><small>{r.email}</small></td><td>Hari ke-{r.streak}</td><td style={{ color: "#86efac" }}>+{fmt(r.reward)}</td><td><small>{new Date(r.createdAt).toLocaleString("id-ID")}</small></td></tr>
+              <div key={i} className="cia-feed-row">
+                <span className="cia-avatar sm">{initial(r.name || r.email)}</span>
+                <div className="cia-user-id"><strong>{r.name}</strong><small>Hari ke-{r.streak} · {new Date(r.createdAt).toLocaleString("id-ID")}</small></div>
+                <span className="cia-plus">+{fmt(r.reward)}</span>
+              </div>
             ))}
-          </tbody></table></div>
+          </div>
+        </section>
+      )}
+
+      {edit && (
+        <div className="cia-modal" onClick={() => setEdit(null)}>
+          <div className="cia-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="cia-sheet-head">
+              <span className="cia-avatar">{initial(edit.user.name || edit.user.email)}</span>
+              <div className="cia-user-id"><strong>{edit.user.name}</strong><small>{edit.user.email}</small></div>
+              <button className="cia-icon-btn" onClick={() => setEdit(null)}><X size={16} /></button>
+            </div>
+            <div className="cia-sheet-now">
+              <div><small>Poin sekarang</small><b>{fmt(edit.user.points)}</b></div>
+              <div><small>Streak</small><b>{edit.user.streak} hari</b></div>
+            </div>
+
+            <div className="cia-group">
+              <h4><CoinIcon size={14} /> Ubah poin</h4>
+              <label className="cia-field"><span>Atur poin jadi</span>
+                <div className="cia-inline">
+                  <input type="number" min="0" value={edit.points} onChange={(e) => setEdit({ ...edit, points: e.target.value })} />
+                  <button className="cia-btn primary" disabled={busy} onClick={() => act({ op: "setPoints", userId: edit.user.id, points: edit.points, note: edit.note }, "Poin diatur")}>Simpan</button>
+                </div>
+              </label>
+              <label className="cia-field"><span>Tambah / kurangi</span>
+                <div className="cia-inline">
+                  <input type="number" min="1" value={edit.amount} onChange={(e) => setEdit({ ...edit, amount: e.target.value })} />
+                  <button className="cia-btn success" disabled={busy} onClick={() => act({ op: "adjust", userId: edit.user.id, delta: Math.abs(parseInt(edit.amount, 10) || 0), note: edit.note || "Bonus dari admin" }, "Poin ditambah")}>+</button>
+                  <button className="cia-btn danger" disabled={busy} onClick={() => act({ op: "adjust", userId: edit.user.id, delta: -Math.abs(parseInt(edit.amount, 10) || 0), note: edit.note || "Koreksi admin" }, "Poin dikurangi")}>−</button>
+                </div>
+              </label>
+              <div className="cia-quick">
+                {[100, 500, 1000, 5000].map((n) => (
+                  <button key={n} className="cia-chip" disabled={busy} onClick={() => act({ op: "adjust", userId: edit.user.id, delta: n, note: edit.note || "Bonus dari admin" }, `+${fmt(n)} poin`)}>+{fmt(n)}</button>
+                ))}
+              </div>
+              <label className="cia-field"><span>Catatan (opsional)</span>
+                <input type="text" value={edit.note} onChange={(e) => setEdit({ ...edit, note: e.target.value })} placeholder="Mis. hadiah event" />
+              </label>
+            </div>
+
+            <div className="cia-group">
+              <h4><FlameIcon size={14} /> Streak check-in</h4>
+              <label className="cia-field"><span>Atur streak (user langsung bisa klaim hari berikutnya)</span>
+                <div className="cia-inline">
+                  <input type="number" min="0" value={edit.streak} onChange={(e) => setEdit({ ...edit, streak: e.target.value })} />
+                  <button className="cia-btn primary" disabled={busy} onClick={() => act({ op: "streak", userId: edit.user.id, streak: parseInt(edit.streak, 10) || 0 }, "Streak diperbarui")}>Simpan</button>
+                </div>
+              </label>
+            </div>
+
+            <div className="cia-group danger-zone">
+              <h4><Trash2 size={14} /> Reset</h4>
+              <div className="cia-reset-grid">
+                <button className="cia-btn outline-danger" disabled={busy} onClick={() => confirmDo("Reset poin user ini jadi 0?", { op: "setPoints", userId: edit.user.id, points: 0, note: "Poin direset admin" }, "Poin direset")}><RotateCcw size={13} /> Reset poin</button>
+                <button className="cia-btn outline-danger" disabled={busy} onClick={() => confirmDo("Reset progres check-in (streak & waktu tunggu)?", { op: "resetCheckin", userId: edit.user.id }, "Progres check-in direset")}><RotateCcw size={13} /> Reset check-in</button>
+                <button className="cia-btn danger" disabled={busy} onClick={() => confirmDo("Reset SEMUA: poin, streak, dan rekor user ini?", { op: "resetAll", userId: edit.user.id }, "Semua data poin direset")}><Trash2 size={13} /> Reset semua</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {modal && (
-        <div className="ci-admin-modal" onClick={() => setModal(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginTop: 0 }}>{modal.ai ? "Analisis AI" : "Riwayat poin"} · {modal.user.email}</h3>
+        <div className="cia-modal" onClick={() => setModal(null)}>
+          <div className="cia-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="cia-sheet-head">
+              <span className="cia-avatar">{initial(modal.user.name || modal.user.email)}</span>
+              <div className="cia-user-id"><strong>{modal.ai ? "Analisis AI" : "Riwayat poin"}</strong><small>{modal.user.email}</small></div>
+              <button className="cia-icon-btn" onClick={() => setModal(null)}><X size={16} /></button>
+            </div>
             {modal.ai && (
               <div className="ci-ai-box">
                 {modal.ai.loading ? <p><Sparkles size={12} className="cx-spin" /> AI sedang menilai riwayat check-in & poin...</p>
@@ -210,7 +276,7 @@ export default function AdminCheckinPage({ onNotice }) {
                       <div className="ci-ai-head">
                         <span className="ci-ai-score">{modal.ai.analysis.score}/100</span>
                         <span className={`ci-ai-risk ${modal.ai.analysis.risk}`}>Risiko {({ low: "rendah", medium: "sedang", high: "tinggi" })[modal.ai.analysis.risk]}</span>
-                        <small style={{ color: "var(--muted)" }}>{modal.ai.stats.checkins} check-in · {modal.ai.stats.activities} aktivitas poin dinilai</small>
+                        <small style={{ color: "var(--muted)" }}>{modal.ai.stats.checkins} check-in · {modal.ai.stats.activities} aktivitas</small>
                       </div>
                       <p>{modal.ai.analysis.summary}</p>
                       <ul>{modal.ai.analysis.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
@@ -219,14 +285,16 @@ export default function AdminCheckinPage({ onNotice }) {
                   )}
               </div>
             )}
-            {!modal.ledger ? <p>Memuat...</p> : !modal.ledger.length ? <p style={{ color: "var(--muted)" }}>Belum ada riwayat</p> : (
-              <table className="ci-admin-table"><tbody>
+            {!modal.ledger ? <div className="cia-empty">Memuat...</div> : !modal.ledger.length ? <div className="cia-empty">Belum ada riwayat</div> : (
+              <div className="cia-feed">
                 {modal.ledger.map((l, i) => (
-                  <tr key={i}><td>{l.reason}</td><td><small>{l.note}</small></td><td style={{ color: l.delta >= 0 ? "#86efac" : "#fda4af" }}>{l.delta >= 0 ? "+" : ""}{fmt(l.delta)}</td><td><small>{new Date(l.createdAt).toLocaleString("id-ID")}</small></td></tr>
+                  <div key={i} className="cia-feed-row">
+                    <div className="cia-user-id"><strong>{l.note || l.reason}</strong><small>{l.reason} · {new Date(l.createdAt).toLocaleString("id-ID")}</small></div>
+                    <span className={l.delta >= 0 ? "cia-plus" : "cia-minus"}>{l.delta >= 0 ? "+" : ""}{fmt(l.delta)}</span>
+                  </div>
                 ))}
-              </tbody></table>
+              </div>
             )}
-            <button className="cx-btn cx-btn-secondary cx-btn-sm" style={{ marginTop: 10 }} onClick={() => setModal(null)}>Tutup</button>
           </div>
         </div>
       )}
