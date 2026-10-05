@@ -571,7 +571,6 @@ function prettyTitle(value) {
 function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
   const [st, setSt] = useState(null);
   const [busy, setBusy] = useState("");
-  const [alt, setAlt] = useState(false);
   const qs = `orderId=${encodeURIComponent(orderId || "")}&product=${encodeURIComponent(product || "")}&accountEmail=${encodeURIComponent(accountEmail || "")}`;
   const load = () => jsonRequest(`/api/data?resource=google-handover&${qs}`).then(setSt).catch(() => {});
   useEffect(() => { if (orderId) load(); }, [orderId]);
@@ -591,7 +590,7 @@ function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
   return (
     <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
       <strong style={{ fontSize: 12 }}>Serah terima akun Google</strong>
-      <small style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>Diminta kode verifikasi saat login? Klik <b>Coba cara lain</b>, lalu pilih <b>Kirim kode verifikasi ke support@akuninstan.com</b>. Admin cek email pemulihan toko untuk akun <b>{accountEmail || "ini"}</b> dan mengirim kodenya ke kamu. Setelah login, ganti email pemulihan ke milikmu.</small>
+      <small style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>Diminta verifikasi saat login Google? Di halaman verifikasi Google, klik <b>Coba cara lain</b>, lalu pilih kirim kode verifikasi ke <b>support@akuninstan.com</b>. Setelah itu klik <b>Minta kode login</b> di bawah — admin mengirim kode untuk akun <b>{accountEmail || "ini"}</b> ke kamu. Setelah login, ganti email pemulihan ke milikmu.</small>
       {cr && (
         <div style={{ fontSize: 12, lineHeight: 1.5 }}>
           Tiket <b>{cr.ticket}</b> — {waiting ? "menunggu admin mengirim kode..." : "dibalas admin"}
@@ -599,21 +598,10 @@ function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
         </div>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={!!busy} onClick={() => setAlt((v) => !v)}>{alt ? "Tutup cara lain" : "Coba cara lain"}</button>
+        {!waiting && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={!!busy} onClick={() => act("request-code")}>{busy === "request-code" ? "Mengirim..." : "Minta kode login"}</button>}
         {waiting && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={load}>Cek balasan</button>}
         <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={!!busy} onClick={() => act("done")}>{busy === "done" ? "Menyimpan..." : "Selesai, akun aman"}</button>
       </div>
-      {alt && (
-        <div style={{ display: "grid", gap: 6, padding: 10, borderRadius: 10, background: "var(--surface-2, rgba(124,58,237,.10))", border: "1px solid var(--line)" }}>
-          <small style={{ fontSize: 11, color: "var(--muted)" }}>Pilih cara lain:</small>
-          {waiting ? (
-            <div style={{ fontSize: 11, lineHeight: 1.5 }}>Kode verifikasi sudah diminta (tiket <b>{cr.ticket}</b>) — tunggu admin mengirim kodenya.</div>
-          ) : (
-            <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={!!busy} onClick={() => act("request-code")}>{busy === "request-code" ? "Mengirim..." : "Kirim kode verifikasi ke support@akuninstan.com"}</button>
-          )}
-          <small style={{ fontSize: 10, color: "var(--faint)", lineHeight: 1.5 }}>Admin cek email pemulihan toko untuk akun <b>{accountEmail || "ini"}</b>, lalu kodenya dikirim ke kamu.</small>
-        </div>
-      )}
       <small style={{ color: "var(--faint)", fontSize: 10 }}>Wajib klik <b>Selesai</b> setelah semua langkah pengamanan beres.</small>
     </div>
   );
@@ -641,7 +629,6 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
   const [prep, setPrep] = useState(false);
   const [state, setState] = useState({ loading: false, answer: "", error: "" });
   const [esc, setEsc] = useState({ loading: false, ticket: "", error: "" });
-  const [alt, setAlt] = useState(false);
   const [code, setCode] = useState({ sending: false, sent: false, error: "" });
   // Gambar dikecilkan di HP (maks 1280px, JPEG) lalu dikirim langsung — tanpa upload terpisah.
   const pick = async (e) => {
@@ -711,21 +698,12 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
         <div style={{ display: "grid", gap: 6, borderTop: "1px solid var(--line)", paddingTop: 8 }}>
           <small style={{ fontSize: 11, color: "var(--muted)" }}>Masih belum beres?</small>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={busy || code.sending} onClick={() => setAlt((v) => !v)}>{alt ? "Tutup cara lain" : "Coba cara lain"}</button>
+            {code.sent
+              ? <span style={{ fontSize: 11, color: "#22c55e", lineHeight: 1.5 }}>Kode login sudah diminta — admin mengirim kodenya ke kamu. Pantau di menu Laporan.</span>
+              : <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || code.sending} onClick={sendCode}>{code.sending ? "Mengirim..." : "Minta kode login"}</button>}
             <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={busy} onClick={escalate}>{esc.loading ? "Mengirim..." : "Teruskan ke admin"}</button>
           </div>
-          {alt && (
-            <div style={{ display: "grid", gap: 6, padding: 10, borderRadius: 10, background: "var(--surface-2, rgba(124,58,237,.10))", border: "1px solid var(--line)" }}>
-              <small style={{ fontSize: 11, color: "var(--muted)" }}>Pilih cara lain:</small>
-              {code.sent ? (
-                <div style={{ fontSize: 11, color: "#22c55e", lineHeight: 1.5 }}>Kode verifikasi sudah diminta — admin mengirim kodenya ke kamu. Pantau di menu Laporan.</div>
-              ) : (
-                <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || code.sending} onClick={sendCode}>{code.sending ? "Mengirim..." : "Kirim kode verifikasi ke support@akuninstan.com"}</button>
-              )}
-              <small style={{ fontSize: 10, color: "var(--faint)", lineHeight: 1.5 }}>Admin cek email pemulihan toko untuk akun <b>{accountEmail || "ini"}</b>, lalu kodenya dikirim ke kamu.</small>
-              {code.error && <div style={{ color: "#ef4444", fontSize: 11 }}>{code.error}</div>}
-            </div>
-          )}
+          {code.error && <div style={{ color: "#ef4444", fontSize: 11 }}>{code.error}</div>}
           {esc.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{esc.error}</div>}
         </div>
       )}
