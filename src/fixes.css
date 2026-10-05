@@ -1942,3 +1942,11 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-platacc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .cx-platacc-card.is-out{opacity:.6}
 .cx-platacc-card.is-out .cx-platacc-head{margin-bottom:0}
+
+/* Tombol kembali: selalu rata kiri atas di semua menu */
+.cx-page-back-wrap{display:flex;justify-content:flex-start;padding-top:12px;padding-bottom:0;}
+.cx-page-back{display:inline-flex;align-items:center;gap:6px;margin:0;padding:8px 14px 8px 10px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,rgba(255,255,255,.04));color:var(--text,inherit);font-weight:600;font-size:13.5px;cursor:pointer;}
+.cx-page-back:active{transform:scale(.97);}
+.cx-pd-sec{margin-top:14px;}
+.cx-pd-sec h4{margin:0 0 8px;font-size:14px;font-weight:700;}
+.ci-hero-top{justify-content:flex-end;}
