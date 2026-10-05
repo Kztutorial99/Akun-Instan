@@ -162,9 +162,11 @@ async function handleUserCheckin(sql, user, request, response) {
   if (w.waitSec > 0) return response.status(409).json({ error: "Check-in berikutnya tersedia 24 jam setelah klaim terakhir", code: "ALREADY", secondsLeft: w.waitSec });
 
   const ip = ipHash(clientIp(request));
-  const [{ c }] = await sql`SELECT COUNT(*)::int AS c FROM codexa_checkins WHERE day = ${t.today}::date AND ip_hash = ${ip}`;
+  // Hitung akun LAIN dari jaringan yang sama dalam 24 jam terakhir (akun sendiri tidak dihitung).
+  const [{ c }] = await sql`SELECT COUNT(DISTINCT user_id)::int AS c FROM codexa_checkins
+    WHERE ip_hash = ${ip} AND user_id <> ${user.id} AND created_at > NOW() - INTERVAL '24 hours'`;
   if (c >= settings.ipDailyLimit) {
-    return response.status(429).json({ error: "Batas check-in dari jaringan ini sudah tercapai hari ini", code: "IP_LIMIT" });
+    return response.status(429).json({ error: "Jaringan ini sudah dipakai check-in akun lain dalam 24 jam. Coba pakai jaringan lain.", code: "IP_LIMIT" });
   }
 
   const streak = w.alive ? w.streak + 1 : 1;

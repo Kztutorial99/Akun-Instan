@@ -64,15 +64,20 @@ let checkinCache = null;
 let checkinRequest = null;
 let lastCheckinSync = 0;
 
+// Versi data: naik setiap klaim, supaya respons GET lama (dimulai sebelum klaim) tidak menimpa status baru.
+let checkinVersion = 0;
 async function loadCheckinData() {
   if (checkinRequest) return checkinRequest;
-  checkinRequest = jsonRequest("/api/topup?resource=checkin")
+  const v = checkinVersion;
+  const req = jsonRequest(`/api/topup?resource=checkin&_=${Date.now()}`, { cache: "no-store" })
     .then((data) => {
+      if (v !== checkinVersion && checkinCache) return checkinCache;
       checkinCache = data;
       return data;
     })
-    .finally(() => { checkinRequest = null; });
-  return checkinRequest;
+    .finally(() => { if (checkinRequest === req) checkinRequest = null; });
+  checkinRequest = req;
+  return req;
 }
 
 function shouldSyncCheckin() {
@@ -155,6 +160,7 @@ function DayTrack({ data }) {
 function ClaimButton({ data, busy, onClaim }) {
   if (data.blocked) return <button className="ci-claim is-off" disabled>Check-in dibatasi</button>;
   if (!data.settings.enabled) return <button className="ci-claim is-off" disabled>Check-in sedang libur</button>;
+  if (!data.claimedToday && data.ipLimited) return <button className="ci-claim is-off" disabled>Jaringan sudah dipakai akun lain · coba jaringan lain</button>;
   if (data.claimedToday) return (
     <button className="ci-claim is-done" disabled>
       <CheckBadge size={16} /> Sudah check-in · berikutnya <Countdown seconds={data.secondsLeft} />
@@ -184,7 +190,11 @@ function useClaim(setState, onNotice) {
     if (busy) return;
     setBusy(true);
     try {
+      checkinVersion++;
+      checkinRequest = null;
       const data = await jsonRequest("/api/topup?resource=checkin", { method: "POST", body: "{}" });
+      checkinVersion++;
+      checkinRequest = null;
       checkinCache = data;
       setState({ loading: false, data, error: "" });
       setBurst(data.earned || 0);
@@ -193,7 +203,14 @@ function useClaim(setState, onNotice) {
       onNotice && onNotice(`Check-in berhasil! +${fmt(data.earned)} poin`);
     } catch (e) {
       onNotice && onNotice(e.message || "Check-in gagal", "error");
-      if (e.code === "ALREADY") window.dispatchEvent(new Event("codexa:points"));
+      // Selalu ambil status terbaru dari server supaya tombol & progres sesuai kenyataan.
+      try {
+        checkinVersion++;
+        checkinRequest = null;
+        const fresh = await loadCheckinData();
+        setState({ loading: false, data: e.code === "IP_LIMIT" ? { ...fresh, ipLimited: true } : fresh, error: "" });
+      } catch {}
+      window.dispatchEvent(new Event("codexa:points"));
     } finally { setBusy(false); }
   };
   return { busy, burst, claim };

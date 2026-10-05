@@ -1254,6 +1254,7 @@ function App() {
   const [ageFilter, setAgeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [notice, setNotice]   = useState("");
+  const [noticeError, setNoticeError] = useState(false);
   // Isi keranjang disimpan di perangkat agar tidak hilang saat halaman di-refresh.
   const [cart, setCart]       = useState(() => {
     try {
@@ -1573,9 +1574,10 @@ function App() {
     scrollTop();
   };
   // Timer lama dibersihkan dulu supaya notice baru tidak ikut terhapus.
-  const showNotice = (msg) => {
+  const showNotice = (msg, type) => {
     if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
     setNotice(msg);
+    setNoticeError(type === "error");
     noticeTimer.current = window.setTimeout(() => { setNotice(""); noticeTimer.current = null; }, 2800);
   };
   useEffect(() => () => { if (noticeTimer.current) window.clearTimeout(noticeTimer.current); }, []);
@@ -2108,7 +2110,7 @@ function App() {
         </div>
       )}
 
-      {notice && <div className="cx-toast"><Check size={14} />{notice}</div>}
+      {notice && <div className={`cx-toast${noticeError ? " is-error" : ""}`}>{noticeError ? <span aria-hidden="true">⚠</span> : <Check size={14} />}{notice}</div>}
     </>
   );
 
