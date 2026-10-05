@@ -20,7 +20,12 @@ export default function AdminCheckinPage({ onNotice }) {
   const [edit, setEdit] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const notice = (m, t) => onNotice && onNotice(m, t);
+  const [toast, setToast] = useState(null);
+  const notice = (m, t = "success") => {
+    const id = Date.now();
+    setToast({ id, m, t });
+    setTimeout(() => setToast((x) => (x && x.id === id ? null : x)), 3200);
+  };
   const load = async () => {
     setLoading(true);
     try { const res = await jsonRequest(API, { method: "GET" }); setData(res); setSettings(res.settings); }
@@ -90,6 +95,12 @@ export default function AdminCheckinPage({ onNotice }) {
 
   return (
     <div className="ci-admin cia">
+      {toast && (
+        <div className={`cia-toast ${toast.t === "error" ? "is-error" : "is-ok"}`} role="status" onClick={() => setToast(null)}>
+          <span className="cia-toast-ic">{toast.t === "error" ? "!" : "\u2713"}</span>
+          <span>{toast.t === "error" ? "Gagal: " : "Berhasil: "}{toast.m}</span>
+        </div>
+      )}
       <header className="cia-hero">
         <div className="cia-hero-text">
           <span className="cia-eyebrow"><Sparkles size={11} /> Program loyalitas</span>
