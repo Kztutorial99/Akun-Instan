@@ -3,6 +3,7 @@ const { db, ensureTables, currentUser, bodyOf } = require("./_users");
 const { createNotification } = require("./_notifications");
 const { isAdmin } = require("./admin/_auth");
 const { once } = require("./_schema");
+const GOOGLE_SECURITY_GUIDE = "CARA MENGAMANKAN AKUN GOOGLE (WAJIB SEGERA):\n1. Login memakai email & password yang diterima.\n2. Ganti password di https://myaccount.google.com/signinoptions/password\n3. Ganti email & nomor pemulihan menjadi milikmu sendiri.\n4. Keluarkan semua perangkat lain di https://myaccount.google.com/device-activity\n5. Cek akses aplikasi pihak ketiga di https://myaccount.google.com/permissions\n6. Aktifkan verifikasi dua langkah.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.";
 const { spendPoints, refundPoints } = require("./_checkin");
 const { effectiveAccountPrice, agedInfo, readAgedConfig, DEFAULT_AGED_CONFIG } = require("./_aged");
 
@@ -927,7 +928,7 @@ module.exports = async function handler(request, response) {
         listingId: row.id,
         title: row.title,
         loginType: row.loginType,
-        deliveryDetails: credentials.deliveryDetails || "",
+        deliveryDetails: credentials.deliveryDetails || (/google/i.test(row.loginType || "") ? GOOGLE_SECURITY_GUIDE : ""),
         accounts: taken.map((a) => ({ email: a.email, password: a.password, price: a.price })),
       });
     }
