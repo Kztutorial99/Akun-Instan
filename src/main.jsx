@@ -568,6 +568,32 @@ function prettyTitle(value) {
     .toLowerCase()
     .replace(/(^|\s|\()([a-z0-9])/g, (m, a, b) => a + b.toUpperCase());
 }
+function GoogleHelpBox() {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [state, setState] = useState({ loading: false, answer: "", error: "" });
+  const ask = async () => {
+    setState({ loading: true, answer: "", error: "" });
+    try {
+      const r = await jsonRequest("/api/data?resource=google-help", { method: "POST", body: JSON.stringify({ question: q }) });
+      setState({ loading: false, answer: r.answer || "", error: "" });
+    } catch (e) { setState({ loading: false, answer: "", error: e.message || "Bantuan gagal" }); }
+  };
+  if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala mengamankan akun? Tanya AI</button>;
+  return (
+    <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
+      <strong style={{ fontSize: 12 }}>Bantuan pengamanan akun Google</strong>
+      <textarea className="cx-input" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Contoh: Saya diminta verifikasi nomor HP saat ganti password" style={{ width: "100%", resize: "vertical" }} />
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+        <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => setOpen(false)}>Tutup</button>
+        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={state.loading || q.trim().length < 5} onClick={ask}>{state.loading ? "Menjawab..." : "Tanya"}</button>
+      </div>
+      {state.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{state.error}</div>}
+      {state.answer && <div style={{ fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{state.answer}</div>}
+      <small style={{ color: "var(--faint)", fontSize: 10 }}>Jangan pernah tulis password atau kode verifikasi di sini.</small>
+    </div>
+  );
+}
 function DeliveryNote({ text, className = "" }) {
   const [open, setOpen] = useState(false);
   const groups = useMemo(() => parseDeliveryNote(text), [text]);
@@ -2679,6 +2705,7 @@ function OrderItems({ items, onNotice, orderId }) {
             />
           ))}
           {item.deliveryDetails && <DeliveryNote className="cx-order-note" text={item.deliveryDetails} />}
+          {/google|gmail/i.test(`${item.title || ""} ${item.loginType || ""}`) && <GoogleHelpBox />}
         </div>
       ))}
     </div>

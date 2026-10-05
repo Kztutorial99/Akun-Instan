@@ -92,12 +92,12 @@ export default function GoogleChecker({ onNotice }) {
           <div className="cx-admin-date">Cek massal status akun Google sebelum dibeli</div>
           <h1>Google Checker</h1>
         </div>
-        <div className="cx-admin-actions">
+        <div className="cx-admin-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => checkAll()} disabled={!!busy || !accounts.length}>
             {busy === "check" ? <Loader2 size={11} className="spin" /> : <RefreshCw size={11} />} Cek semua
           </button>
           <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={connect} disabled={!!busy || !data.configured}>
-            <Plus size={11} /> Hubungkan akun Gmail
+            <Plus size={11} /> Hubungkan Gmail
           </button>
         </div>
       </div>
@@ -108,59 +108,45 @@ export default function GoogleChecker({ onNotice }) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 12, paddingBottom: 2, scrollbarWidth: "none" }}>
         {[["ALL", `Semua (${accounts.length})`], ["ACTIVE", `Active (${count("ACTIVE")})`], ["SUSPENDED", `Suspended (${count("SUSPENDED")})`], ["SOLD", `Terjual (${count("SOLD")})`]].map(([k, l]) => (
-          <button key={k} className={`cx-btn cx-btn-sm ${filter === k ? "cx-btn-primary" : "cx-btn-secondary"}`} onClick={() => setFilter(k)}>{l}</button>
+          <button key={k} className={`cx-btn cx-btn-sm ${filter === k ? "cx-btn-primary" : "cx-btn-secondary"}`} onClick={() => setFilter(k)} style={{ flex: "none", borderRadius: 999 }}>{l}</button>
         ))}
       </div>
 
-      <div className="cx-panel" style={{ overflowX: "auto" }}>
+      <div className="cx-panel" style={{ padding: 0, overflow: "hidden" }}>
         {loading ? (
           <div style={{ padding: 24, textAlign: "center" }}><Loader2 size={16} className="spin" /></div>
         ) : !shown.length ? (
-          <div style={{ padding: 24, textAlign: "center", color: "var(--faint)" }}>Belum ada akun. Klik "Hubungkan akun Gmail" lalu login ke akun yang mau dijual.</div>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: "var(--faint)" }}>
-                <th style={{ padding: 10 }}>Email</th><th style={{ padding: 10 }}>Status</th>
-                <th style={{ padding: 10 }}>Terakhir dicek</th><th style={{ padding: 10, textAlign: "right" }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((a) => {
-                const s = STATUS[a.status] || STATUS.ACTIVE;
-                return (
-                  <tr key={a.id} style={{ borderTop: "1px solid var(--line, rgba(255,255,255,.08))" }}>
-                    <td style={{ padding: 10, wordBreak: "break-all" }}>{a.email}{a.listingTitle && a.status !== "SOLD" ? <div style={{ color: "#22c55e", fontSize: 10 }}>Di stok: {a.listingTitle}</div> : null}{a.lastError && a.status !== "SOLD" ? <div style={{ color: "var(--faint)", fontSize: 10 }}>{a.lastError}</div> : null}</td>
-                    <td style={{ padding: 10 }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 999, fontWeight: 700, fontSize: 10, color: s.color, background: s.bg }}>
-                        {a.status === "SUSPENDED" ? <ShieldAlert size={10} /> : <CheckCircle2 size={10} />} {s.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: 10, whiteSpace: "nowrap" }}>{a.status === "SOLD" ? `Terjual ${when(a.soldAt)}` : when(a.lastChecked)}</td>
-                    <td style={{ padding: 10, textAlign: "right", whiteSpace: "nowrap" }}>
-                      {a.status !== "SOLD" && (
-                        <>
-                          <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Cek" onClick={() => checkAll(a.id)} disabled={!!busy}>{busy === `check-${a.id}` ? <Loader2 size={11} className="spin" /> : <RefreshCw size={11} />}</button>{" "}
-                          {a.status === "ACTIVE" && !a.listingId && <><button className="cx-btn cx-btn-primary cx-btn-sm" title="Masukkan ke stok produk" onClick={() => openStock(a)} disabled={!!busy}><PackagePlus size={11} /></button>{" "}</>}
-                          <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Tandai terjual" onClick={() => sold(a)} disabled={!!busy}><Tag size={11} /></button>{" "}
-                        </>
-                      )}
-                      <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Hapus" onClick={() => remove(a)} disabled={!!busy}><Trash2 size={11} /></button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+          <div style={{ padding: 24, textAlign: "center", color: "var(--faint)", fontSize: 12 }}>Belum ada akun. Ketuk "Hubungkan Gmail" lalu login ke akun yang mau dijual.</div>
+        ) : shown.map((a, i) => {
+          const s = STATUS[a.status] || STATUS.ACTIVE;
+          return (
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderTop: i ? "1px solid var(--line, rgba(255,255,255,.08))" : "none" }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, background: s.color, flex: "none", boxShadow: `0 0 0 3px ${s.bg}` }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</div>
+                <div style={{ fontSize: 10, color: "var(--faint)", display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                  <span style={{ color: s.color, fontWeight: 700 }}>{s.label}</span>
+                  <span>{a.status === "SOLD" ? `Terjual ${when(a.soldAt)}` : `Dicek ${when(a.lastChecked)}`}</span>
+                  {a.listingTitle && a.status !== "SOLD" && <span style={{ color: "#22c55e" }}>Di stok</span>}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 4, flex: "none" }}>
+                {a.status !== "SOLD" && <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Cek" aria-label="Cek" onClick={() => checkAll(a.id)} disabled={!!busy}>{busy === `check-${a.id}` ? <Loader2 size={12} className="spin" /> : <RefreshCw size={12} />}</button>}
+                {a.status === "ACTIVE" && !a.listingId && <button className="cx-btn cx-btn-primary cx-btn-sm" title="Masukkan ke stok" aria-label="Masukkan ke stok" onClick={() => openStock(a)} disabled={!!busy}><PackagePlus size={12} /></button>}
+                {a.status !== "SOLD" && <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Tandai terjual" aria-label="Tandai terjual" onClick={() => sold(a)} disabled={!!busy}><Tag size={12} /></button>}
+                <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Hapus" aria-label="Hapus" onClick={() => remove(a)} disabled={!!busy}><Trash2 size={12} /></button>
+              </div>
+            </div>
+          );
+        })}
       </div>
       <p style={{ color: "var(--faint)", fontSize: 11, marginTop: 10 }}>Semua akun dicek otomatis setiap hari pukul 09.00 WIB. Akun SUSPENDED otomatis ditarik dari stok, akun yang dibeli otomatis jadi TERJUAL.</p>
 
       {stockFor && (
         <div onClick={() => setStockFor(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "grid", placeItems: "center", zIndex: 100, padding: 16 }}>
-          <div className="cx-panel" onClick={(e) => e.stopPropagation()} style={{ padding: 18, width: "100%", maxWidth: 420, display: "grid", gap: 10 }}>
+          <div className="cx-panel" onClick={(e) => e.stopPropagation()} style={{ padding: 18, width: "100%", maxWidth: 420, maxHeight: "90vh", overflowY: "auto", display: "grid", gap: 10, borderRadius: 16 }}>
             <h3 style={{ margin: 0 }}>Masukkan ke stok produk</h3>
             <label style={{ fontSize: 12 }}>Email<input className="cx-input" value={stockFor.email} readOnly style={{ width: "100%" }} /></label>
             <label style={{ fontSize: 12 }}>Password (dikirim ke pembeli)<input className="cx-input" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} style={{ width: "100%" }} autoFocus /></label>

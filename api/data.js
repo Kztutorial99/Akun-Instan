@@ -337,6 +337,20 @@ module.exports = async function handler(request, response) {
   }
 
 
+  /* POST ?resource=google-help = bantuan AI pengamanan akun Google (login wajib, tidak disimpan). */
+  if (request.method === "POST" && request.query && request.query.resource === "google-help") {
+    response.setHeader("Cache-Control", "no-store");
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const user = await currentUser(sql, request).catch(() => null);
+      if (!user) return response.status(401).json({ error: "Login dulu untuk memakai bantuan" });
+      const q = String((bodyOf(request) || {}).question || "").trim().slice(0, 600);
+      if (q.length < 5) return response.status(400).json({ error: "Tulis pertanyaanmu dulu" });
+      const r = await require("./_google-help").askGoogleHelp(q);
+      return response.status(r.status).json(r.error ? { error: r.error } : { answer: r.answer });
+    } catch (e) { return response.status(500).json({ error: "Bantuan AI gagal" }); }
+  }
+
   /* POST ?resource=visit = catat kunjungan halaman (Visitor Traffic, tanpa login). */
   if (request.method === "POST" && request.query && request.query.resource === "visit") {
     response.setHeader("Cache-Control", "no-store");

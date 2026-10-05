@@ -49,6 +49,16 @@ async function googleListings(sql) {
 /* Masukkan akun checker ke stok listing (compare-and-swap supaya aman dari checkout bersamaan). */
 const NEW_DESC = "Tentang Produk:\nAkun Google (Gmail) Fresh \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.";
 const NEW_DELIVERY = "CARA MENGAMANKAN AKUN GOOGLE (WAJIB SEGERA):\n1. Login memakai email & password yang diterima.\n2. Ganti password di https://myaccount.google.com/signinoptions/password\n3. Ganti email & nomor pemulihan menjadi milikmu sendiri.\n4. Keluarkan semua perangkat lain di https://myaccount.google.com/device-activity\n5. Cek akses aplikasi pihak ketiga di https://myaccount.google.com/permissions\n6. Aktifkan verifikasi dua langkah.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.";
+/* Cek seluruh produk: email yang sama tidak boleh ada dua kali di stok. */
+async function emailInAnyStock(sql, email) {
+  const target = String(email || "").toLowerCase();
+  const rows = await sql`SELECT credential_blob AS "blob" FROM codexa_account_listings WHERE credential_blob IS NOT NULL AND credential_blob <> ''`;
+  for (const r of rows) {
+    let cred; try { cred = decCred(r.blob); } catch (_) { continue; }
+    if ((cred.accounts || []).some((a) => String(a.email || "").toLowerCase() === target)) return true;
+  }
+  return false;
+}
 async function addToStock(sql, { id, password, listingId, price, newTitle }) {
   await ensureTable(sql);
   const [acc] = await sql`SELECT email, status, listing_id FROM google_account_checks WHERE id = ${id}`;
@@ -57,6 +67,7 @@ async function addToStock(sql, { id, password, listingId, price, newTitle }) {
   if (acc.listing_id) throw new Error("Akun ini sudah ada di stok produk");
   const pass = String(password || "").trim().slice(0, 200);
   if (!pass) throw new Error("Password wajib diisi");
+  if (await emailInAnyStock(sql, acc.email)) throw new Error("Email ini sudah ada di stok produk lain");
   if (listingId === "__new__" || !listingId) {
     const p = Math.max(0, Math.round(Number(price) || 0));
     if (!p) throw new Error("Harga wajib diisi untuk produk baru");
@@ -255,4 +266,4 @@ async function remove(sql, id) {
   await sql`DELETE FROM google_account_checks WHERE id = ${id}`;
 }
 
-module.exports = { googleListings, addToStock, markSoldByEmails, authUrl, handleCallback, checkAll, list, markSold, remove, creds };
+module.exports = { emailInAnyStock, googleListings, addToStock, markSoldByEmails, authUrl, handleCallback, checkAll, list, markSold, remove, creds };
