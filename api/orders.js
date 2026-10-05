@@ -538,6 +538,24 @@ async function handleAdmin(sql, request, response) {
         customByOrder.set(c.orderId, list);
       }
     } catch (_) { customByOrder = new Map(); }
+    /* Status serah terima akun Google per pesanan: pembeli sudah klik "Selesai, akun aman"
+       (secured_at) dan/atau sudah minta kode verifikasi (code_ticket -> laporan kode). */
+    let handoverByOrder = new Map();
+    try {
+      const handRows = await sql`SELECT order_id AS "orderId", secured_at AS "securedAt", code_ticket AS "codeTicket" FROM codexa_google_handover`;
+      const codeReports = await sql`SELECT ticket, status, admin_note AS "adminNote" FROM codexa_reports WHERE category = 'kode_login'`;
+      const byTicket = new Map(codeReports.map((r) => [r.ticket, r]));
+      for (const h of handRows) {
+        const r = h.codeTicket ? byTicket.get(h.codeTicket) : null;
+        handoverByOrder.set(h.orderId, {
+          secured: !!(h.securedAt),
+          securedAt: h.securedAt || "",
+          ticket: h.codeTicket || "",
+          codeStatus: r ? (r.status || "open") : (h.codeTicket ? "open" : ""),
+          adminNote: (r && r.adminNote) || "",
+        });
+      }
+    } catch (_) { handoverByOrder = new Map(); }
     // Ringkasan dari seluruh pesanan lunas, bukan dari status listing (produk
     // etalase juga berstatus sold) atau hanya 100 pesanan yang ditampilkan.
     // Jumlahkan harga akun yang benar-benar dibeli, tanpa biaya email kustom.
@@ -569,6 +587,7 @@ async function handleAdmin(sql, request, response) {
         customEmails: customList,
         customEmail: (custom && custom.requested) || "",
         customEmailStatus: (custom && custom.status) || "",
+        handover: handoverByOrder.get(row.id) || { secured: false, securedAt: "", ticket: "", codeStatus: "", adminNote: "" },
         buyer: {
           id: row.userId, name: row.userName, email: row.userEmail,
           phone: row.userPhone || "", balance: Number(row.userBalance) || 0,
