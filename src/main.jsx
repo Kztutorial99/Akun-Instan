@@ -366,19 +366,17 @@ export function productCategoryKey(product) {
 }
 
 /* Platform utama untuk halaman Katalog ("Pilih Platform" dulu, baru produk). */
-export const CATALOG_PLATFORMS = [
-  { key: "google", label: "Google", icon: "google" },
-  { key: "tiktok", label: "TikTok", icon: "tiktok" },
-  { key: "instagram", label: "Instagram", icon: "instagram" },
-  { key: "mobile-legends", label: "Mobile Legends", icon: "mobile-legends" },
-  { key: "freefire", label: "Free Fire", icon: "freefire" },
-];
+const CATALOG_PLATFORM_HIDDEN = ["game-lain", "streaming-lain", "email"];
+const CATALOG_PLATFORM_LABELS = { google: "Google", outlook: "Outlook", "custom-email": "Custom Email", twitter: "Twitter / X", youtube: "YouTube", pubg: "PUBG", cod: "COD Mobile", spotify: "Spotify", disney: "Disney+", "vidio-wetv": "Vidio / WeTV", canva: "Canva", chatgpt: "ChatGPT", capcut: "CapCut", "microsoft-office": "Microsoft 365", "shopee-tokopedia": "Shopee", vpn: "VPN" };
+export const CATALOG_PLATFORMS = PRODUCT_TEMPLATES
+  .filter((t) => !CATALOG_PLATFORM_HIDDEN.includes(t.key))
+  .map((t) => ({ key: t.key, label: CATALOG_PLATFORM_LABELS[t.key] || t.label, icon: t.icon }));
+const CATALOG_PLATFORM_KEYS = CATALOG_PLATFORMS.map((p) => p.key);
 export function productPlatformKey(product) {
   const cat = productCategoryKey(product);
   if (cat === "google-basic" || cat === "google-pva") return "google";
   const icon = productIconKey(product);
-  if (["google", "tiktok", "instagram", "mobile-legends", "freefire"].includes(icon)) return icon;
-  return "other";
+  return CATALOG_PLATFORM_KEYS.includes(icon) ? icon : "other";
 }
 
 export async function jsonRequest(url, opts = {}) {
@@ -2318,17 +2316,18 @@ function App() {
           <section className="cx-plat-section" aria-label="Pilih Platform">
             <h2 className="cx-plat-title">Pilih Platform</h2>
             <div className="cx-plat-grid">
-              {CATALOG_PLATFORMS.map((pl) => {
+              {CATALOG_PLATFORMS.map((pl, idx) => {
                 const items = data.products.filter((p) => productPlatformKey(p) === pl.key);
-                const n = items.length;
-                return (
-                  <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
-                    <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
-                    <span className="cx-plat-name">{pl.label}</span>
-                    {!data.loading && <span className="cx-plat-count">{n > 0 ? `${n} produk` : "Kosong"}</span>}
-                  </button>
-                );
-              })}
+                const isDemoP = (p) => p.demo === true || /^(etl-|demo-)/.test(String(p.id || ""));
+                const real = items.filter((p) => !isDemoP(p)).length;
+                return { pl, n: items.length, rank: real > 0 ? 0 : items.length > 0 ? 1 : 2, idx };
+              }).sort((x, y) => x.rank - y.rank || x.idx - y.idx).map(({ pl, n }) => (
+                <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
+                  <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
+                  <span className="cx-plat-name">{pl.label}</span>
+                  {!data.loading && <span className="cx-plat-count">{n > 0 ? `${n} produk` : "Kosong"}</span>}
+                </button>
+              ))}
             </div>
           </section>
         )}
@@ -2350,7 +2349,7 @@ function App() {
           </div>
         )}
 
-        {data.loading && (
+        {(platform || search.trim()) && data.loading && (
           <div className="cx-grid">
             {[1,2,3,4,5,6].map((i) => (
               <div key={i} style={{ border: "1px solid var(--b1)", borderRadius: 4, overflow: "hidden" }}>
@@ -2374,7 +2373,7 @@ function App() {
           </div>
         )}
 
-        {!data.loading && !data.error && products.length === 0 && (
+        {(platform || search.trim()) && !data.loading && !data.error && products.length === 0 && (
           <div className="cx-empty">
             <Package size={28} />
             <h3>Belum ada akun tersedia</h3>
@@ -2382,7 +2381,7 @@ function App() {
           </div>
         )}
 
-        {!data.loading && products.length > 0 && (() => {
+        {(platform || search.trim()) && !data.loading && products.length > 0 && (() => {
           const card = (p, i) => (
             <ProductCard
               key={p.id || i}
@@ -2394,7 +2393,6 @@ function App() {
           );
           return (
             <section className="cx-cat-group" aria-label="Produk">
-              {!platform && !search.trim() && <h2 className="cx-plat-title" style={{ marginTop: 22 }}>Semua Produk</h2>}
               <div className="cx-cat-count">{products.length} produk</div>
               <div className="cx-grid">{products.map(card)}</div>
             </section>
