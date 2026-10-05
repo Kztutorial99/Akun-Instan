@@ -5457,7 +5457,7 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
             </div>
             {!editing && (
               <button className="cx-btn cx-btn-secondary cx-btn-sm cx-profile-edit-btn" onClick={startEdit} aria-label="Edit profil" title="Edit profil">
-                <User size={15} />
+                <Pencil size={15} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -5514,27 +5514,27 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
 
           <ul className="cx-profile-list">
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon is-violet"><Mail size={15} /></span>Email</span>
+              <span className="cx-info-label"><span className="cx-info-icon is-violet"><Mail size={12} aria-hidden="true" /></span>Email</span>
               <strong>{user.email}</strong>
             </li>
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon"><LogIn size={15} aria-hidden="true" /></span>Daftar via</span>
+              <span className="cx-info-label"><span className="cx-info-icon"><LogIn size={12} aria-hidden="true" /></span>Daftar via</span>
               <strong>{user.provider === "google" ? "Google" : "Email & password"}</strong>
             </li>
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon"><Phone size={15} /></span>WhatsApp</span>
+              <span className="cx-info-label"><span className="cx-info-icon"><Phone size={12} aria-hidden="true" /></span>WhatsApp</span>
               <strong>{user.phone || "-"}</strong>
             </li>
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon"><BadgeCheck size={15} /></span>ID Akun</span>
+              <span className="cx-info-label"><span className="cx-info-icon"><BadgeCheck size={12} aria-hidden="true" /></span>ID Akun</span>
               <strong><span className="cx-id-chip">{String(user.id).slice(0, 8)}</span></strong>
             </li>
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon"><ShieldCheck size={15} /></span>Verifikasi</span>
-              <strong><span className="cx-verified-tag" title="Akun terverifikasi"><span className="cx-verified-dot" aria-hidden="true" /> Terverifikasi</span></strong>
+              <span className="cx-info-label"><span className="cx-info-icon"><ShieldCheck size={12} aria-hidden="true" /></span>Verifikasi</span>
+              <strong><span className="cx-verified-tag" title="Akun terverifikasi"><BadgeCheck size={11} aria-hidden="true" />Terverifikasi</span></strong>
             </li>
             <li>
-              <span className="cx-info-label"><span className="cx-info-icon"><User size={15} /></span>Role akun</span>
+              <span className="cx-info-label"><span className="cx-info-icon"><User size={12} aria-hidden="true" /></span>Role akun</span>
               <strong>
                 {user.role === "admin" ? "Admin" : "User"}
                 <span className={`cx-role-tag${user.role === "admin" ? "" : " is-user"}`}>
