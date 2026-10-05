@@ -685,7 +685,7 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
         <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || prep || q.trim().length < 5} onClick={ask}>{state.loading ? "Menganalisis... (±20 dtk)" : "Analisis kendala"}</button>
       </div>
       {state.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{state.error}</div>}
-      {state.answer && <div style={{ fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{state.answer}</div>}
+      {state.answer && <div style={{ fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{state.answer.replace(/\*\*|__|`{1,3}/g, "").replace(/^\s*#{1,6}\s*/gm, "").replace(/^\s*[-*]\s+/gm, "\u2022 ")}</div>}
       {state.answer && !esc.ticket && (
         <div style={{ display: "grid", gap: 6, borderTop: "1px solid var(--line)", paddingTop: 8 }}>
           <small style={{ fontSize: 11, color: "var(--muted)" }}>Masih belum beres?</small>
