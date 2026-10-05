@@ -47,7 +47,9 @@ async function googleListings(sql) {
 }
 
 /* Masukkan akun checker ke stok listing (compare-and-swap supaya aman dari checkout bersamaan). */
-async function addToStock(sql, { id, password, listingId, price }) {
+const NEW_DESC = "Tentang Produk:\nAkun Google (Gmail) Fresh \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.";
+const NEW_DELIVERY = "CARA MENGAMANKAN AKUN GOOGLE (WAJIB SEGERA):\n1. Login memakai email & password yang diterima.\n2. Ganti password di https://myaccount.google.com/signinoptions/password\n3. Ganti email & nomor pemulihan menjadi milikmu sendiri.\n4. Keluarkan semua perangkat lain di https://myaccount.google.com/device-activity\n5. Cek akses aplikasi pihak ketiga di https://myaccount.google.com/permissions\n6. Aktifkan verifikasi dua langkah.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.";
+async function addToStock(sql, { id, password, listingId, price, newTitle }) {
   await ensureTable(sql);
   const [acc] = await sql`SELECT email, status, listing_id FROM google_account_checks WHERE id = ${id}`;
   if (!acc) throw new Error("Akun tidak ditemukan");
@@ -55,6 +57,14 @@ async function addToStock(sql, { id, password, listingId, price }) {
   if (acc.listing_id) throw new Error("Akun ini sudah ada di stok produk");
   const pass = String(password || "").trim().slice(0, 200);
   if (!pass) throw new Error("Password wajib diisi");
+  if (listingId === "__new__" || !listingId) {
+    const p = Math.max(0, Math.round(Number(price) || 0));
+    if (!p) throw new Error("Harga wajib diisi untuk produk baru");
+    const title = String(newTitle || "").trim().slice(0, 160) || "Akun Google (Gmail) Fresh \u2014 Siap Pakai";
+    listingId = require("crypto").randomUUID();
+    await sql`INSERT INTO codexa_account_listings (id,title,description,login_type,price,stock,status,credential_blob)
+      VALUES (${listingId},${title},${NEW_DESC},${"Google"},${p},${0},${"sold"},${encCred({ accounts: [], agedPricing: false, deliveryDetails: NEW_DELIVERY })})`;
+  }
   for (let attempt = 0; attempt < 3; attempt++) {
     const [row] = await sql`SELECT id, price, credential_blob AS "blob" FROM codexa_account_listings WHERE id = ${String(listingId || "")}`;
     if (!row) throw new Error("Produk tidak ditemukan");

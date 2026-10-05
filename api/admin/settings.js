@@ -62,7 +62,7 @@ module.exports = async function handler(request, response) {
         return response.status(200).json({ ok: true, checked, accounts: await GC.list(sql) });
       }
       if (request.method === "POST" && resource === "gchecker-stock") {
-        try { await GC.addToStock(sql, { id: String(body.id || ""), password: body.password, listingId: body.listingId, price: body.price }); }
+        try { await GC.addToStock(sql, { id: String(body.id || ""), password: body.password, listingId: body.listingId, price: body.price, newTitle: body.newTitle }); }
         catch (e) { return response.status(400).json({ error: e.message }); }
         return response.status(200).json({ ok: true, accounts: await GC.list(sql), listings: await GC.googleListings(sql) });
       }

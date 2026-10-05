@@ -18,7 +18,7 @@ export default function GoogleChecker({ onNotice }) {
   const [busy, setBusy] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [stockFor, setStockFor] = useState(null);
-  const [form, setForm] = useState({ password: "", listingId: "", price: "" });
+  const [form, setForm] = useState({ password: "", listingId: "", price: "", newTitle: "" });
   const autoOpened = useRef(false);
 
   const notify = useCallback((msg) => onNotice && onNotice(msg), [onNotice]);
@@ -33,7 +33,7 @@ export default function GoogleChecker({ onNotice }) {
 
   const openStock = useCallback((a, listings) => {
     const first = (listings || data.listings || [])[0];
-    setForm({ password: "", listingId: first ? first.id : "", price: first ? String(first.price) : "" });
+    setForm({ password: "", listingId: first ? first.id : "__new__", price: first ? String(first.price) : "", newTitle: "Akun Google (Gmail) Fresh \u2014 Siap Pakai" });
     setStockFor(a);
   }, [data.listings]);
 
@@ -166,14 +166,15 @@ export default function GoogleChecker({ onNotice }) {
             <label style={{ fontSize: 12 }}>Password (dikirim ke pembeli)<input className="cx-input" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} style={{ width: "100%" }} autoFocus /></label>
             <label style={{ fontSize: 12 }}>Produk Google
               <select className="cx-input" value={form.listingId} style={{ width: "100%" }} onChange={(e) => { const l = (data.listings || []).find((x) => x.id === e.target.value); setForm({ ...form, listingId: e.target.value, price: l ? String(l.price) : form.price }); }}>
-                {!(data.listings || []).length && <option value="">Belum ada produk Google, buat dulu di menu Produk</option>}
                 {(data.listings || []).map((l) => <option key={l.id} value={l.id}>{l.title} (stok {l.stock})</option>)}
+                <option value="__new__">+ Buat produk Google baru otomatis</option>
               </select>
             </label>
+            {form.listingId === "__new__" && <label style={{ fontSize: 12 }}>Nama produk baru<input className="cx-input" value={form.newTitle} onChange={(e) => setForm({ ...form, newTitle: e.target.value })} style={{ width: "100%" }} /></label>}
             <label style={{ fontSize: 12 }}>Harga (Rp)<input className="cx-input" inputMode="numeric" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value.replace(/\D/g, "") })} style={{ width: "100%" }} /></label>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => setStockFor(null)}>Nanti</button>
-              <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={saveStock} disabled={busy === "stock" || !form.password || !form.listingId}>{busy === "stock" ? <Loader2 size={11} className="spin" /> : <PackagePlus size={11} />} Simpan ke stok</button>
+              <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={saveStock} disabled={busy === "stock" || !form.password || !form.listingId || (form.listingId === "__new__" && !form.price)}>{busy === "stock" ? <Loader2 size={11} className="spin" /> : <PackagePlus size={11} />} Simpan ke stok</button>
             </div>
           </div>
         </div>
