@@ -1727,176 +1727,143 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 @media (max-width:420px){.cx-secured-lock{display:none}}
 .cx-toast.is-error{background:#7f1d1d!important;border-color:#ef4444!important;color:#fff!important}
 
-/* ─── Profil: desain "Cyber glass" (v2) ─── */
+/* ─── Profil: clean premium (v3) ─── */
 .cx-profile-glass{
-  position:relative;overflow:hidden;
-  border-radius:28px !important;
+  border-radius:20px !important;
   background:rgba(255,255,255,.03) !important;
-  border:1px solid rgba(255,255,255,.1) !important;
-  backdrop-filter:blur(24px);
-  box-shadow:0 24px 60px -24px rgba(0,0,0,.7);
-  padding:22px !important;
+  border:1px solid rgba(255,255,255,.07) !important;
+  box-shadow:0 14px 36px -20px rgba(0,0,0,.55);
+  padding:20px !important;
 }
-.cx-profile-glass::before{
-  content:"";position:absolute;top:-70px;left:-70px;width:190px;height:190px;
-  background:rgba(139,92,246,.22);border-radius:50%;filter:blur(70px);pointer-events:none;
-}
-.cx-profile-glass::after{
-  content:"";position:absolute;bottom:-70px;right:-70px;width:190px;height:190px;
-  background:rgba(34,211,238,.12);border-radius:50%;filter:blur(70px);pointer-events:none;
-}
-.cx-profile-glass > *{position:relative;z-index:1}
-
-.cx-profile-glass .cx-profile-head{gap:14px;margin-bottom:22px;flex-wrap:nowrap}
+.cx-profile-glass .cx-profile-head{gap:13px;margin-bottom:16px;flex-wrap:nowrap}
 .cx-avatar-ring{
-  position:relative;flex:none;width:58px;height:58px;border-radius:16px;padding:2px;
-  background:linear-gradient(135deg,#8b5cf6,#22d3ee);
+  position:relative;flex:none;width:54px;height:54px;border-radius:15px;padding:0;
+  border:1px solid rgba(139,92,246,.4);box-shadow:none;
 }
 .cx-avatar-ring .cx-avatar-xl{
   width:100% !important;height:100% !important;border-radius:14px !important;
-  background:#0f0f1b;overflow:hidden;
+  background:#12101c;overflow:hidden;
 }
 .cx-avatar-dot{
-  position:absolute;bottom:-3px;right:-3px;width:14px;height:14px;border-radius:50%;
-  background:#22c55e;border:3px solid #0d0d16;
-  box-shadow:0 0 10px rgba(34,197,94,.55);
+  position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;
+  background:#22c55e;border:2px solid #141220;box-shadow:none;
 }
 .cx-profile-glass .cx-profile-head-copy h2{
-  font-size:19px;font-weight:800;letter-spacing:-.02em;color:#fff;
+  font-size:17px;font-weight:700;letter-spacing:-.01em;color:#fff;
 }
 .cx-profile-glass .cx-member-badge{
-  margin-top:4px !important;font-size:9.5px !important;font-weight:700;
-  text-transform:uppercase;letter-spacing:.14em;
-  color:rgba(167,139,250,.85) !important;
+  margin-top:3px !important;font-size:10px !important;font-weight:600;
+  text-transform:uppercase;letter-spacing:.1em;
+  color:rgba(196,181,253,.75) !important;
 }
 .cx-profile-glass .cx-profile-edit-btn{
-  width:38px;height:38px;padding:0 !important;flex:none;
+  width:32px;height:32px;padding:0 !important;flex:none;
   display:inline-flex;align-items:center;justify-content:center;
-  border-radius:12px;background:rgba(255,255,255,.05) !important;
-  border:1px solid rgba(255,255,255,.1) !important;color:rgba(255,255,255,.65) !important;
+  border-radius:10px;background:rgba(255,255,255,.04) !important;
+  border:1px solid rgba(255,255,255,.08) !important;color:rgba(255,255,255,.6) !important;
+  box-shadow:none;
 }
 .cx-profile-glass .cx-profile-edit-btn:hover{color:#fff !important}
+.cx-profile-glass .cx-profile-edit-btn svg{width:14px;height:14px;stroke-width:2}
 
-.cx-profile-glass .cx-profile-list{gap:14px;margin-bottom:22px}
+.cx-profile-glass .cx-profile-list{gap:0;margin-bottom:16px}
 .cx-profile-glass .cx-profile-list li{
-  padding:0;border-bottom:0;gap:10px;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);gap:10px;
 }
+.cx-profile-glass .cx-profile-list li:first-child{padding-top:4px}
+.cx-profile-glass .cx-profile-list li:last-child{border-bottom:0;padding-bottom:4px}
 .cx-profile-glass .cx-info-label{
-  display:inline-flex;align-items:center;gap:10px;min-width:0;
-  font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;
-  color:rgba(255,255,255,.4) !important;
+  display:inline-flex;align-items:center;gap:8px;min-width:0;
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
+  color:rgba(255,255,255,.38) !important;
 }
 .cx-info-icon{
-  flex:none;width:32px;height:32px;border-radius:10px;
+  flex:none;width:auto;height:auto;border-radius:0;
   display:inline-flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
-  color:rgba(255,255,255,.45);
+  background:transparent !important;border:0 !important;box-shadow:none;
+  color:rgba(255,255,255,.32);
 }
-.cx-info-icon.is-violet{
-  background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.25);color:#a78bfa;
-}
+.cx-info-icon.is-violet{background:transparent !important;border-color:transparent;color:rgba(139,92,246,.7)}
+.cx-info-icon svg{width:12px;height:12px;stroke-width:2}
 .cx-profile-glass .cx-profile-list li strong{
-  font-size:13px;font-weight:600;color:rgba(255,255,255,.92);
-  display:inline-flex;align-items:center;gap:7px;min-width:0;
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.9);
+  display:inline-flex;align-items:center;gap:6px;min-width:0;
 }
 .cx-id-chip{
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
-  color:#22d3ee;background:rgba(34,211,238,.1);
-  padding:3px 9px;border-radius:7px;letter-spacing:.02em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  color:#67e8f9;background:rgba(34,211,238,.08);
+  padding:3px 8px;border-radius:7px;letter-spacing:.02em;
 }
 .cx-profile-glass .cx-verified-tag{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 11px;border-radius:999px;
-  background:rgba(34,197,94,.1) !important;border:1px solid rgba(34,197,94,.25) !important;
-  color:#4ade80 !important;font-size:9.5px;font-weight:700;
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;
+  background:rgba(34,197,94,.09) !important;border:1px solid rgba(34,197,94,.22) !important;
+  color:#86efac !important;font-size:9.5px;font-weight:700;
   text-transform:uppercase;letter-spacing:.05em;
+  box-shadow:none;
 }
-.cx-verified-dot{
-  width:6px;height:6px;border-radius:50%;background:#22c55e;flex:none;
-  box-shadow:0 0 8px rgba(34,197,94,.7);
+.cx-profile-glass .cx-verified-tag svg{
+  width:11px !important;height:11px !important;stroke-width:2.2;
+  color:#4ade80;flex:none;
 }
 .cx-profile-glass .cx-role-tag{
-  font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
-  color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.12);
+  font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1);
   padding:2px 7px;border-radius:6px;background:transparent;
 }
 
 .cx-profile-glass .cx-balance-card{
-  margin-top:0;padding:16px 18px;border-radius:20px;
-  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.01));
-  border:1px solid rgba(255,255,255,.1);
+  margin-top:0;padding:15px 17px;border-radius:15px;
+  background:rgba(139,92,246,.09);
+  border:1px solid rgba(139,92,246,.2);
+  box-shadow:none;
 }
-.cx-balance-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.cx-balance-dot{width:8px;height:8px;border-radius:50%;background:#22d3ee;flex:none;box-shadow:0 0 8px rgba(34,211,238,.6)}
+.cx-balance-head{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.cx-balance-dot{width:6px;height:6px;border-radius:50%;background:#22d3ee;flex:none;box-shadow:none}
 .cx-balance-label{
-  font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;
-  color:rgba(255,255,255,.4);
+  font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;
+  color:rgba(255,255,255,.45);
 }
 .cx-balance-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cx-profile-glass .cx-balance-card strong{
-  margin-top:0;font-size:27px;font-weight:800;letter-spacing:-.03em;color:#fff;
+  margin-top:0;font-size:26px;font-weight:800;letter-spacing:-.02em;color:#fff;
   font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .cx-balance-coin{
-  flex:none;width:38px;height:38px;border-radius:50%;
+  flex:none;width:32px;height:32px;border-radius:10px;
   display:inline-flex;align-items:center;justify-content:center;
   background:rgba(34,211,238,.1);color:#22d3ee;
 }
+.cx-balance-coin svg{width:15px;height:15px}
 
 .cx-topup-glow{
-  position:relative;border:0 !important;border-radius:16px !important;
-  padding:14px 16px !important;
-  background:linear-gradient(90deg,#7c3aed,#06b6d4) !important;
-  font-weight:800 !important;font-size:12.5px !important;
-  text-transform:uppercase;letter-spacing:.14em;
-  box-shadow:0 10px 30px -8px rgba(124,58,237,.55),0 0 0 1px rgba(255,255,255,.08) inset;
-  transition:transform .15s ease,box-shadow .3s ease,filter .3s ease;
+  border:0 !important;border-radius:12px !important;
+  padding:13px 16px !important;
+  background:#7c3aed !important;
+  font-weight:700 !important;font-size:12px !important;
+  text-transform:uppercase;letter-spacing:.12em;
+  box-shadow:0 8px 22px -12px rgba(124,58,237,.6);
+  transition:background .2s ease,transform .12s ease;
 }
-.cx-topup-glow:hover{filter:brightness(1.12);box-shadow:0 12px 36px -8px rgba(34,211,238,.5)}
+.cx-topup-glow:hover{background:#8b5cf6 !important;box-shadow:0 10px 24px -12px rgba(139,92,246,.6)}
 .cx-topup-glow:active{transform:scale(.98)}
+.cx-topup-glow svg{width:14px;height:14px}
 
-
-/* Profil mobile: ikon ringkas, status verifikasi stabil, dan aksi edit yang jelas */
-.cx-profile-glass .cx-profile-edit-btn{
-  width:34px;height:34px;border-radius:10px;
-  color:#c4b5fd !important;background:rgba(139,92,246,.1) !important;
-  border-color:rgba(167,139,250,.25) !important;
-}
-.cx-profile-glass .cx-profile-edit-btn svg{width:15px;height:15px;stroke-width:2.2}
-.cx-profile-glass .cx-info-label{gap:8px}
-.cx-profile-glass .cx-info-icon{
-  width:28px;height:28px;border-radius:8px;
-  color:rgba(226,232,240,.58);
-}
-.cx-profile-glass .cx-info-icon svg{width:12px;height:12px;stroke-width:2}
-.cx-profile-glass .cx-verified-tag{
-  gap:4px;padding:3px 8px;line-height:1.2;letter-spacing:.03em;
-  background:rgba(34,197,94,.08) !important;
-  border-color:rgba(74,222,128,.28) !important;
-  color:#86efac !important;box-shadow:none;
-}
-.cx-profile-glass .cx-verified-tag svg{
-  width:11px !important;height:11px !important;stroke-width:2.2;
-  color:#4ade80;filter:none;flex:none;
-}
-.cx-profile-glass .cx-balance-coin{width:34px;height:34px}
-.cx-profile-glass .cx-balance-coin svg{width:16px;height:16px}
-.cx-profile-glass .cx-topup-glow svg{width:14px;height:14px}
 @media(max-width:520px){
-  .cx-profile-glass{padding:18px !important;border-radius:22px !important}
-  .cx-profile-glass .cx-profile-head{gap:11px;margin-bottom:18px}
-  .cx-avatar-ring{width:54px;height:54px;border-radius:15px}
-  .cx-avatar-ring .cx-avatar-xl{border-radius:13px !important}
-  .cx-avatar-dot{width:12px;height:12px;border-width:3px}
-  .cx-profile-glass .cx-profile-head-copy h2{font-size:17px;letter-spacing:0}
-  .cx-profile-glass .cx-member-badge{font-size:8.5px !important;letter-spacing:.1em}
-  .cx-profile-glass .cx-profile-list{gap:11px;margin-bottom:18px}
-  .cx-profile-glass .cx-profile-list li{gap:8px}
-  .cx-profile-glass .cx-info-label{font-size:9.5px;letter-spacing:.07em}
-  .cx-profile-glass .cx-profile-list li strong{font-size:12px;gap:5px}
+  .cx-profile-glass{padding:16px !important;border-radius:18px !important}
+  .cx-profile-glass .cx-profile-head{gap:11px;margin-bottom:14px}
+  .cx-avatar-ring{width:48px;height:48px;border-radius:13px}
+  .cx-avatar-ring .cx-avatar-xl{border-radius:12px !important}
+  .cx-avatar-dot{width:10px;height:10px;border-width:2px}
+  .cx-profile-glass .cx-profile-head-copy h2{font-size:16px}
+  .cx-profile-glass .cx-member-badge{font-size:8.5px !important;letter-spacing:.09em}
+  .cx-profile-glass .cx-profile-list li{padding:9px 0}
+  .cx-profile-glass .cx-profile-list li strong{font-size:12.5px;gap:5px}
   .cx-profile-glass .cx-role-tag{font-size:7.5px;padding:2px 5px}
   .cx-id-chip{font-size:10.5px;padding:3px 7px}
-  .cx-profile-glass .cx-balance-card{padding:14px 15px;border-radius:17px}
-  .cx-profile-glass .cx-balance-card strong{font-size:23px;letter-spacing:0}
+  .cx-profile-glass .cx-balance-card{padding:13px 14px;border-radius:13px}
+  .cx-profile-glass .cx-balance-card strong{font-size:22px}
+  .cx-balance-coin{width:28px;height:28px}
+  .cx-balance-coin svg{width:13px;height:13px}
   .cx-topup-glow{padding:12px 14px !important;font-size:11.5px !important}
 }
