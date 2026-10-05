@@ -109,9 +109,13 @@ export const CATALOG_SORTS = [
 ];
 export const CATALOG_AGES = [
   { key: "all", label: "Semua" },
-  { key: "fresh", label: "Fresh" },
-  { key: "aged", label: "Aged" },
+  { key: "basic", label: "Biasa" },
+  { key: "pva", label: "PVA" },
 ];
+export function productIsPva(product) {
+  const text = `${product?.title || ""} ${product?.name || ""} ${product?.category || ""}`.toLowerCase();
+  return /\bpva\b/.test(text) && !/\b(no[ -]?pva|non[ -]?pva)\b/.test(text);
+}
 export const CATALOG_CATEGORIES = [
   { key: "all", label: "Semua kategori" },
   { key: "social", label: "Social" },
@@ -1512,7 +1516,7 @@ function App() {
         `${p.title} ${p.description} ${p.loginType} ${p.ageInfo.kind} ${p.ageInfo.label}`.toLowerCase().includes(q),
       );
     }
-    if (ageFilter !== "all") list = list.filter((p) => p.ageInfo.kind === ageFilter);
+    if (ageFilter !== "all" && platform && !q) list = list.filter((p) => (ageFilter === "pva") === productIsPva(p));
     if (categoryFilter !== "all") list = list.filter((p) => productCategoryKey(p) === categoryFilter);
     if (platform && !q) list = list.filter((p) => productPlatformKey(p) === platform);
     const priceOf = (p) => Number(p.price) || 0;
@@ -2381,7 +2385,11 @@ function App() {
           </div>
         )}
 
-        {(platform || search.trim()) && !data.loading && products.length > 0 && (() => {
+        {platform && !search.trim() && !data.loading && products.length > 0 && (
+          <PlatformAccounts products={products} onAdd={addToCart} onOpen={(p) => navigate(productPagePath(p, data.products))} />
+        )}
+
+        {search.trim() && !data.loading && products.length > 0 && (() => {
           const card = (p, i) => (
             <ProductCard
               key={p.id || i}
@@ -4402,6 +4410,54 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
 /* ═══════════════════════════════════════════════════
    HALAMAN PRODUK (URL sendiri per listing)
 ════════════════════════════════════════════════════ */
+/* Katalog > platform: langsung daftar akun per produk, bisa dicentang & dibeli
+   tanpa buka halaman produk dulu. */
+function PlatformAccounts({ products, onAdd, onOpen }) {
+  const [sel, setSel] = useState({});
+  const toggle = (id, index) => setSel((prev) => {
+    const cur = prev[id] || [];
+    return { ...prev, [id]: cur.includes(index) ? cur.filter((i) => i !== index) : [...cur, index] };
+  });
+  const picked = products.filter((p) => (sel[p.id] || []).length > 0);
+  const count = picked.reduce((a, p) => a + sel[p.id].length, 0);
+  const total = picked.reduce((a, p) => a + sumSelected(p, sel[p.id]), 0);
+  return (
+    <div className="cx-platacc">
+      {products.map((p) => {
+        const accounts = Array.isArray(p.accounts) ? p.accounts : [];
+        const age = productAgeInfo(p);
+        return (
+          <section key={p.id} className={`cx-prodpage-card cx-platacc-card${accounts.length ? "" : " is-out"}`}>
+            <div className="cx-platacc-head">
+              <div>
+                <h3>{p.title}</h3>
+                <div className="cx-platacc-meta">
+                  <span className="cx-age-badge">{productIsPva(p) ? "PVA" : "Biasa"}</span>
+                  {age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
+                  <span>{accounts.length ? `${accounts.length} akun` : "Stok habis"}</span>
+                </div>
+              </div>
+              <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => onOpen(p)}>Detail</button>
+            </div>
+            {accounts.length > 0 && (
+              <AccountPicker product={p} accounts={accounts} selected={sel[p.id] || []} onToggle={(i) => toggle(p.id, i)} pageSize={5} size="lg" />
+            )}
+          </section>
+        );
+      })}
+      <div className="cx-prodpage-buy is-sticky">
+        <div className="cx-prodpage-total">
+          <small>{count ? `${count} akun dipilih` : "Belum ada akun dipilih"}</small>
+          <strong>{formatPrice(total)}</strong>
+        </div>
+        <button className="cx-btn cx-btn-primary" disabled={count === 0} onClick={() => { picked.forEach((p) => onAdd(p, sel[p.id])); setSel({}); }}>
+          <ShoppingBag size={14} /> Tambah ke keranjang
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
   const [selected, setSelected] = useState([]);
   useEffect(() => { setSelected([]); }, [product && product.id]);
