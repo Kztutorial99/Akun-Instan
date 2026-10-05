@@ -13,6 +13,17 @@ import AdminNotifyPage from "./admin-notify-page.jsx";
 import AdminCheckinPage from "./admin-checkin-page.jsx";
 import "./admin-ui.css";
 
+/* Ringkasan status serah terima akun Google per pesanan untuk menu Pesanan admin:
+   aman (pembeli klik selesai), kode diminta/dibalas, atau belum selesai. */
+function handoverInfo(o) {
+  const h = o && o.handover;
+  if (!h) return { label: "Belum aman", cls: "", note: "" };
+  if (h.secured) return { label: "Aman", cls: "cx-status-ok", note: `Pembeli menyatakan akun aman${h.securedAt ? ` · ${formatDate(h.securedAt)}` : ""}` };
+  if (h.codeStatus === "open" || h.codeStatus === "in_progress") return { label: "Kode diminta", cls: "cx-status-low", note: `Pembeli minta kode verifikasi${h.ticket ? ` · tiket ${h.ticket}` : ""} — kirim kodenya dari menu Laporan` };
+  if (h.codeStatus) return { label: "Kode dibalas", cls: "cx-status-low", note: `Admin sudah balas${h.ticket ? ` · tiket ${h.ticket}` : ""} — pembeli belum klik selesai` };
+  return { label: "Belum aman", cls: "", note: "Pembeli belum klik Selesai, akun aman" };
+}
+
 function AdminPage({ onBack, onNotice }) {
   const [authenticated, setAuthenticated] = useState(null);
   const [password, setPassword]           = useState("");
@@ -1441,12 +1452,15 @@ function AdminPage({ onBack, onNotice }) {
                         <span>Terakhir: {formatDate(g.orders[0].createdAt)}</span>
                       </div>
                       <div className="cx-buyer-orders">
-                        {shownOrders.map((o) => (
+                        {shownOrders.map((o) => {
+                          const ho = handoverInfo(o);
+                          return (
                           <div key={o.id} className="cx-buyer-order">
                             <div className="cx-buyer-order-head">
                               <span className="cx-mono">#{String(o.id).slice(0, 8)}</span>
                               <span>{formatDate(o.createdAt)}</span>
                               <span className={`cx-status ${o.status === "paid" ? "cx-status-ok" : "cx-status-low"}`}>{o.status === "paid" ? "Lunas" : "Refund"}</span>
+                              <span className={`cx-status ${ho.cls}`} style={ho.cls ? undefined : { color: "var(--faint)" }} title={ho.note}>{ho.label}</span>
                               <strong className="cx-mono" style={{ marginLeft: "auto" }}>{formatPrice(o.total)}</strong>
                               <button
                                 className="cx-row-btn danger"
@@ -1457,6 +1471,9 @@ function AdminPage({ onBack, onNotice }) {
                                 {isPending(`aorder-${o.id}`) ? <Spinner /> : <Trash2 size={11} />}
                               </button>
                             </div>
+                            {ho.note && (
+                              <div style={{ fontSize: 10, color: "var(--faint)", marginTop: 3, lineHeight: 1.45 }}>{ho.note}</div>
+                            )}
                             {customEmailsOf(o).map((r) => (
                               <div key={r.id} className="cx-custom-email-tag"><Mail size={11} /> <strong>{r.requested}</strong>
                                 <span className={`cx-status cx-cemail-${r.status || "pending"}`}>{CUSTOM_EMAIL_STATUS_LABEL[r.status || "pending"]}</span>
@@ -1472,7 +1489,8 @@ function AdminPage({ onBack, onNotice }) {
                               ))}
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="cx-order-actions">
                         {g.orders.length > 1 && (
