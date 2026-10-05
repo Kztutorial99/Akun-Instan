@@ -5443,7 +5443,6 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
     <div className="cx-container cx-account-page">
 
       <div className="cx-account-grid">
-<CheckinProfileCard onOpen={onOpenCheckin} onNotice={onNotice} />
         <div className="cx-panel cx-profile-card">
           <div className="cx-profile-head">
             <UserAvatar user={editing ? { name: form.name, avatar } : user} className="cx-avatar-xl" />
@@ -5457,6 +5456,8 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
               </button>
             )}
           </div>
+
+          {!editing && <div className="cx-profile-checkin"><CheckinProfileCard onOpen={onOpenCheckin} onNotice={onNotice} /></div>}
 
           {editing && (
             <div className="cx-profile-form">
