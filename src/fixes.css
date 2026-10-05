@@ -1768,7 +1768,8 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 
 .cx-profile-glass .cx-profile-list{gap:0;margin-bottom:16px}
 .cx-profile-glass .cx-profile-list li{
-  padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);gap:10px;
+  display:grid;grid-template-columns:minmax(100px,42%) minmax(0,1fr);
+  align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;
 }
 .cx-profile-glass .cx-profile-list li:first-child{padding-top:4px}
 .cx-profile-glass .cx-profile-list li:last-child{border-bottom:0;padding-bottom:4px}
@@ -1787,7 +1788,8 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-info-icon svg{width:12px;height:12px;stroke-width:2}
 .cx-profile-glass .cx-profile-list li strong{
   font-size:13px;font-weight:600;color:rgba(255,255,255,.9);
-  display:inline-flex;align-items:center;gap:6px;min-width:0;
+  display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0;
+  text-align:right;overflow-wrap:anywhere;
 }
 .cx-id-chip{
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
@@ -1849,6 +1851,31 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-topup-glow:active{transform:scale(.98)}
 .cx-topup-glow svg{width:14px;height:14px}
 
+/* Mode edit menyatu dengan kartu utama, tanpa card bertumpuk. */
+.cx-profile-glass .cx-profile-form{
+  gap:12px;margin:2px 0 14px;padding:15px 0 16px;border:0;border-radius:0;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  background:transparent;box-shadow:none;
+}
+.cx-profile-glass .cx-profile-photo-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cx-profile-glass .cx-profile-photo-row .cx-btn{
+  min-width:0;min-height:38px;padding:8px 10px;border-radius:9px;font-size:11px;
+}
+.cx-profile-glass .cx-profile-form .cx-field{gap:6px}
+.cx-profile-glass .cx-profile-form .cx-field span{
+  font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.42);
+}
+.cx-profile-glass .cx-profile-form .cx-field input{
+  min-height:43px;padding:10px 12px;border-radius:10px;
+  border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.035);
+  font-size:13px;
+}
+.cx-profile-glass .cx-profile-form-actions{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:8px}
+.cx-profile-glass .cx-profile-form-actions .cx-btn{
+  min-width:0;min-height:40px;padding:9px 10px;border-radius:9px;font-size:11px;
+}
+
 @media(max-width:520px){
   .cx-profile-glass{padding:16px !important;border-radius:18px !important}
   .cx-profile-glass .cx-profile-head{gap:11px;margin-bottom:14px}
@@ -1857,8 +1884,12 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   .cx-avatar-dot{width:10px;height:10px;border-width:2px}
   .cx-profile-glass .cx-profile-head-copy h2{font-size:16px}
   .cx-profile-glass .cx-member-badge{font-size:8.5px !important;letter-spacing:.09em}
-  .cx-profile-glass .cx-profile-list li{padding:9px 0}
-  .cx-profile-glass .cx-profile-list li strong{font-size:12.5px;gap:5px}
+  .cx-profile-glass .cx-profile-list li{grid-template-columns:106px minmax(0,1fr);gap:8px;padding:9px 0}
+  .cx-profile-glass .cx-info-label{gap:7px;font-size:8.5px;letter-spacing:.09em}
+  .cx-info-icon svg{width:11px;height:11px}
+  .cx-profile-glass .cx-profile-list li strong{font-size:11.5px;gap:5px}
+  .cx-profile-glass .cx-verified-tag{font-size:8px;padding:3px 7px;gap:4px}
+  .cx-profile-glass .cx-verified-tag svg{width:9px !important;height:9px !important}
   .cx-profile-glass .cx-role-tag{font-size:7.5px;padding:2px 5px}
   .cx-id-chip{font-size:10.5px;padding:3px 7px}
   .cx-profile-glass .cx-balance-card{padding:13px 14px;border-radius:13px}
@@ -1866,4 +1897,11 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
   .cx-balance-coin{width:28px;height:28px}
   .cx-balance-coin svg{width:13px;height:13px}
   .cx-topup-glow{padding:12px 14px !important;font-size:11.5px !important}
+}
+
+@media(max-width:370px){
+  .cx-profile-glass .cx-profile-list li{grid-template-columns:94px minmax(0,1fr)}
+  .cx-profile-glass .cx-info-label{font-size:8px;gap:6px}
+  .cx-profile-glass .cx-profile-list li strong{font-size:11px}
+  .cx-profile-glass .cx-role-tag{display:none}
 }
