@@ -1920,6 +1920,16 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-plat-item:hover .cx-plat-icon,.cx-plat-item:focus-visible .cx-plat-icon{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--indigo),0 8px 20px -10px var(--indigo)}
 .cx-plat-name{font:600 11.5px Inter,system-ui,sans-serif;text-align:center;line-height:1.25;color:var(--ink);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .cx-plat-count{font:500 10px Inter,system-ui,sans-serif;color:var(--muted);margin-top:-3px}
+/* Platform yang stoknya kosong: icon dibuat redup seperti warna habis */
+.cx-plat-item.is-empty .cx-plat-icon{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--indigo) 8%,transparent)}
+.cx-plat-item.is-empty .cx-plat-icon img{filter:grayscale(1) brightness(.72) opacity(.42)}
+.cx-plat-item.is-empty .cx-plat-name{color:color-mix(in srgb,var(--ink) 62%,transparent)}
+.cx-plat-item.is-empty .cx-plat-count{color:color-mix(in srgb,var(--muted) 70%,transparent)}
+.cx-plat-item.is-empty:hover .cx-plat-icon,.cx-plat-item.is-empty:focus-visible .cx-plat-icon{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--indigo) 40%,transparent),0 8px 20px -10px color-mix(in srgb,var(--indigo) 50%,transparent)}
+.cx-plat-item.is-empty:hover .cx-plat-icon img,.cx-plat-item.is-empty:focus-visible .cx-plat-icon img{filter:grayscale(.4) brightness(.85) opacity(.75)}
+/* Kartu produk stok habis: icon platform di kartu ikut redup */
+.cx-pc.is-out .cx-pc-brandicon img{filter:grayscale(1) brightness(.72) opacity(.4)}
+.cx-pc.is-out .cx-pc-brandicon .cx-product-icon-fallback{opacity:.4}
 .cx-plat-head{display:flex;flex-direction:column;gap:12px;margin:12px 0 14px}
 .cx-plat-back{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--s2);border:0;color:var(--ink2);border-radius:999px;height:32px;padding:0 14px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
 .cx-plat-back:hover{color:var(--ink);background:var(--s3)}
