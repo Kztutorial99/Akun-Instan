@@ -380,13 +380,13 @@ async function handleAdminCheckin(sql, request, response) {
       return response.status(200).json({ ok: true, points: target });
     }
     if (body.op === "resetCheckin") {
-      await sql`UPDATE codexa_points SET streak = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
+      await sql`UPDATE codexa_points SET streak = 0, total_checkins = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
       await sql`DELETE FROM codexa_checkins WHERE user_id = ${userId} AND created_at > NOW() - INTERVAL '24 hours'`;
       return response.status(200).json({ ok: true });
     }
     if (body.op === "resetAll") {
       const [cur] = await sql`SELECT points FROM codexa_points WHERE user_id = ${userId}`;
-      await sql`UPDATE codexa_points SET points = 0, streak = 0, best_streak = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
+      await sql`UPDATE codexa_points SET points = 0, streak = 0, best_streak = 0, total_checkins = 0, total_earned = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
       if (Number(cur.points)) await sql`INSERT INTO codexa_point_ledger (id, user_id, delta, reason, note)
         VALUES (${crypto.randomUUID()}, ${userId}, ${-Number(cur.points)}, 'admin', 'Reset total oleh admin')`;
       return response.status(200).json({ ok: true });
