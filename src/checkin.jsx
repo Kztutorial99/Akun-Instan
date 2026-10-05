@@ -136,7 +136,10 @@ function Countdown({ seconds }) {
 
 function DayTrack({ data }) {
   const done = data.cycleDone;
+  const week = data.streak > 0 ? Math.floor((data.streak - (data.claimedToday ? 1 : 0)) / 7) + 1 : 1;
   return (
+    <>
+    {data.streak > 0 && <div className="ci-week">🔥 Streak {data.streak} hari · Minggu ke-{week}</div>}
     <div className="ci-track">
       <div className="ci-track-line"><span style={{ width: `${Math.min(100, (done / 7) * 100)}%` }} /></div>
       {data.settings.rewards.map((reward, i) => {
@@ -154,6 +157,7 @@ function DayTrack({ data }) {
         );
       })}
     </div>
+    </>
   );
 }
 
