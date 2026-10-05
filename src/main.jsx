@@ -397,6 +397,16 @@ export async function jsonRequest(url, opts = {}) {
 }
 
 /* ─── small UI atoms ─── */
+function PageBack({ onClick, label = "Kembali" }) {
+  return (
+    <div className="cx-container cx-page-back-wrap">
+      <button type="button" className="cx-page-back" onClick={onClick}>
+        <ArrowLeft size={16} /> {label}
+      </button>
+    </div>
+  );
+}
+
 function IconBtn({ children, label, onClick, style }) {
   return <button aria-label={label} onClick={onClick} className="cx-icon-btn" style={style}>{children}</button>;
 }
@@ -1896,7 +1906,7 @@ function App() {
   const guest = !auth.user;
   const shellClass = guest ? "cx-app cx-land" : "cx-app";
 
-  const topbar = guest ? (
+  const topbarEl = guest ? (
     <PublicTopbar
       navigate={navigate}
       activePage={activePage}
@@ -1910,6 +1920,19 @@ function App() {
       user={auth.user} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onLogout={logout}
       onLogin={() => goAuthScreen("login")}
     />
+  );
+
+  const goBack = () => {
+    if (activePage === "checkin") return navigate("account");
+    if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
+    else navigate("store");
+  };
+  const showGlobalBack = activePage !== "store" && activePage !== "katalog" && activePage !== "admin";
+  const topbar = (
+    <>
+      {topbarEl}
+      {showGlobalBack && <PageBack onClick={goBack} />}
+    </>
   );
 
   const tabbar = guest ? null : (
@@ -2304,6 +2327,7 @@ function App() {
   if (activePage === "katalog") return (
     <div className={`${shellClass} cx-catv2`}>
       {topbar}
+      <PageBack onClick={() => { if (platform && !search.trim()) { setPlatform(""); setAgeFilter("all"); } else navigate("store"); }} />
             <main className="cx-container cx-cat-main" id="catalog" style={{ paddingTop: 20, paddingBottom: 64 }}>
         <div className="cx-section-header cx-section-header-stack cx-cat-header">
           <div>
@@ -2338,10 +2362,7 @@ function App() {
 
         {(platform && !search.trim()) && (
           <div className="cx-plat-head">
-            <button type="button" className="cx-plat-back" onClick={() => { setPlatform(""); setAgeFilter("all"); }}>
-              <ArrowLeft size={14} /> Kembali
-            </button>
-            <div className="cx-plat-headrow">
+                        <div className="cx-plat-headrow">
               <span className="cx-plat-icon is-sm"><ProductIcon icon={(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).icon} label={platform} size={22} /></span>
               <h2>{(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).label}</h2>
             </div>
@@ -3460,7 +3481,7 @@ function CustomEmailPage({ draft, setDraft, check, onVerify, list, status, quota
             <button className="cx-btn cx-btn-primary cx-btn-full cx-cev2-cta" disabled={!list.length} onClick={onCheckout}>
               Lanjut ke Pembayaran <ArrowRight size={13} />
             </button>
-            <button className="cx-cev2-back" type="button" onClick={onBack}>Kembali ke Beranda</button>
+            
           </div>
         </section>
 
@@ -4139,31 +4160,23 @@ function ProductDetailModal({ product, color, open, onClose }) {
 
 
 
-          <div className="cx-pd-desc">
-            <ProductDescription text={product.description} compact={false} />
-          </div>
-
-          {product.deliveryDetails && (
-            <div className="cx-pd-delivery">
-              <h4><ShieldCheck size={14} /> Panduan &amp; keamanan</h4>
-              <DeliveryNote text={product.deliveryDetails} />
+          <section className="cx-pd-sec">
+            <h4>Tentang produk</h4>
+            <div className="cx-pd-desc">
+              <ProductDescription text={product.description || "Akun digital siap digunakan. Detail login dikirim otomatis setelah pembayaran."} compact={false} />
             </div>
-          )}
-
-          <div className="cx-pd-summary">
-            <div className="cx-pd-summary-row">
-              <span>Jumlah akun</span>
-              <strong>{accounts.length || stock} akun</strong>
-            </div>
-            <div className="cx-pd-summary-row">
-              <span>Kisaran harga</span>
-              <strong style={{ color }}>
-                {minPrice > 0
-                  ? (hasRange ? `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}` : formatPrice(minPrice))
-                  : "Pilih akun untuk melihat harga"}
-              </strong>
-            </div>
-          </div>
+          </section>
+          <section className="cx-pd-sec">
+            <h4>Spesifikasi</h4>
+            <dl className="cx-spec">
+              <div className="cx-spec-row"><dt>Login</dt><dd>{product.loginType}</dd></div>
+              <div className="cx-spec-row"><dt>Status</dt><dd>{productAgeInfo(product).label || "Siap pakai"}</dd></div>
+              <div className="cx-spec-row"><dt>Stok</dt><dd>{stock > 0 ? `${stock} tersedia` : "Kosong"}</dd></div>
+              <div className="cx-spec-row"><dt>Harga</dt><dd>{minPrice > 0 ? (hasRange ? `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}` : formatPrice(minPrice)) : "-"}</dd></div>
+              <div className="cx-spec-row"><dt>Pengiriman</dt><dd>Otomatis setelah bayar</dd></div>
+              <div className="cx-spec-row"><dt>Garansi</dt><dd>Sesuai ketentuan</dd></div>
+            </dl>
+          </section>
         </div>
 
         <div className="cx-pd-foot">
@@ -4495,13 +4508,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
 
   return (
     <main className="cx-container cx-prodpage">
-      <nav className="cx-prodpage-crumbs" aria-label="Breadcrumb">
-        <button type="button" onClick={() => navigate("store")}>Beranda</button>
-        <span>/</span>
-        <button type="button" onClick={() => navigate("katalog")}>Katalog</button>
-        <span>/</span>
-        <strong>{product.title}</strong>
-      </nav>
 
       <header className="cx-prodpage-head">
         <span className="cx-prodpage-plat">
@@ -4556,16 +4562,6 @@ function ProductPage({ product, loading, navigate, onAdd, canRate, onRate }) {
 
       {onRate && <ProductRating product={product} canRate={canRate} onRate={onRate} />}
 
-      <section className="cx-prodpage-card cx-prodpage-more">
-        <h2>Kategori lain</h2>
-        <div className="cx-prodpage-links">
-          {CATEGORY_SLUGS.map((slug) => (
-            <button key={slug} type="button" onClick={() => navigate(slug)}>
-              {CATEGORY_PAGES[slug].label} <ArrowRight size={13} />
-            </button>
-          ))}
-        </div>
-      </section>
     </main>
   );
 }
