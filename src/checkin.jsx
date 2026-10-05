@@ -260,7 +260,7 @@ export function CheckinPage({ onBack, onNotice, navigate }) {
       <div className="ci-hero">
         <div className="ci-hero-glow" />
         <div className="ci-hero-top">
-          <button className="ci-back" onClick={onBack}>← Kembali</button>
+          <span />
           {d && <span className="ci-today">WIB · {d.today}</span>}
         </div>
         <p className="ci-eyebrow">Check-in Harian</p>
