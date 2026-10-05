@@ -109,8 +109,10 @@ export const CATALOG_SORTS = [
 ];
 export const CATALOG_AGES = [
   { key: "all", label: "Semua" },
-  { key: "basic", label: "Biasa" },
-  { key: "pva", label: "PVA" },
+  { key: "newest", label: "Terbaru" },
+  { key: "price", label: "Harga" },
+  { key: "basic", label: "Biasa", googleOnly: true },
+  { key: "pva", label: "PVA", googleOnly: true },
 ];
 export function productIsPva(product) {
   const text = `${product?.title || ""} ${product?.name || ""} ${product?.category || ""}`.toLowerCase();
@@ -1526,7 +1528,7 @@ function App() {
         `${p.title} ${p.description} ${p.loginType} ${p.ageInfo.kind} ${p.ageInfo.label}`.toLowerCase().includes(q),
       );
     }
-    if (ageFilter !== "all" && platform && !q) list = list.filter((p) => (ageFilter === "pva") === productIsPva(p));
+    if ((ageFilter === "basic" || ageFilter === "pva") && platform === "google" && !q) list = list.filter((p) => (ageFilter === "pva") === productIsPva(p));
     if (categoryFilter !== "all") list = list.filter((p) => productCategoryKey(p) === categoryFilter);
     if (platform && !q) list = list.filter((p) => productPlatformKey(p) === platform);
     const priceOf = (p) => Number(p.price) || 0;
@@ -1535,6 +1537,11 @@ function App() {
     else if (sortBy === "price-desc") list = [...list].sort((a, b) => priceOf(b) - priceOf(a));
     else if (sortBy === "stock-desc") list = [...list].sort((a, b) => stockOf(b) - stockOf(a));
     else if (sortBy === "name-asc") list = [...list].sort((a, b) => String(a.title).localeCompare(String(b.title), "id"));
+    if (platform && !q && ageFilter === "price") list = [...list].sort((a, b) => priceOf(a) - priceOf(b));
+    if (platform && !q && ageFilter === "newest") {
+      const t = (p) => Date.parse(p.createdAt || p.created_at || p.updatedAt || p.updated_at || "") || 0;
+      list = [...list].sort((a, b) => t(b) - t(a));
+    }
     /* Produk yang masih ada stoknya selalu di atas; yang habis turun ke bawah
        tanpa mengubah urutan relatif hasil sortir di atas. */
     const ready = [];
@@ -2366,8 +2373,8 @@ function App() {
               <span className="cx-plat-icon is-sm"><ProductIcon icon={(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).icon} label={platform} size={22} /></span>
               <h2>{(CATALOG_PLATFORMS.find((x) => x.key === platform) || {}).label}</h2>
             </div>
-            <div className="cx-filter-chips" role="group" aria-label="Filter umur akun">
-              {CATALOG_AGES.map((a) => (
+            <div className="cx-filter-chips cx-plat-filter" role="group" aria-label="Filter akun">
+              {CATALOG_AGES.filter((a) => !a.googleOnly || platform === "google").map((a) => (
                 <button key={a.key} type="button" className={`cx-filter-chip${ageFilter === a.key ? " is-active" : ""}`} onClick={() => setAgeFilter(a.key)}>{a.label}</button>
               ))}
             </div>
@@ -4584,7 +4591,7 @@ function PlatformAccounts({ products, onAdd, canRate, onRate }) {
               <div>
                 <h3>{p.title}</h3>
                 <div className="cx-platacc-meta">
-                  <span className="cx-age-badge">{productIsPva(p) ? "PVA" : "Biasa"}</span>
+                  {productPlatformKey(p) === "google" && <span className="cx-age-badge">{productIsPva(p) ? "PVA" : "Biasa"}</span>}
                   {age.kind && <span className={`cx-age-badge is-${age.kind}`}>{age.label}</span>}
                   <span>{accounts.length ? `${accounts.length} akun` : "Stok habis"}</span>
                 </div>
@@ -4599,15 +4606,15 @@ function PlatformAccounts({ products, onAdd, canRate, onRate }) {
       })}
       {onRate && <PlatformReviews products={products} canRate={canRate} onRate={onRate} />}
       {detail && <ProductDetailModal product={detail} color="#3b82f6" open={!!detail} onClose={() => setDetail(null)} />}
-      <div className="cx-prodpage-buy is-sticky">
+      {count > 0 && <div className="cx-prodpage-buy is-sticky">
         <div className="cx-prodpage-total">
-          <small>{count ? `${count} akun dipilih` : "Belum ada akun dipilih"}</small>
+          <small>{`${count} akun dipilih`}</small>
           <strong>{formatPrice(total)}</strong>
         </div>
         <button className="cx-btn cx-btn-primary" disabled={count === 0} onClick={() => { picked.forEach((p) => onAdd(p, sel[p.id])); setSel({}); }}>
           <ShoppingBag size={14} /> Tambah ke keranjang
         </button>
-      </div>
+      </div>}
     </div>
   );
 }
