@@ -568,29 +568,75 @@ function prettyTitle(value) {
     .toLowerCase()
     .replace(/(^|\s|\()([a-z0-9])/g, (m, a, b) => a + b.toUpperCase());
 }
-function GoogleHelpBox() {
+function GoogleHelpBox({ orderId, product, accountEmail }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [files, setFiles] = useState([]);
+  const [images, setImages] = useState([]);
   const [state, setState] = useState({ loading: false, answer: "", error: "" });
+  const [esc, setEsc] = useState({ loading: false, ticket: "", error: "" });
+  const pick = (e) => {
+    const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/") && f.size <= MAX_MEDIA_BYTES);
+    setFiles((cur) => [...cur, ...list].slice(0, 3)); setImages([]); e.target.value = "";
+  };
+  const ensureUploaded = async () => {
+    if (images.length || !files.length) return images;
+    const urls = [];
+    for (const f of files) urls.push((await uploadMedia(f, "/api/assistant")).url);
+    setImages(urls); return urls;
+  };
+  const payload = (imgs) => ({ question: q, images: imgs, orderId, product, accountEmail });
   const ask = async () => {
     setState({ loading: true, answer: "", error: "" });
     try {
-      const r = await jsonRequest("/api/data?resource=google-help", { method: "POST", body: JSON.stringify({ question: q }) });
+      const imgs = await ensureUploaded();
+      const r = await jsonRequest("/api/data?resource=google-help", { method: "POST", body: JSON.stringify(payload(imgs)) });
       setState({ loading: false, answer: r.answer || "", error: "" });
     } catch (e) { setState({ loading: false, answer: "", error: e.message || "Bantuan gagal" }); }
   };
-  if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala mengamankan akun? Tanya AI</button>;
+  const escalate = async () => {
+    setEsc({ loading: true, ticket: "", error: "" });
+    try {
+      const imgs = await ensureUploaded();
+      const r = await jsonRequest("/api/data?resource=google-escalate", { method: "POST", body: JSON.stringify({ ...payload(imgs), answer: state.answer }) });
+      setEsc({ loading: false, ticket: r.ticket, error: "", existing: r.existing });
+    } catch (e) { setEsc({ loading: false, ticket: "", error: e.message || "Gagal meneruskan" }); }
+  };
+  if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala akun Google? Tanya AI</button>;
+  const busy = state.loading || esc.loading;
   return (
     <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
-      <strong style={{ fontSize: 12 }}>Bantuan pengamanan akun Google</strong>
-      <textarea className="cx-input" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Contoh: Saya diminta verifikasi nomor HP saat ganti password" style={{ width: "100%", resize: "vertical" }} />
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+      <strong style={{ fontSize: 12 }}>Bantuan kendala akun Google</strong>
+      <textarea className="cx-input" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jelaskan kendalanya. Contoh: muncul 'Verifikasi bahwa ini Anda' saat login" style={{ width: "100%", resize: "vertical" }} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        {files.map((f, i) => (
+          <span key={i} style={{ position: "relative" }}>
+            <img src={URL.createObjectURL(f)} alt="Tangkapan layar" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }} />
+            <button type="button" aria-label="Hapus gambar" onClick={() => { setFiles(files.filter((_, k) => k !== i)); setImages([]); }} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: 9, border: 0, background: "var(--danger, #ef4444)", color: "#fff", fontSize: 11, lineHeight: "18px", padding: 0 }}>×</button>
+          </span>
+        ))}
+        {files.length < 3 && (
+          <label className="cx-btn cx-btn-secondary cx-btn-sm" style={{ cursor: "pointer" }}>
+            + Tangkapan layar
+            <input type="file" accept="image/*" multiple hidden onChange={pick} />
+          </label>
+        )}
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
         <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => setOpen(false)}>Tutup</button>
-        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={state.loading || q.trim().length < 5} onClick={ask}>{state.loading ? "Menjawab..." : "Tanya"}</button>
+        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || q.trim().length < 5} onClick={ask}>{state.loading ? "Menganalisis..." : "Analisis kendala"}</button>
       </div>
       {state.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{state.error}</div>}
       {state.answer && <div style={{ fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{state.answer}</div>}
-      <small style={{ color: "var(--faint)", fontSize: 10 }}>Jangan pernah tulis password atau kode verifikasi di sini.</small>
+      {state.answer && !esc.ticket && (
+        <div style={{ display: "grid", gap: 6, borderTop: "1px solid var(--line)", paddingTop: 8 }}>
+          <small style={{ fontSize: 11, color: "var(--muted)" }}>Masih belum beres?</small>
+          <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={busy} onClick={escalate}>{esc.loading ? "Mengirim..." : "Teruskan ke admin"}</button>
+          {esc.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{esc.error}</div>}
+        </div>
+      )}
+      {esc.ticket && <div style={{ fontSize: 12, color: "#22c55e" }}>{esc.existing ? "Kendala ini sudah diteruskan sebelumnya" : "Terkirim ke admin"} — tiket <b>{esc.ticket}</b>. Pantau balasannya di menu Laporan.</div>}
+      <small style={{ color: "var(--faint)", fontSize: 10 }}>Jangan tulis password atau kode verifikasi. Tutupi kode di tangkapan layar.</small>
     </div>
   );
 }
@@ -2705,7 +2751,7 @@ function OrderItems({ items, onNotice, orderId }) {
             />
           ))}
           {item.deliveryDetails && <DeliveryNote className="cx-order-note" text={item.deliveryDetails} />}
-          {/google|gmail/i.test(`${item.title || ""} ${item.loginType || ""}`) && <GoogleHelpBox />}
+          {/google|gmail/i.test(`${item.title || ""} ${item.loginType || ""}`) && <GoogleHelpBox orderId={orderId} product={item.title} accountEmail={(item.accounts || [])[0]?.email || ""} />}
         </div>
       ))}
     </div>

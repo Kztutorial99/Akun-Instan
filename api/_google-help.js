@@ -8,7 +8,7 @@ const GUIDE = `PANDUAN SERAH TERIMA AKUN GOOGLE AKUNINSTAN:
 6. Aktifkan verifikasi dua langkah (https://myaccount.google.com/signinoptions/two-step-verification).
 Garansi login 1x24 jam sejak pembelian. Masalah di luar panduan / garansi: hubungi admin AkunInstan lewat menu Laporan.`;
 
-async function askGoogleHelp(question) {
+async function askGoogleHelp(question, images = [], order = null) {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) return { status: 500, error: "Bantuan AI belum aktif" };
   const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
@@ -17,7 +17,10 @@ async function askGoogleHelp(question) {
     body: JSON.stringify({
       model: "openai/gpt-6-astra", stream: true, store: false, reasoning: { effort: "low" },
       instructions: `Kamu asisten AkunInstan yang membantu pembeli mengamankan akun Google yang baru dibeli. Jawab hanya berdasarkan panduan berikut dan pengetahuan umum keamanan akun Google. Bahasa Indonesia santai, ringkas, berupa langkah bernomor (maks 6). Jangan pernah meminta password atau kode verifikasi. Jika pertanyaan di luar topik akun Google, tolak singkat. Jika masalah butuh admin (akun tidak bisa login, diminta verifikasi nomor yang bukan milik pembeli, akun ditangguhkan), sarankan lapor ke admin lewat menu Laporan selama masih masa garansi.\n\n${GUIDE}`,
-      input: [{ role: "user", content: question }],
+      input: [{ role: "user", content: [
+        { type: "input_text", text: `${order ? `DETAIL PESANAN: ID ${order.id}, produk "${order.product}", dibeli ${order.createdAt}, akun ${order.email || "-"}.\n` : ""}KENDALA PEMBELI: ${question}${images.length ? `\n(${images.length} tangkapan layar terlampir — baca pesan/error di gambar untuk mengidentifikasi masalah.)` : ""}\n\nFormat jawaban: baris pertama "Masalah: <identifikasi singkat>", lalu langkah perbaikan bernomor.` },
+        ...images.map((u) => ({ type: "input_image", image_url: u })),
+      ] }],
     }),
   });
   if (!res.ok) {

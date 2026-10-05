@@ -330,6 +330,21 @@ async function handleWhatsappWebhook(request, response) {
   return response.status(200).json({ received: true });
 }
 
+
+const BLOB_IMG = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
+function blobImages(raw) {
+  return (Array.isArray(raw) ? raw : []).map((u) => String(u || "")).filter((u) => BLOB_IMG.test(u)).slice(0, 3).map((u) => u.slice(0, 500));
+}
+/** Pesanan milik user yang login; detail produk dari klien hanya dipakai sebagai label. */
+async function ownOrder(sql, user, body) {
+  const id = String(body.orderId || "").slice(0, 80);
+  if (!id) return null;
+  const [row] = await sql`SELECT id, total, created_at AS "createdAt" FROM codexa_orders WHERE id = ${id} AND user_id = ${user.id} LIMIT 1`;
+  if (!row) return null;
+  return { id: row.id, total: row.total, createdAt: new Date(row.createdAt).toISOString().slice(0, 16).replace("T", " "),
+    product: String(body.product || "").slice(0, 160), email: String(body.accountEmail || "").slice(0, 160) };
+}
+
 module.exports = async function handler(request, response) {
   /* ?wa=webhook = Webhook WhatsApp (Meta): verifikasi + pesan masuk. */
   if (request.query && request.query.wa === "webhook") {
@@ -344,11 +359,39 @@ module.exports = async function handler(request, response) {
       const sql = neon(process.env.DATABASE_URL);
       const user = await currentUser(sql, request).catch(() => null);
       if (!user) return response.status(401).json({ error: "Login dulu untuk memakai bantuan" });
-      const q = String((bodyOf(request) || {}).question || "").trim().slice(0, 600);
+      const body = bodyOf(request) || {};
+      const q = String(body.question || "").trim().slice(0, 600);
       if (q.length < 5) return response.status(400).json({ error: "Tulis pertanyaanmu dulu" });
-      const r = await require("./_google-help").askGoogleHelp(q);
+      const images = blobImages(body.images);
+      const order = await ownOrder(sql, user, body);
+      const r = await require("./_google-help").askGoogleHelp(q, images, order);
       return response.status(r.status).json(r.error ? { error: r.error } : { answer: r.answer });
     } catch (e) { return response.status(500).json({ error: "Bantuan AI gagal" }); }
+  }
+
+  /* POST ?resource=google-escalate = teruskan kendala akun Google ke admin (masuk Data Laporan). */
+  if (request.method === "POST" && request.query && request.query.resource === "google-escalate") {
+    response.setHeader("Cache-Control", "no-store");
+    try {
+      const sql = neon(process.env.DATABASE_URL);
+      const user = await currentUser(sql, request).catch(() => null);
+      if (!user) return response.status(401).json({ error: "Login dulu" });
+      const body = bodyOf(request) || {};
+      const q = String(body.question || "").trim().slice(0, 600);
+      if (q.length < 5) return response.status(400).json({ error: "Tulis kendalanya dulu" });
+      const order = await ownOrder(sql, user, body);
+      if (!order) return response.status(404).json({ error: "Pesanan tidak ditemukan" });
+      const [open] = await sql`SELECT ticket FROM codexa_reports WHERE user_id = ${user.id} AND status IN ('open','in_progress') AND detail LIKE ${"%Pesanan: " + order.id + "%"} LIMIT 1`;
+      if (open) return response.status(200).json({ ticket: open.ticket, existing: true });
+      const media = blobImages(body.images).map((url) => ({ url, type: "image/*", name: "screenshot", size: 0 }));
+      const answer = String(body.answer || "").slice(0, 3000);
+      const detail = `Pesanan: ${order.id}\nProduk: ${order.product}\nAkun: ${order.email || "-"}\nTanggal beli: ${order.createdAt}\nTotal: ${order.total}\n\nKendala pembeli:\n${q}\n\nJawaban bantuan AI yang sudah diterima:\n${answer || "(belum ada)"}`;
+      const ticket = `TXT-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+      await sql`INSERT INTO codexa_reports (id, ticket, user_id, user_name, user_email, category, summary, detail, urgency, status, source, attachments)
+        VALUES (${"rep_" + crypto.randomBytes(8).toString("hex")}, ${ticket}, ${user.id}, ${user.name || ""}, ${user.email || ""},
+          'akun_google', ${("Kendala akun Google: " + q).slice(0, 160)}, ${detail}, 'tinggi', 'open', 'order', ${JSON.stringify(media)}::jsonb)`;
+      return response.status(200).json({ ticket });
+    } catch (e) { console.error("google-escalate", e && e.message); return response.status(500).json({ error: "Gagal meneruskan ke admin" }); }
   }
 
   /* POST ?resource=visit = catat kunjungan halaman (Visitor Traffic, tanpa login). */
