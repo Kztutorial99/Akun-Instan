@@ -5473,7 +5473,7 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
               />
               <div className="cx-profile-photo-row">
                 <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => fileRef.current && fileRef.current.click()}>
-                  <Mail size={12} /> {avatar ? "Ganti foto" : "Unggah foto"}
+                  <ImagePlus size={12} /> {avatar ? "Ganti foto" : "Unggah foto"}
                 </button>
                 {avatar && (
                   <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => { setAvatar(""); setAvatarTouched(true); }}>
