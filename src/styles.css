@@ -4355,3 +4355,4 @@ button.is-spinning .lucide-refresh-cw{animation:cx-spin-k .8s linear infinite}
 @media (max-width: 380px) {
   .cx-account-wallets { grid-template-columns: 1fr; }
 }
+.cx-profile-checkin{margin:12px 0}
