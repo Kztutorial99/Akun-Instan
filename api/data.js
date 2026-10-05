@@ -333,7 +333,10 @@ async function handleWhatsappWebhook(request, response) {
 
 const BLOB_IMG = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
 function blobImages(raw) {
-  return (Array.isArray(raw) ? raw : []).map((u) => String(u || "")).filter((u) => BLOB_IMG.test(u)).slice(0, 3).map((u) => u.slice(0, 500));
+  // Blob URL lama atau data URL JPEG/PNG/WebP hasil kompres di HP (maks ~700KB per gambar).
+  return (Array.isArray(raw) ? raw : []).map((u) => String(u || ""))
+    .filter((u) => (BLOB_IMG.test(u) && u.length <= 500) || (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u) && u.length <= 950000))
+    .slice(0, 3);
 }
 /** Pesanan milik user yang login; detail produk dari klien hanya dipakai sebagai label. */
 async function ownOrder(sql, user, body) {
@@ -383,7 +386,7 @@ module.exports = async function handler(request, response) {
       if (!order) return response.status(404).json({ error: "Pesanan tidak ditemukan" });
       const [open] = await sql`SELECT ticket FROM codexa_reports WHERE user_id = ${user.id} AND status IN ('open','in_progress') AND detail LIKE ${"%Pesanan: " + order.id + "%"} LIMIT 1`;
       if (open) return response.status(200).json({ ticket: open.ticket, existing: true });
-      const media = blobImages(body.images).map((url) => ({ url, type: "image/*", name: "screenshot", size: 0 }));
+      const media = blobImages(body.images).map((url) => ({ url, type: "image/jpeg", name: "screenshot", size: url.length }));
       const answer = String(body.answer || "").slice(0, 3000);
       const detail = `Pesanan: ${order.id}\nProduk: ${order.product}\nAkun: ${order.email || "-"}\nTanggal beli: ${order.createdAt}\nTotal: ${order.total}\n\nKendala pembeli:\n${q}\n\nJawaban bantuan AI yang sudah diterima:\n${answer || "(belum ada)"}`;
       const ticket = `TXT-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;

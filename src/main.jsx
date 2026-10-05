@@ -606,23 +606,43 @@ function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
     </div>
   );
 }
+function shrinkImage(file, max = 1280, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+    img.src = url;
+  });
+}
 function GoogleHelpBox({ orderId, product, accountEmail }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [files, setFiles] = useState([]);
   const [images, setImages] = useState([]);
+  const [prep, setPrep] = useState(false);
   const [state, setState] = useState({ loading: false, answer: "", error: "" });
   const [esc, setEsc] = useState({ loading: false, ticket: "", error: "" });
-  const pick = (e) => {
-    const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/") && f.size <= MAX_MEDIA_BYTES);
-    setFiles((cur) => [...cur, ...list].slice(0, 3)); setImages([]); e.target.value = "";
+  // Gambar dikecilkan di HP (maks 1280px, JPEG) lalu dikirim langsung — tanpa upload terpisah.
+  const pick = async (e) => {
+    const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/")).slice(0, 3 - images.length);
+    e.target.value = "";
+    if (!list.length) return;
+    setPrep(true);
+    try {
+      const out = [];
+      for (const f of list) out.push(await shrinkImage(f));
+      setImages((cur) => [...cur, ...out].slice(0, 3));
+    } catch (_) { setState((s) => ({ ...s, error: "Gambar tidak bisa dibaca, coba gambar lain" })); }
+    setPrep(false);
   };
-  const ensureUploaded = async () => {
-    if (images.length || !files.length) return images;
-    const urls = [];
-    for (const f of files) urls.push((await uploadMedia(f, "/api/assistant")).url);
-    setImages(urls); return urls;
-  };
+  const ensureUploaded = async () => images;
   const payload = (imgs) => ({ question: q, images: imgs, orderId, product, accountEmail });
   const ask = async () => {
     setState({ loading: true, answer: "", error: "" });
@@ -645,24 +665,24 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
   return (
     <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
       <strong style={{ fontSize: 12 }}>Bantuan kendala akun Google</strong>
-      <textarea className="cx-input" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jelaskan kendalanya. Contoh: muncul 'Verifikasi bahwa ini Anda' saat login" style={{ width: "100%", resize: "vertical" }} />
+      <textarea className="cx-gh-textarea" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jelaskan kendalanya. Contoh: muncul 'Verifikasi bahwa ini Anda' saat login" />
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        {files.map((f, i) => (
+        {images.map((src, i) => (
           <span key={i} style={{ position: "relative" }}>
-            <img src={URL.createObjectURL(f)} alt="Tangkapan layar" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }} />
-            <button type="button" aria-label="Hapus gambar" onClick={() => { setFiles(files.filter((_, k) => k !== i)); setImages([]); }} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: 9, border: 0, background: "var(--danger, #ef4444)", color: "#fff", fontSize: 11, lineHeight: "18px", padding: 0 }}>×</button>
+            <img src={src} alt="Tangkapan layar" style={{ width: 52, height: 52, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }} />
+            <button type="button" aria-label="Hapus gambar" onClick={() => setImages(images.filter((_, k) => k !== i))} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: 9, border: 0, background: "var(--danger, #ef4444)", color: "#fff", fontSize: 11, lineHeight: "18px", padding: 0 }}>×</button>
           </span>
         ))}
-        {files.length < 3 && (
-          <label className="cx-btn cx-btn-secondary cx-btn-sm" style={{ cursor: "pointer" }}>
-            + Tangkapan layar
+        {images.length < 3 && (
+          <label className="cx-btn cx-btn-secondary cx-btn-sm" style={{ cursor: "pointer", opacity: prep ? 0.6 : 1 }}>
+            {prep ? "Memproses..." : "+ Tangkapan layar"}
             <input type="file" accept="image/*" multiple hidden onChange={pick} />
           </label>
         )}
       </div>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
         <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => setOpen(false)}>Tutup</button>
-        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || q.trim().length < 5} onClick={ask}>{state.loading ? "Menganalisis..." : "Analisis kendala"}</button>
+        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || prep || q.trim().length < 5} onClick={ask}>{state.loading ? "Menganalisis... (±20 dtk)" : "Analisis kendala"}</button>
       </div>
       {state.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{state.error}</div>}
       {state.answer && <div style={{ fontSize: 12, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{state.answer}</div>}

@@ -1964,3 +1964,8 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-filter-chips.cx-plat-filter::-webkit-scrollbar{display:none}
 .cx-filter-chips.cx-plat-filter .cx-filter-chip{flex:0 0 auto!important;height:34px;padding:0 16px;border-radius:999px;border:1px solid var(--b2,#e5e7eb);background:var(--s1,#fff);font-weight:600;font-size:13px;white-space:nowrap;display:inline-flex;align-items:center}
 .cx-filter-chips.cx-plat-filter .cx-filter-chip.is-active{background:#3b82f6;border-color:#3b82f6;color:#fff}
+
+/* Kotak ketik bantuan akun Google (tema gelap). */
+.cx-gh-textarea{width:100%;resize:vertical;min-height:84px;padding:10px 12px;border-radius:12px;border:1px solid rgba(167,139,250,.28);background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px;line-height:1.5;outline:none;box-sizing:border-box}
+.cx-gh-textarea:focus{border-color:rgba(167,139,250,.7);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.cx-gh-textarea::placeholder{color:rgba(255,255,255,.38)}
