@@ -1461,6 +1461,7 @@ function App() {
       syncing = true;
       try {
         await Promise.allSettled([loadSession(), loadCatalog()]);
+        window.dispatchEvent(new Event("codexa:page-change"));
         lastSync = Date.now();
       } finally {
         syncing = false;
@@ -1561,6 +1562,7 @@ function App() {
     }
     window.history.pushState({}, "", page === "store" ? "/" : `/${page}`);
     setActivePage(page);
+    window.dispatchEvent(new Event("codexa:page-change"));
     // Pindah menu harus menutup semua panel yang sedang terbuka.
     setCartOpen(false);
     setBuyItem(null);

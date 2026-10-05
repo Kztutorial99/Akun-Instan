@@ -62,6 +62,7 @@ const REASON = { checkin: "Check-in", redeem: "Tukar produk", refund: "Pengembal
 
 let checkinCache = null;
 let checkinRequest = null;
+let lastCheckinSync = 0;
 
 async function loadCheckinData() {
   if (checkinRequest) return checkinRequest;
@@ -72,6 +73,13 @@ async function loadCheckinData() {
     })
     .finally(() => { checkinRequest = null; });
   return checkinRequest;
+}
+
+function shouldSyncCheckin() {
+  const now = Date.now();
+  if (now - lastCheckinSync < 500) return false;
+  lastCheckinSync = now;
+  return true;
 }
 
 export function useCheckin(enabled = true) {
@@ -85,11 +93,25 @@ export function useCheckin(enabled = true) {
   }, [enabled]);
   useEffect(() => {
     load();
-    const onVis = () => { if (document.visibilityState === "visible") load(); };
-    const onPoints = () => load();
+    const sync = () => {
+      if (document.visibilityState === "visible" && navigator.onLine && shouldSyncCheckin()) load();
+    };
+    const onVis = () => { if (document.visibilityState === "visible") sync(); };
+    const onPoints = () => sync();
     document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", sync);
+    window.addEventListener("pageshow", sync);
+    window.addEventListener("online", sync);
     window.addEventListener("codexa:points", onPoints);
-    return () => { document.removeEventListener("visibilitychange", onVis); window.removeEventListener("codexa:points", onPoints); };
+    window.addEventListener("codexa:page-change", sync);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("pageshow", sync);
+      window.removeEventListener("online", sync);
+      window.removeEventListener("codexa:points", onPoints);
+      window.removeEventListener("codexa:page-change", sync);
+    };
   }, [load]);
   return [state, setState, load];
 }
