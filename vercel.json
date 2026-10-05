@@ -27,9 +27,20 @@
     },
     "api/admin/youtube.js": {
       "maxDuration": 60
+    },
+    "api/admin/settings.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
+    {
+      "source": "/api/admin/google-checker-callback",
+      "destination": "/api/admin/settings?resource=gchecker-callback"
+    },
+    {
+      "source": "/api/cron/google-checker",
+      "destination": "/api/admin/settings?resource=gchecker-cron"
+    },
     {
       "source": "/checkin",
       "destination": "/"
@@ -228,5 +239,11 @@
   ],
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/google-checker",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

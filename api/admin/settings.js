@@ -14,12 +14,63 @@ const {
 const { readAgedConfig, writeAgedConfig, DEFAULT_AGED_CONFIG } = require("../_aged");
 const { visitStats } = require("../_visits");
 const { readCustomEmailFee, writeCustomEmailFee } = require("../_custom-email-fee");
+const GC = require("../_google-checker");
+
+const page = (response, status, title, message) =>
+  response.status(status).setHeader("Content-Type", "text/html; charset=utf-8").send(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
+     <body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#0b0a10;color:#efeaff;font:14px/1.6 system-ui,sans-serif">
+     <div style="max-width:420px;padding:28px;text-align:center"><h1 style="font-size:18px">${title}</h1>
+     <p style="color:#b3a9cc">${String(message).replace(/[<>&]/g, "")}</p><a href="/admin" style="color:#c4a6ff">Kembali ke Admin Panel</a></div></body>`);
 
 module.exports = async function handler(request, response) {
+  const resource = (request.query && request.query.resource) || "";
+
+  /* Callback OAuth Google Checker: dilindungi state bertanda tangan (cookie admin SameSite=Strict tidak terkirim). */
+  if (resource === "gchecker-callback") {
+    try {
+      const email = await GC.handleCallback(db(), request);
+      return page(response, 200, "Akun terhubung", `${email} berhasil disimpan dan berstatus ACTIVE.`);
+    } catch (error) {
+      return page(response, 400, "Gagal menghubungkan akun", (error && error.message) || "Terjadi kesalahan");
+    }
+  }
+
+  /* Cron harian Vercel. */
+  if (resource === "gchecker-cron") {
+    const secret = process.env.CRON_SECRET || "";
+    if (!secret || request.headers.authorization !== `Bearer ${secret}`) return response.status(401).json({ error: "Unauthorized" });
+    const checked = await GC.checkAll(db());
+    return response.status(200).json({ ok: true, checked });
+  }
+
   if (!isAdmin(request)) return response.status(401).json({ error: "Sesi admin tidak valid" });
 
   try {
     const sql = db();
+
+    if (resource.startsWith("gchecker")) {
+      response.setHeader("Cache-Control", "no-store");
+      const body = request.method === "GET" ? {} : bodyOf(request);
+      if (request.method === "GET" && resource === "gchecker") {
+        const c = GC.creds();
+        return response.status(200).json({ configured: Boolean(c.id && c.secret), accounts: await GC.list(sql) });
+      }
+      if (request.method === "POST" && resource === "gchecker-connect") return response.status(200).json({ url: GC.authUrl(request) });
+      if (request.method === "POST" && resource === "gchecker-check") {
+        const checked = await GC.checkAll(sql, body.id ? String(body.id) : undefined);
+        return response.status(200).json({ ok: true, checked, accounts: await GC.list(sql) });
+      }
+      if (request.method === "POST" && resource === "gchecker-sold") {
+        await GC.markSold(sql, String(body.id || ""));
+        return response.status(200).json({ ok: true, accounts: await GC.list(sql) });
+      }
+      if (request.method === "DELETE" && resource === "gchecker") {
+        await GC.remove(sql, String(body.id || (request.query && request.query.id) || ""));
+        return response.status(200).json({ ok: true, accounts: await GC.list(sql) });
+      }
+      return response.status(405).json({ error: "Method not allowed" });
+    }
 
     /* Visitor Traffic: ringkasan kunjungan website untuk menu admin. */
     if (request.method === "GET" && request.query && request.query.resource === "visits") {

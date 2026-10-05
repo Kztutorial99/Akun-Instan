@@ -189,6 +189,8 @@ function clampNum(value, min, max, fallback) {
 }
 
 module.exports = {
+  encryptSecret,
+  decryptSecret,
   DEFAULT_BASE,
   DEFAULT_MODEL_ADMIN,
   DEFAULT_MODEL_USER,

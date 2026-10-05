@@ -7,6 +7,7 @@ import {
 } from "./main.jsx";
 import YoutubePromo from "./youtube-promo.jsx";
 import VisitorTraffic from "./visitor-traffic.jsx";
+import GoogleChecker from "./google-checker.jsx";
 import ReportsPage from "./reports-page.jsx";
 import AdminNotifyPage from "./admin-notify-page.jsx";
 import AdminCheckinPage from "./admin-checkin-page.jsx";
@@ -820,6 +821,7 @@ function AdminPage({ onBack, onNotice }) {
     { label: "Inject Data",  shortcut: "⌘J", icon: Plus },
     { label: "YouTube Promo", shortcut: "⌘Y", icon: MonitorPlay },
     { label: "Visitor Traffic", shortcut: "⌘V", icon: Activity },
+    { label: "Google Checker", shortcut: "⌘G", icon: ShieldCheck },
     { label: "Pengaturan",  shortcut: "⌘,", icon: Settings },
   ];
 
@@ -967,6 +969,8 @@ function AdminPage({ onBack, onNotice }) {
         <div className="cx-admin-content" ref={contentRef}>
           {activeNav === "YouTube Promo" ? (
             <YoutubePromo onNotice={onNotice} />
+          ) : activeNav === "Google Checker" ? (
+            <GoogleChecker onNotice={onNotice} />
           ) : activeNav === "Visitor Traffic" ? (
             <VisitorTraffic onNotice={onNotice} />
           ) : activeNav === "Check-in Point" ? (
