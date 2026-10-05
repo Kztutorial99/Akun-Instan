@@ -363,8 +363,10 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 .cx-footer { border-top: 1px solid var(--b1); padding: 10px 0; background: var(--bg); }
 .cx-footer-inner { display: flex; flex-direction: column; gap: 8px; }
 .cx-footer-top { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px 24px; }
-.cx-footer-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.cx-footer-brand p { margin: 0; color: var(--ink2); font-size: 10px; line-height: 1.4; max-width: 200px; }
+.cx-footer-brand { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.cx-footer-brand p { margin: 0; color: var(--ink2); font-size: 10px; line-height: 1.4; max-width: none; }
+.cx-footer-security { color: var(--indigo3); font-size: 10px; line-height: 1.4; text-decoration: none; }
+.cx-footer-security:hover { text-decoration: underline; }
 .cx-footer-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 14px; }
 .cx-footer-links button { font-size: 11px; color: var(--muted); transition: color .15s; white-space: nowrap; padding: 2px 0; background: transparent; border: none; cursor: pointer; }
 .cx-footer-links button:hover { color: var(--indigo3); }
@@ -634,7 +636,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .cx-account-head { display: flex; gap: 8px; align-items: center; padding: 6px; }
 .cx-account-head strong { display: block; font: 600 12px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .cx-account-head small { display: block; font-size: 10px; color: var(--muted); word-break: break-all; }
-.cx-account-balance { display: flex; align-items: center; justify-content: space-between; margin: 5px 0 6px; padding: 7px 8px; border-radius: 6px; background: var(--b1); font-size: 10.5px; }
+.cx-account-balance { display: flex; align-items: center; justify-content: flex-start; gap: 5px; margin: 5px 0 6px; padding: 7px 8px; border-radius: 6px; background: var(--b1); font-size: 10.5px; }
 .cx-account-balance span { display: flex; align-items: center; gap: 6px; color: var(--muted); }
 .cx-account-balance strong { font: 600 12.5px ui-monospace, monospace; }
 .cx-account-item { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 7px 9px; border-radius: 6px; font: 500 11px Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink2); cursor: pointer; text-align: left; }

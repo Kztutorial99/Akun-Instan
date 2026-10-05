@@ -1283,8 +1283,9 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
     align-items:start !important;
     gap:8px 14px;
   }
-  .cx-footer-brand{ grid-column:1 / -1; flex-direction:row; align-items:center; justify-content:space-between; gap:10px; }
-  .cx-footer-brand p{ max-width:170px; font-size:10px; line-height:1.35; text-align:right; }
+  .cx-footer-brand{ grid-column:1 / -1; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:3px; }
+  .cx-footer-brand p{ max-width:none; font-size:10px; line-height:1.35; text-align:left; }
+  .cx-footer-security{ font-size:10px; }
   .cx-footer-col{ gap:1px; }
   .cx-footer-col strong{ font-size:10px; margin-bottom:1px; }
   .cx-footer-col button{ font-size:10px; line-height:1.35; padding:1px 0; }
