@@ -4425,6 +4425,144 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
 ════════════════════════════════════════════════════ */
 /* Katalog > platform: langsung daftar akun per produk, bisa dicentang & dibeli
    tanpa buka halaman produk dulu. */
+/* Semua ulasan platform dalam satu bagian: digabung dari semua produk. */
+function PlatformReviews({ products, canRate, onRate }) {
+  const list = Array.isArray(products) ? products : [];
+  const [targetId, setTargetId] = useState(null);
+  const [hover, setHover] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const ids = list.map((p) => p.id).join("|");
+  useEffect(() => {
+    setTargetId((cur) => (list.some((p) => p.id === cur) ? cur : list[0] ? list[0].id : null));
+  }, [ids]);
+
+  const merged = list
+    .flatMap((p) => (Array.isArray(p.reviews) ? p.reviews.map((r) => ({ ...r, productTitle: p.title })) : []))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const totalCount = Math.max(list.reduce((a, p) => a + ratingCountOf(p), 0), merged.length);
+  const totalSold = list.reduce((a, p) => a + soldOf(p), 0);
+  const weighted = list.reduce((a, p) => a + ratingOf(p) * ratingCountOf(p), 0);
+  const avg = totalCount ? weighted / totalCount : 0;
+  const visible = showAll ? merged : merged.slice(0, 4);
+
+  const target = list.find((p) => p.id === targetId) || list[0];
+  const mine = Number(target && target.myRating) || 0;
+  const myComment = (target && target.myComment) || "";
+  const [draftStars, setDraftStars] = useState(0);
+  const [draft, setDraft] = useState("");
+  useEffect(() => { setDraftStars(mine); setDraft(myComment); }, [targetId, mine, myComment]);
+
+  if (!list.length) return null;
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (busy || !target) return;
+    setBusy(true);
+    try { await onRate(target, draftStars, draft.trim()); } finally { setBusy(false); }
+  };
+
+  const MAX = 600;
+  const active = hover || draftStars;
+
+  return (
+    <section className="cx-prodpage-card cx-rating-card">
+      <h2>Ulasan &amp; penilaian</h2>
+      <div className="cx-rating-summary">
+        <div className="cx-rating-score">
+          <strong>{totalCount ? avg.toFixed(1) : "–"}</strong>
+          <StarRow value={avg} size={14} />
+          <small>{totalCount ? `${totalCount} penilaian` : "Belum ada penilaian"}</small>
+        </div>
+        <div className="cx-rating-sold">
+          <strong>{totalSold}</strong>
+          <small>akun terjual</small>
+        </div>
+      </div>
+
+      {merged.length > 0 && (
+        <div className="cx-reviews">
+          {visible.map((review, idx) => (
+            <article key={`${review.productTitle}-${review.id || idx}`} className="cx-review">
+              <div className="cx-review-top">
+                <span className="cx-review-avatar" aria-hidden="true">{(review.author || "?").charAt(0).toUpperCase()}</span>
+                <span className="cx-review-who">
+                  <strong>{review.author}</strong>
+                  <small>{reviewDate(review.createdAt)}</small>
+                </span>
+                <StarRow value={review.rating} size={11} />
+              </div>
+              <p className="cx-review-text">{review.comment}</p>
+              <small className="cx-review-prod">{review.productTitle}</small>
+            </article>
+          ))}
+          {merged.length > 4 && (
+            <button type="button" className="cx-review-more" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "Tampilkan lebih sedikit" : `Lihat semua ${merged.length} ulasan`}
+            </button>
+          )}
+        </div>
+      )}
+      {merged.length === 0 && (
+        <p className="cx-review-empty">Belum ada ulasan. Jadi yang pertama berbagi pengalamanmu.</p>
+      )}
+
+      <form className="cx-rating-pick" onSubmit={submit}>
+        {list.length > 1 && (
+          <div className="cx-rev-target">
+            <span className="cx-rating-pick-label">Ulas produk:</span>
+            {list.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={target && p.id === target.id ? "is-on" : ""}
+                onClick={() => setTargetId(p.id)}
+                disabled={busy}
+              >
+                {p.title}
+              </button>
+            ))}
+          </div>
+        )}
+        <span className="cx-rating-pick-label">{mine ? "Ubah ulasanmu" : "Tulis ulasan produk ini"}</span>
+        <div className="cx-rating-stars" onMouseLeave={() => setHover(0)}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={`cx-rating-star${n <= active ? " is-on" : ""}`}
+              aria-label={`Beri ${n} bintang`}
+              disabled={busy}
+              onMouseEnter={() => setHover(n)}
+              onFocus={() => setHover(n)}
+              onClick={() => setDraftStars(n)}
+            >
+              <Star size={22} />
+            </button>
+          ))}
+        </div>
+        <textarea
+          className="cx-review-input"
+          rows={3}
+          maxLength={MAX}
+          value={draft}
+          disabled={busy}
+          onChange={(e) => setDraft(e.target.value.slice(0, MAX))}
+          placeholder={canRate ? "Ceritakan pengalamanmu memakai akun ini…" : "Masuk dulu untuk menulis ulasan"}
+        />
+        <div className="cx-review-actions">
+          <small className="cx-review-count">{draft.length}/{MAX}</small>
+          <button type="submit" className="cx-review-submit" disabled={busy || draftStars < 1}>
+            {busy ? "Mengirim…" : mine ? "Simpan ulasan" : "Kirim ulasan"}
+          </button>
+        </div>
+        {!canRate && <small className="cx-rating-note">Masuk dulu untuk memberi bintang dan ulasan.</small>}
+        {canRate && draftStars < 1 && <small className="cx-rating-note">Pilih bintang dulu sebelum mengirim.</small>}
+      </form>
+    </section>
+  );
+}
+
 function PlatformAccounts({ products, onAdd, canRate, onRate }) {
   const [sel, setSel] = useState({});
   const [detail, setDetail] = useState(null);
@@ -4459,9 +4597,7 @@ function PlatformAccounts({ products, onAdd, canRate, onRate }) {
           </section>
         );
       })}
-      {onRate && products.map((p) => (
-        <ProductRating key={`r-${p.id}`} product={p} canRate={canRate} onRate={onRate} />
-      ))}
+      {onRate && <PlatformReviews products={products} canRate={canRate} onRate={onRate} />}
       {detail && <ProductDetailModal product={detail} color="#3b82f6" open={!!detail} onClose={() => setDetail(null)} />}
       <div className="cx-prodpage-buy is-sticky">
         <div className="cx-prodpage-total">
