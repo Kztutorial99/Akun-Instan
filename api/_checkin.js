@@ -65,6 +65,9 @@ const ensureCheckinTables = once(async (sql) => {
   await sql`ALTER TABLE codexa_points ADD COLUMN IF NOT EXISTS last_at TIMESTAMPTZ`;
   await sql`UPDATE codexa_points p SET last_at = c.m FROM (SELECT user_id, MAX(created_at) m FROM codexa_checkins GROUP BY user_id) c
     WHERE p.user_id = c.user_id AND p.last_at IS NULL`;
+  // Siklus 24 jam (bukan hari kalender): satu user boleh punya >1 baris per tanggal.
+  await sql`ALTER TABLE codexa_checkins DROP CONSTRAINT IF EXISTS codexa_checkins_user_id_day_key`;
+  await sql`CREATE INDEX IF NOT EXISTS codexa_checkins_user_idx ON codexa_checkins (user_id, created_at DESC)`;
 });
 
 function sanitizeSettings(raw) {
@@ -173,20 +176,18 @@ async function handleUserCheckin(sql, user, request, response) {
   const reward = settings.rewards[(streak - 1) % 7];
   const ua = text(String(request.headers["user-agent"] || ""), 200);
 
-  const [inserted] = await sql`
-    INSERT INTO codexa_checkins (id, user_id, day, reward, streak, ip_hash, ua)
-    VALUES (${crypto.randomUUID()}, ${user.id}, ${t.today}::date, ${reward}, ${streak}, ${ip}, ${ua})
-    ON CONFLICT (user_id, day) DO NOTHING RETURNING id`;
-  if (!inserted) return response.status(409).json({ error: "Kamu sudah check-in hari ini", code: "ALREADY" });
-
-  await sql`
-    INSERT INTO codexa_points (user_id, points, streak, best_streak, last_day, last_at, total_checkins, total_earned)
-    VALUES (${user.id}, ${reward}, ${streak}, ${streak}, ${t.today}::date, NOW(), 1, ${reward})
-    ON CONFLICT (user_id) DO UPDATE SET
-      points = codexa_points.points + ${reward}, streak = ${streak},
-      best_streak = GREATEST(codexa_points.best_streak, ${streak}), last_day = ${t.today}::date, last_at = NOW(),
-      total_checkins = codexa_points.total_checkins + 1,
-      total_earned = codexa_points.total_earned + ${reward}, updated_at = NOW()`;
+  // Kunci atomik: hanya satu request yang lolos per siklus 24 jam (jam server).
+  await sql`INSERT INTO codexa_points (user_id) VALUES (${user.id}) ON CONFLICT (user_id) DO NOTHING`;
+  const [locked] = await sql`
+    UPDATE codexa_points SET
+      points = points + ${reward}, streak = ${streak},
+      best_streak = GREATEST(best_streak, ${streak}), last_day = ${t.today}::date, last_at = NOW(),
+      total_checkins = total_checkins + 1, total_earned = total_earned + ${reward}, updated_at = NOW()
+    WHERE user_id = ${user.id} AND blocked = FALSE AND (last_at IS NULL OR last_at <= NOW() - INTERVAL '24 hours')
+    RETURNING user_id`;
+  if (!locked) return response.status(409).json({ error: "Kamu sudah check-in, tunggu 24 jam dari klaim terakhir", code: "ALREADY" });
+  await sql`INSERT INTO codexa_checkins (id, user_id, day, reward, streak, ip_hash, ua)
+    VALUES (${crypto.randomUUID()}, ${user.id}, ${t.today}::date, ${reward}, ${streak}, ${ip}, ${ua})`;
   await sql`INSERT INTO codexa_point_ledger (id, user_id, delta, reason, note)
     VALUES (${crypto.randomUUID()}, ${user.id}, ${reward}, 'checkin', ${`Check-in hari ke-${streak}`})`;
 
@@ -367,6 +368,26 @@ async function handleAdminCheckin(sql, request, response) {
         last_day = CASE WHEN ${streak} = 0 THEN NULL ELSE COALESCE(GREATEST(last_day, ${t.yesterday}::date), ${t.yesterday}::date) END,
         last_at = CASE WHEN ${streak} = 0 THEN NULL ELSE LEAST(COALESCE(last_at, NOW() - INTERVAL '24 hours'), NOW() - INTERVAL '24 hours') END,
         updated_at = NOW() WHERE user_id = ${userId}`;
+      return response.status(200).json({ ok: true });
+    }
+    if (body.op === "setPoints") {
+      const target = Math.max(0, Math.min(1000000000, Math.floor(Number(body.points) || 0)));
+      const [cur] = await sql`SELECT points FROM codexa_points WHERE user_id = ${userId}`;
+      const delta = target - Number(cur.points || 0);
+      await sql`UPDATE codexa_points SET points = ${target}, total_earned = total_earned + GREATEST(0, ${delta}), updated_at = NOW() WHERE user_id = ${userId}`;
+      if (delta) await sql`INSERT INTO codexa_point_ledger (id, user_id, delta, reason, note)
+        VALUES (${crypto.randomUUID()}, ${userId}, ${delta}, 'admin', ${text(body.note, 200) || (target === 0 ? "Poin direset admin" : `Poin diatur admin ke ${target}`)})`;
+      return response.status(200).json({ ok: true, points: target });
+    }
+    if (body.op === "resetCheckin") {
+      await sql`UPDATE codexa_points SET streak = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
+      return response.status(200).json({ ok: true });
+    }
+    if (body.op === "resetAll") {
+      const [cur] = await sql`SELECT points FROM codexa_points WHERE user_id = ${userId}`;
+      await sql`UPDATE codexa_points SET points = 0, streak = 0, best_streak = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
+      if (Number(cur.points)) await sql`INSERT INTO codexa_point_ledger (id, user_id, delta, reason, note)
+        VALUES (${crypto.randomUUID()}, ${userId}, ${-Number(cur.points)}, 'admin', 'Reset total oleh admin')`;
       return response.status(200).json({ ok: true });
     }
     if (body.op === "block") {
