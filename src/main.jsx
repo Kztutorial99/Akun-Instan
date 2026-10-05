@@ -2407,7 +2407,7 @@ function App() {
         )}
 
         {platform && !search.trim() && !data.loading && products.length > 0 && (
-          <PlatformAccounts products={products} onAdd={addToCart} onOpen={(p) => navigate(productPagePath(p, data.products))} />
+          <PlatformAccounts products={products} onAdd={addToCart} canRate={!!auth.user} onRate={rateProduct} />
         )}
 
         {search.trim() && !data.loading && products.length > 0 && (() => {
@@ -4425,8 +4425,9 @@ function ProductCard({ product, colorIdx, onBuy, onOpen }) {
 ════════════════════════════════════════════════════ */
 /* Katalog > platform: langsung daftar akun per produk, bisa dicentang & dibeli
    tanpa buka halaman produk dulu. */
-function PlatformAccounts({ products, onAdd, onOpen }) {
+function PlatformAccounts({ products, onAdd, canRate, onRate }) {
   const [sel, setSel] = useState({});
+  const [detail, setDetail] = useState(null);
   const toggle = (id, index) => setSel((prev) => {
     const cur = prev[id] || [];
     return { ...prev, [id]: cur.includes(index) ? cur.filter((i) => i !== index) : [...cur, index] };
@@ -4450,7 +4451,7 @@ function PlatformAccounts({ products, onAdd, onOpen }) {
                   <span>{accounts.length ? `${accounts.length} akun` : "Stok habis"}</span>
                 </div>
               </div>
-              <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => onOpen(p)}>Detail</button>
+              <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => setDetail(p)}>Detail</button>
             </div>
             {accounts.length > 0 && (
               <AccountPicker product={p} accounts={accounts} selected={sel[p.id] || []} onToggle={(i) => toggle(p.id, i)} pageSize={5} size="lg" />
@@ -4458,6 +4459,10 @@ function PlatformAccounts({ products, onAdd, onOpen }) {
           </section>
         );
       })}
+      {onRate && products.map((p) => (
+        <ProductRating key={`r-${p.id}`} product={p} canRate={canRate} onRate={onRate} />
+      ))}
+      {detail && <ProductDetailModal product={detail} color="#3b82f6" open={!!detail} onClose={() => setDetail(null)} />}
       <div className="cx-prodpage-buy is-sticky">
         <div className="cx-prodpage-total">
           <small>{count ? `${count} akun dipilih` : "Belum ada akun dipilih"}</small>
