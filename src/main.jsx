@@ -5445,16 +5445,19 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
     <div className="cx-container cx-account-page">
 
       <div className="cx-account-grid">
-        <div className="cx-panel cx-profile-card">
+        <div className="cx-panel cx-profile-card cx-profile-glass">
           <div className="cx-profile-head">
-            <UserAvatar user={editing ? { name: form.name, avatar } : user} className="cx-avatar-xl" />
+            <div className="cx-avatar-ring">
+              <UserAvatar user={editing ? { name: form.name, avatar } : user} className="cx-avatar-xl" />
+              <span className="cx-avatar-dot" aria-hidden="true" />
+            </div>
             <div className="cx-profile-head-copy">
               <h2>{editing ? (form.name || "Nama kamu") : user.name}</h2>
-              <p>Member Akun Instan sejak {formatDate(user.createdAt)}</p>
+              <p className="cx-member-badge">Member sejak {formatDate(user.createdAt)}</p>
             </div>
             {!editing && (
-              <button className="cx-btn cx-btn-secondary cx-btn-sm cx-profile-edit-btn" onClick={startEdit}>
-                <User size={12} /> Edit profil
+              <button className="cx-btn cx-btn-secondary cx-btn-sm cx-profile-edit-btn" onClick={startEdit} aria-label="Edit profil" title="Edit profil">
+                <User size={15} />
               </button>
             )}
           </div>
@@ -5510,17 +5513,28 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
           )}
 
           <ul className="cx-profile-list">
-            <li><Mail size={13} /><span>Email</span><strong>{user.email}</strong></li>
             <li>
-              <LogIn size={13} aria-hidden="true" />
-              <span>Daftar via</span>
+              <span className="cx-info-label"><span className="cx-info-icon is-violet"><Mail size={15} /></span>Email</span>
+              <strong>{user.email}</strong>
+            </li>
+            <li>
+              <span className="cx-info-label"><span className="cx-info-icon"><LogIn size={15} aria-hidden="true" /></span>Daftar via</span>
               <strong>{user.provider === "google" ? "Google" : "Email & password"}</strong>
             </li>
-            <li><Phone size={13} /><span>WhatsApp</span><strong>{user.phone || "-"}</strong></li>
-            <li><BadgeCheck size={13} /><span>ID Akun</span><strong className="cx-mono">{String(user.id).slice(0, 8)}</strong></li>
-            <li><ShieldCheck size={13} /><span>Verifikasi</span><strong><span className="cx-verified-tag" title="Akun terverifikasi"><BadgeCheck size={10} /> Terverifikasi</span></strong></li>
             <li>
-              <ShieldCheck size={13} /><span>Role akun</span>
+              <span className="cx-info-label"><span className="cx-info-icon"><Phone size={15} /></span>WhatsApp</span>
+              <strong>{user.phone || "-"}</strong>
+            </li>
+            <li>
+              <span className="cx-info-label"><span className="cx-info-icon"><BadgeCheck size={15} /></span>ID Akun</span>
+              <strong><span className="cx-id-chip">{String(user.id).slice(0, 8)}</span></strong>
+            </li>
+            <li>
+              <span className="cx-info-label"><span className="cx-info-icon"><ShieldCheck size={15} /></span>Verifikasi</span>
+              <strong><span className="cx-verified-tag" title="Akun terverifikasi"><span className="cx-verified-dot" aria-hidden="true" /> Terverifikasi</span></strong>
+            </li>
+            <li>
+              <span className="cx-info-label"><span className="cx-info-icon"><User size={15} /></span>Role akun</span>
               <strong>
                 {user.role === "admin" ? "Admin" : "User"}
                 <span className={`cx-role-tag${user.role === "admin" ? "" : " is-user"}`}>
@@ -5617,13 +5631,19 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
 
 
           <div className="cx-balance-card">
-            <span><Wallet size={13} /> Saldo tersedia</span>
-            <strong>{formatPrice(state.balance)}</strong>
+            <div className="cx-balance-head">
+              <span className="cx-balance-dot" aria-hidden="true" />
+              <span className="cx-balance-label">Saldo Tersedia</span>
+            </div>
+            <div className="cx-balance-row">
+              <strong>{formatPrice(state.balance)}</strong>
+              <span className="cx-balance-coin" aria-hidden="true"><Wallet size={20} /></span>
+            </div>
             {pendingTotal > 0 && <small>{formatPrice(pendingTotal)} menunggu verifikasi</small>}
           </div>
 
-          <button className="cx-btn cx-btn-primary cx-btn-full" style={{ marginTop: 12 }} onClick={onTopup}>
-            <CreditCard size={13} /> Top up saldo
+          <button className="cx-btn cx-btn-primary cx-btn-full cx-topup-glow" style={{ marginTop: 12 }} onClick={onTopup}>
+            <CreditCard size={15} /> Top up saldo
           </button>
         </div>
 
