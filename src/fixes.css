@@ -1956,3 +1956,9 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 .cx-rev-target button{border:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,rgba(255,255,255,.04));color:var(--ink2,inherit);border-radius:999px;padding:6px 12px;font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
 .cx-rev-target button.is-on{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.1)}
 .cx-review-prod{display:inline-block;margin-top:6px;font:600 10.5px Inter,system-ui,sans-serif;color:var(--muted,rgba(255,255,255,.55));background:var(--panel,rgba(255,255,255,.05));border-radius:6px;padding:2px 7px}
+
+/* Filter platform: satu baris rapi, bisa digeser */
+.cx-filter-chips.cx-plat-filter{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px;justify-content:flex-start!important}
+.cx-filter-chips.cx-plat-filter::-webkit-scrollbar{display:none}
+.cx-filter-chips.cx-plat-filter .cx-filter-chip{flex:0 0 auto!important;height:34px;padding:0 16px;border-radius:999px;border:1px solid var(--b2,#e5e7eb);background:var(--s1,#fff);font-weight:600;font-size:13px;white-space:nowrap;display:inline-flex;align-items:center}
+.cx-filter-chips.cx-plat-filter .cx-filter-chip.is-active{background:#3b82f6;border-color:#3b82f6;color:#fff}
