@@ -12,6 +12,7 @@ import {
   Star, ImagePlus, Play,
   ArrowLeft,
 } from "lucide-react";
+import { catalogPlatformFromSearch, catalogBannerVisible } from "./catalog-navigation.mjs";
 import "./styles.css";
 import "./mobile-polish.css";
 import { CheckinPage, CheckinProfileCard, PointsPayButton, CheckinReminder, useCheckin } from "./checkin.jsx";
@@ -1284,7 +1285,7 @@ function App() {
   const [sortBy, setSortBy]   = useState("default");
   const [ageFilter, setAgeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [platform, setPlatform] = useState("");
+  const [platform, setPlatform] = useState(() => pageFromPath(window.location.pathname) === "katalog" ? catalogPlatformFromSearch(window.location.search, CATALOG_PLATFORMS.map((p) => p.key)) : "");
   const [notice, setNotice]   = useState("");
   const [noticeError, setNoticeError] = useState(false);
   // Isi keranjang disimpan di perangkat agar tidak hilang saat halaman di-refresh.
@@ -1485,6 +1486,9 @@ function App() {
     const pop = () => {
       const next = pageFromPath(window.location.pathname);
       setActivePage(next);
+      setPlatform(next === "katalog" ? catalogPlatformFromSearch(window.location.search, CATALOG_PLATFORMS.map((p) => p.key)) : "");
+      setSearch("");
+      setAgeFilter("all");
       setAuthScreen(authScreenFromPath(window.location.pathname));
     };
     let lastSync = Date.now();
@@ -1588,6 +1592,15 @@ function App() {
     [data.products],
   );
 
+  const openCatalogPlatform = (key) => {
+    setPlatform(key);
+    setSearch("");
+    setAgeFilter("all");
+    window.history.pushState({}, "", key ? `/katalog?platform=${encodeURIComponent(key)}` : "/katalog");
+    window.dispatchEvent(new Event("codexa:page-change"));
+    scrollTop();
+  };
+
   const navigate = (page) => {
     // Untuk tamu, simpan menu publik yang sedang dibuka sebelum mengarahkan
     // menu terkunci ke Login. Tombol "Kembali" lalu pulang ke menu asal,
@@ -1605,6 +1618,8 @@ function App() {
     }
     window.history.pushState({}, "", page === "store" ? "/" : `/${page}`);
     setActivePage(page);
+    setPlatform("");
+    setAgeFilter("all");
     window.dispatchEvent(new Event("codexa:page-change"));
     // Pindah menu harus menutup semua panel yang sedang terbuka.
     setCartOpen(false);
@@ -2334,10 +2349,10 @@ function App() {
   if (activePage === "katalog") return (
     <div className={`${shellClass} cx-catv2`}>
       {topbar}
-      <PageBack onClick={() => { if (platform && !search.trim()) { setPlatform(""); setAgeFilter("all"); } else navigate("store"); }} />
-            <main className="cx-container cx-cat-main" id="catalog" style={{ paddingTop: 20, paddingBottom: 64 }}>
+      <PageBack onClick={() => { if (platform) openCatalogPlatform(""); else navigate("store"); }} />
+      <main className="cx-container cx-cat-main" id="catalog">
         <div className="cx-section-header cx-section-header-stack cx-cat-header">
-          <img className="cx-cat-banner" src="/banners/banner-promo-katalog.webp?v=2" alt="Promo katalog akun dengan stok realtime" />
+          {catalogBannerVisible(platform) && <img className="cx-cat-banner" src="/banners/banner-promo-katalog.webp?v=2" alt="Promo katalog akun dengan stok realtime" />}
           <div className="cx-search">
             <Search size={13} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari akun, platform..." />
@@ -2354,7 +2369,7 @@ function App() {
                 const real = items.filter((p) => !isDemoP(p)).length;
                 return { pl, n: items.length, rank: real > 0 ? 0 : items.length > 0 ? 1 : 2, idx };
               }).sort((x, y) => x.rank - y.rank || x.idx - y.idx).map(({ pl, n }) => (
-                <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
+                <button key={pl.key} type="button" className="cx-plat-item" onClick={() => openCatalogPlatform(pl.key)}>
                   <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
                   <span className="cx-plat-name">{pl.label}</span>
                   {!data.loading && <span className="cx-plat-count">{n > 0 ? `${n} produk` : "Kosong"}</span>}
