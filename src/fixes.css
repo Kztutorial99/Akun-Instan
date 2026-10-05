@@ -1456,6 +1456,7 @@ body.cx-drawer-open .cx-ai-fab { display: none !important; }
 
 /* ─── Redesign katalog v3: kartu produk compact & premium ─── */
 .cx-catv2 .cx-cat-header { gap: 12px; margin-bottom: 14px; }
+.cx-catv2 .cx-cat-banner { width: 100%; height: auto; display: block; border-radius: 16px; }
 .cx-catv2 .cx-cat-header h1 { letter-spacing: -.02em; }
 .cx-catv2 .cx-search { height: 40px; border-radius: 12px; }
 .cx-catv2 .cx-filterbar { margin-bottom: 16px; }
