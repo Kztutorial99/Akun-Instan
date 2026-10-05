@@ -2337,10 +2337,7 @@ function App() {
       <PageBack onClick={() => { if (platform && !search.trim()) { setPlatform(""); setAgeFilter("all"); } else navigate("store"); }} />
             <main className="cx-container cx-cat-main" id="catalog" style={{ paddingTop: 20, paddingBottom: 64 }}>
         <div className="cx-section-header cx-section-header-stack cx-cat-header">
-          <div>
-            <h1>Katalog</h1>
-            <p className="cx-section-sub">{data.loading ? "Memuat katalog..." : "Akun siap pakai · Stok realtime"}</p>
-          </div>
+          <img className="cx-cat-banner" src="/banners/banner-promo-katalog.webp?v=2" alt="Promo katalog akun dengan stok realtime" />
           <div className="cx-search">
             <Search size={13} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari akun, platform..." />
