@@ -2857,6 +2857,17 @@ function NotificationBell({ navigate, activePage, onUnreadChange }) {
   // Panel notifikasi ikut tertutup begitu user pindah menu.
   useEffect(() => { setOpen(false); }, [activePage]);
 
+  // Membuka halaman Notifikasi berarti semua pesan sudah terlihat.
+  // Badge hilang langsung, lalu statusnya disimpan ke server di belakang layar.
+  useEffect(() => {
+    if (activePage !== "notifications") return;
+    setItems((list) => list.map((n) => ({ ...n, read: true })));
+    setUnread(0);
+    jsonRequest("/api/notifications", { method: "PATCH", body: JSON.stringify({}) })
+      .then(() => window.dispatchEvent(new Event("codexa:notify")))
+      .catch(() => {});
+  }, [activePage]);
+
   // Esc juga menutup panel.
   useEffect(() => {
     if (!open) return undefined;

@@ -36,7 +36,14 @@ export default function UserNotificationsPage({ guest, onLogin, navigate }) {
     } catch (e) { setErr(e.message || "Gagal memuat"); setItems((x) => x || []); }
     setTimeout(() => setLoading(false), Math.max(0, 600 - (Date.now() - t)));
   };
-  useEffect(() => { if (!guest) load(); }, [guest]);
+  useEffect(() => {
+    if (guest) return;
+    setUnread(0);
+    window.dispatchEvent(new Event("codexa:notify"));
+    jsonRequest("/api/notifications", { method: "PATCH", body: JSON.stringify({}) })
+      .then(() => load())
+      .catch(() => load());
+  }, [guest]);
 
   const markAll = async () => {
     try { await jsonRequest("/api/notifications", { method: "PATCH", body: JSON.stringify({}) }); } catch (_) {}
