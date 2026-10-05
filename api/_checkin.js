@@ -366,7 +366,7 @@ async function handleAdminCheckin(sql, request, response) {
       const t = await todayInfo(sql);
       await sql`UPDATE codexa_points SET streak = ${streak}, best_streak = GREATEST(best_streak, ${streak}),
         last_day = CASE WHEN ${streak} = 0 THEN NULL ELSE COALESCE(GREATEST(last_day, ${t.yesterday}::date), ${t.yesterday}::date) END,
-        last_at = CASE WHEN ${streak} = 0 THEN NULL ELSE LEAST(COALESCE(last_at, NOW() - INTERVAL '24 hours'), NOW() - INTERVAL '24 hours') END,
+        last_at = CASE WHEN ${streak} = 0 THEN NULL ELSE NOW() - INTERVAL '24 hours' - INTERVAL '1 second' END,
         updated_at = NOW() WHERE user_id = ${userId}`;
       return response.status(200).json({ ok: true });
     }
@@ -381,6 +381,7 @@ async function handleAdminCheckin(sql, request, response) {
     }
     if (body.op === "resetCheckin") {
       await sql`UPDATE codexa_points SET streak = 0, last_day = NULL, last_at = NULL, updated_at = NOW() WHERE user_id = ${userId}`;
+      await sql`DELETE FROM codexa_checkins WHERE user_id = ${userId} AND created_at > NOW() - INTERVAL '24 hours'`;
       return response.status(200).json({ ok: true });
     }
     if (body.op === "resetAll") {
