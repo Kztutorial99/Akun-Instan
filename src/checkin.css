@@ -270,3 +270,10 @@
   .cia-modal { place-items: end center; padding: 0; }
   .cia-sheet { width: 100%; border-radius: 20px 20px 0 0; max-height: 92vh; }
 }
+
+.cia-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:10px;max-width:min(92vw,420px);padding:11px 16px;border-radius:14px;font-size:13.5px;font-weight:600;color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.28);animation:ciaToast .28s ease;cursor:pointer}
+.cia-toast.is-ok{background:linear-gradient(135deg,#16a34a,#059669)}
+.cia-toast.is-error{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+.cia-toast-ic{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;flex-shrink:0;font-weight:800}
+@keyframes ciaToast{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+.ci-week{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:999px;padding:3px 10px;margin-bottom:8px}
