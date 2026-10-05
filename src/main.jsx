@@ -372,7 +372,6 @@ export const CATALOG_PLATFORMS = [
   { key: "instagram", label: "Instagram", icon: "instagram" },
   { key: "mobile-legends", label: "Mobile Legends", icon: "mobile-legends" },
   { key: "freefire", label: "Free Fire", icon: "freefire" },
-  { key: "other", label: "Lainnya", icon: "game-lain" },
 ];
 export function productPlatformKey(product) {
   const cat = productCategoryKey(product);
@@ -2317,12 +2316,14 @@ function App() {
             <h2 className="cx-plat-title">Pilih Platform</h2>
             <div className="cx-plat-grid">
               {CATALOG_PLATFORMS.map((pl) => {
-                const n = data.products.filter((p) => productPlatformKey(p) === pl.key).length;
+                const items = data.products.filter((p) => productPlatformKey(p) === pl.key);
+                const n = items.length;
+                const avail = items.filter((p) => (Number(p.stock) || (Array.isArray(p.accounts) ? p.accounts.length : 0)) > 0 && p.status !== "sold").length;
                 return (
-                  <button key={pl.key} type="button" className="cx-plat-item" onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
+                  <button key={pl.key} type="button" className={`cx-plat-item${!data.loading && avail === 0 ? " is-empty" : ""}`} onClick={() => { setPlatform(pl.key); setAgeFilter("all"); scrollTop(); }}>
                     <span className="cx-plat-icon"><ProductIcon icon={pl.icon} label={pl.label} size={30} /></span>
                     <span className="cx-plat-name">{pl.label}</span>
-                    {!data.loading && <span className="cx-plat-count">{n} produk</span>}
+                    {!data.loading && <span className="cx-plat-count">{n > 0 ? `${n} produk` : "Kosong"}</span>}
                   </button>
                 );
               })}
