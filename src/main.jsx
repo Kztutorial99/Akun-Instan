@@ -5457,8 +5457,6 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
             )}
           </div>
 
-          {!editing && <div className="cx-profile-checkin"><CheckinProfileCard onOpen={onOpenCheckin} onNotice={onNotice} /></div>}
-
           {editing && (
             <div className="cx-profile-form">
               <input
@@ -5626,6 +5624,8 @@ function ProfilePage({ user, onOpenCheckin, onBack, onTopup, onSaved, onNotice }
             <CreditCard size={13} /> Top up saldo
           </button>
         </div>
+
+        <CheckinProfileCard onOpen={onOpenCheckin} onNotice={onNotice} />
 
         <div className="cx-panel cx-profile-activity">
           <div className="cx-panel-header">
