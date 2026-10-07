@@ -584,25 +584,25 @@ function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
     setBusy("");
   };
   if (!orderId) return null;
-  if (st && st.secured) return <div className="cx-panel" style={{ marginTop: 8, padding: 10, fontSize: 12, color: "#22c55e", display: "flex", gap: 6, alignItems: "center" }}><ShieldCheck size={13} /> Akun sudah kamu nyatakan aman.</div>;
+  if (st && st.secured) return <div className="cx-panel cx-google-handover is-secured"><ShieldCheck size={13} /> Akun sudah kamu nyatakan aman.</div>;
   const cr = st && st.codeRequest;
   const waiting = cr && ["open", "in_progress"].includes(cr.status);
   return (
-    <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
-      <strong style={{ fontSize: 12 }}>Serah terima akun Google</strong>
-      <small style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>Diminta verifikasi saat login Google? Di halaman verifikasi Google, klik <b>Coba cara lain</b>, lalu pilih kirim kode verifikasi ke <b>support@akuninstan.com</b>. Setelah itu klik <b>Minta kode login</b> di bawah — admin mengirim kode untuk akun <b>{accountEmail || "ini"}</b> ke kamu. Setelah login, ganti email pemulihan ke milikmu.</small>
+    <div className="cx-panel cx-google-handover">
+      <strong className="cx-google-handover-title">Serah terima akun Google</strong>
+      <small className="cx-google-handover-copy">Diminta verifikasi saat login Google? Di halaman verifikasi Google, klik <b>Coba cara lain</b>, lalu pilih kirim kode verifikasi ke <b>support@akuninstan.com</b>. Setelah itu klik <b>Minta kode login</b> di bawah — admin mengirim kode untuk akun <b>{accountEmail || "ini"}</b> ke kamu. Setelah login, ganti email pemulihan ke milikmu.</small>
       {cr && (
         <div style={{ fontSize: 12, lineHeight: 1.5 }}>
           Tiket <b>{cr.ticket}</b> — {waiting ? "menunggu admin mengirim kode..." : "dibalas admin"}
           {cr.adminNote && <div style={{ marginTop: 4, padding: 8, borderRadius: 8, background: "var(--surface-2, rgba(124,58,237,.12))", whiteSpace: "pre-wrap" }}>{cr.adminNote}</div>}
         </div>
       )}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div className="cx-google-handover-actions">
         {!waiting && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={!!busy} onClick={() => act("request-code")}>{busy === "request-code" ? "Mengirim..." : "Minta kode login"}</button>}
         {waiting && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" onClick={load}>Cek balasan</button>}
         <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={!!busy} onClick={() => act("done")}>{busy === "done" ? "Menyimpan..." : "Selesai, akun aman"}</button>
       </div>
-      <small style={{ color: "var(--faint)", fontSize: 10 }}>Wajib klik <b>Selesai</b> setelah semua langkah pengamanan beres.</small>
+      <small className="cx-google-handover-note">Wajib klik <b>Selesai</b> setelah semua langkah pengamanan beres.</small>
     </div>
   );
 }
@@ -668,10 +668,10 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
       setCode({ sending: false, sent: true, error: "" });
     } catch (e) { setCode({ sending: false, sent: false, error: e.message || "Gagal meminta kode" }); }
   };
-  if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala akun Google? Tanya AI</button>;
+  if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm cx-google-help-trigger" onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala akun Google? Tanya AI</button>;
   const busy = state.loading || esc.loading;
   return (
-    <div className="cx-panel" style={{ marginTop: 8, padding: 12, display: "grid", gap: 8 }}>
+    <div className="cx-panel cx-google-help-panel">
       <strong style={{ fontSize: 12 }}>Bantuan kendala akun Google</strong>
       <textarea className="cx-gh-textarea" rows={3} maxLength={600} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jelaskan kendalanya. Contoh: muncul 'Verifikasi bahwa ini Anda' saat login" />
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

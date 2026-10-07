@@ -78,3 +78,171 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .ci-stat { padding: 10px 9px; gap: 7px; }
   .ci-stat strong { font-size: 18px; }
 }
+
+/* Pesanan mobile — ultra-ringkas, data akun tetap jelas tanpa kartu besar. */
+.cx-orders-page { max-width: 760px; }
+
+@media (max-width: 720px) {
+  .cx-orders-page {
+    width: min(100% - 24px, 760px);
+    padding-top: 8px;
+  }
+
+  .cx-orders-hero {
+    margin: 4px 0 10px;
+    padding: 12px 0 10px;
+    overflow: visible;
+    border: 0;
+    border-bottom: 1px solid var(--b1);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .cx-orders-kicker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    letter-spacing: .1em;
+  }
+
+  .cx-orders-kicker::before {
+    content: "";
+    width: 14px;
+    height: 1px;
+    background: var(--indigo);
+  }
+
+  .cx-orders-hero h1 { margin: 4px 0 2px; font-size: 21px; letter-spacing: 0; }
+  .cx-orders-hero p { font-size: 11px; line-height: 1.45; }
+
+  .cx-orders-stats { gap: 6px; margin-top: 10px; }
+  .cx-orders-stats > div {
+    min-width: 0;
+    padding: 7px 8px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--s1) 82%, transparent);
+  }
+  .cx-orders-stats small {
+    margin-bottom: 1px;
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cx-orders-stats strong { font-size: 12px; letter-spacing: 0; }
+
+  .cx-order-card {
+    margin-bottom: 10px;
+    padding: 0;
+    overflow: hidden;
+    border-color: var(--b2);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--s1) 92%, var(--bg));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--bg) 72%, transparent);
+  }
+
+  .cx-order-card-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px 11px;
+  }
+  .cx-order-card-id { min-width: 0; gap: 8px; }
+  .cx-order-icon { width: 32px; height: 32px; border-radius: 9px; }
+  .cx-order-card-head strong { font-size: 13px; letter-spacing: 0; }
+  .cx-order-card-head small { margin-top: 0; font-size: 9.5px; }
+  .cx-order-status { height: 22px; padding: 0 7px; font-size: 9px; }
+  .cx-order-card-head .cx-row-btn { width: 28px; height: 28px; }
+
+  .cx-order-items { gap: 0; margin-top: 0; }
+  .cx-order-item {
+    padding: 10px 11px 11px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .cx-order-item + .cx-order-item { border-top: 1px solid var(--b1); }
+  .cx-order-item-head { gap: 6px; margin-bottom: 8px; font-size: 11px; }
+  .cx-order-item-head strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cx-order-cred {
+    gap: 5px;
+    padding: 0;
+    border-top: 0;
+  }
+  .cx-order-cred-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto auto;
+    gap: 4px;
+    min-height: 36px;
+    padding: 3px 4px 3px 9px;
+    border: 1px solid var(--b1);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--bg) 58%, transparent);
+  }
+  .cx-order-cred-label {
+    width: auto;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .06em;
+  }
+  .cx-order-cred-row code {
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    font-size: 10.5px;
+    text-overflow: ellipsis;
+  }
+  .cx-order-cred-row .cx-icon-btn {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+
+  .cx-order-note { margin-top: 7px; }
+  .cx-delivery { gap: 6px; margin-top: 6px; }
+  .cx-delivery-sec { padding: 8px 9px; border-radius: 9px; }
+  .cx-delivery-title { margin-bottom: 5px; font-size: 9px; letter-spacing: .04em; }
+  .cx-delivery-list { gap: 4px; }
+  .cx-delivery-list li { grid-template-columns: 16px minmax(0, 1fr); gap: 6px; font-size: 10px; line-height: 1.45; }
+  .cx-delivery-num { width: 16px; height: 16px; font-size: 8px; }
+
+  .cx-google-handover,
+  .cx-google-help-panel {
+    display: grid;
+    gap: 7px;
+    margin-top: 7px;
+    padding: 9px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--indigo) 6%, var(--s1));
+  }
+  .cx-google-handover.is-secured {
+    display: flex;
+    align-items: center;
+    color: var(--green);
+    font-size: 10.5px;
+  }
+  .cx-google-handover-title { font-size: 10.5px; }
+  .cx-google-handover-copy { color: var(--muted); font-size: 9.5px; line-height: 1.45; }
+  .cx-google-handover-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .cx-google-handover-actions .cx-btn { min-width: 0; min-height: 34px; padding: 6px; font-size: 9.5px; }
+  .cx-google-handover-note { color: var(--faint); font-size: 8.5px; line-height: 1.35; }
+
+  .cx-google-help-trigger {
+    width: 100%;
+    min-height: 34px;
+    margin-top: 7px;
+    border-color: var(--b1);
+    background: transparent;
+    font-size: 10px;
+  }
+}
