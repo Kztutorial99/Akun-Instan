@@ -246,3 +246,12 @@ html, body { overflow-x: hidden; max-width: 100%; }
     font-size: 10px;
   }
 }
+
+/* Pesanan: kartu akun tersusun vertikal (menimpa .cx-order-item flex milik ringkasan pesanan lain). */
+.cx-orders-page .cx-order-item {
+  display: block;
+  min-width: 0;
+}
+.cx-orders-page .cx-order-item > * { width: 100%; max-width: 100%; box-sizing: border-box; }
+.cx-orders-page .cx-order-item-head { display: flex; width: 100%; }
+.cx-orders-page .cx-order-note { margin-top: 8px; }
