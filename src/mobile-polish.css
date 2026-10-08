@@ -278,3 +278,14 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .cx-inbox-code small { font-size: 10.5px; color: var(--indigo2); }
 .cx-inbox-preview { margin: 0; font-size: 10px; line-height: 1.45; color: var(--faint, var(--muted)); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .cx-google-handover-actions .cx-btn.is-full { grid-column: 1 / -1; }
+.cx-inbox-note { color: var(--muted); font-size: 10px; line-height: 1.4; }
+/* Notifikasi koneksi: muncul kecil di tengah atas layar. */
+.cx-net { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; align-items: center; gap: 7px; max-width: calc(100vw - 32px); padding: 7px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; color: #fff; background: rgba(24, 24, 34, 0.94); border: 1px solid var(--b1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px); animation: cx-net-in 0.26s ease-out; }
+@keyframes cx-net-in { from { opacity: 0; transform: translate(-50%, -14px) scale(0.94); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.cx-net-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor; }
+.cx-net-reconnecting { color: #fbbf24; }
+.cx-net-reconnecting .cx-net-dot { animation: cx-net-pulse 1s infinite; }
+.cx-net-connected { color: var(--green, #34d399); }
+.cx-net-offline { color: #f87171; }
+@keyframes cx-net-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .cx-net, .cx-net-dot { animation: none; } }

@@ -386,8 +386,72 @@ export function productPlatformKey(product) {
   return CATALOG_PLATFORM_KEYS.includes(icon) ? icon : "other";
 }
 
+/* Pemantau koneksi: semua permintaan ke server lewat sini, jadi putus/nyambungnya
+   internet bisa ditampilkan sebagai notifikasi kecil di tengah atas layar. */
+export const CONNECTION_EVENT = "codexa:connection";
+function emitConnection(state) {
+  try { window.dispatchEvent(new CustomEvent(CONNECTION_EVENT, { detail: state })); } catch (_) {}
+}
+if (typeof window !== "undefined" && !window.__codexaFetchPatched) {
+  window.__codexaFetchPatched = true;
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    try {
+      const res = await nativeFetch(...args);
+      emitConnection("online");
+      return res;
+    } catch (err) {
+      /* TypeError "Failed to fetch" = jaringan putus, bukan error dari server. */
+      emitConnection(navigator.onLine ? "reconnecting" : "offline");
+      throw err;
+    }
+  };
+  window.addEventListener("offline", () => emitConnection("offline"));
+  window.addEventListener("online", () => emitConnection("reconnecting"));
+}
+
+function ConnectionToast() {
+  const [state, setState] = useState("idle");
+  const hideTimer = useRef(null);
+  useEffect(() => {
+    const clear = () => { if (hideTimer.current) { window.clearTimeout(hideTimer.current); hideTimer.current = null; } };
+    const onState = (e) => {
+      const next = e.detail;
+      setState((cur) => {
+        if (next === "online") {
+          /* "Tersambung" hanya muncul kalau sebelumnya memang sempat putus. */
+          if (cur === "idle" || cur === "connected") return cur;
+          clear();
+          hideTimer.current = window.setTimeout(() => setState("idle"), 1800);
+          return "connected";
+        }
+        clear();
+        return next;
+      });
+    };
+    window.addEventListener(CONNECTION_EVENT, onState);
+    if (typeof navigator !== "undefined" && !navigator.onLine) setState("offline");
+    return () => { window.removeEventListener(CONNECTION_EVENT, onState); clear(); };
+  }, []);
+  if (state === "idle") return null;
+  const label = state === "offline" ? "Tidak Ada Koneksi Internet!" : state === "connected" ? "Tersambung" : "Menyambungkan Kembali...";
+  return (
+    <div className={`cx-net cx-net-${state}`} role="status" aria-live="polite">
+      <span className="cx-net-dot" />
+      {label}
+    </div>
+  );
+}
+
 export async function jsonRequest(url, opts = {}) {
-  const r = await fetch(url, { credentials: "same-origin", ...opts, headers: { "Content-Type": "application/json", ...(opts.headers || {}) } });
+  let r;
+  try {
+    r = await fetch(url, { credentials: "same-origin", ...opts, headers: { "Content-Type": "application/json", ...(opts.headers || {}) } });
+  } catch (_) {
+    const offline = new Error(typeof navigator !== "undefined" && !navigator.onLine ? "Tidak ada koneksi internet" : "Koneksi terputus, mencoba menyambung kembali");
+    offline.code = "NETWORK";
+    throw offline;
+  }
   const p = await r.json().catch(() => ({}));
   if (!r.ok) {
     const error = new Error(p.error || "Permintaan gagal diproses");
@@ -596,21 +660,22 @@ function InboxMonitor({ qs, account }) {
       {!st.messages.length && !st.error && (
         <div className="cx-inbox-empty">{st.loading ? "Membuka inbox..." : "Belum ada kode masuk. Kirim kode dari halaman Google, inbox dicek otomatis tiap 8 detik."}</div>
       )}
-      {st.messages.map((m, i) => (
-        <div key={m.id || i} className={`cx-inbox-item${i === 0 ? " is-latest" : ""}`}>
+      {latest && (
+        <div className="cx-inbox-item is-latest" key={latest.id || latest.date}>
           <div className="cx-inbox-item-top">
-            <span className="cx-inbox-from">{(m.from || "Google").replace(/<.*>/, "").trim() || "Google"}</span>
-            <span className="cx-inbox-time">{time(m.date)}</span>
+            <span className="cx-inbox-from">{(latest.from || "Google").replace(/<.*>/, "").trim() || "Google"}</span>
+            <span className="cx-inbox-time">{time(latest.date)}</span>
           </div>
-          <div className="cx-inbox-subject">{m.subject}</div>
-          {m.code && (
-            <button type="button" className="cx-inbox-code" onClick={() => copy(m.code)}>
-              <span>{m.code}</span><small>{copied === m.code ? "Tersalin" : "Salin"}</small>
+          <div className="cx-inbox-subject">{latest.subject}</div>
+          {latest.code && (
+            <button type="button" className="cx-inbox-code" onClick={() => copy(latest.code)}>
+              <span>{latest.code}</span><small>{copied === latest.code ? "Tersalin" : "Salin"}</small>
             </button>
           )}
-          {i === 0 && m.preview && <p className="cx-inbox-preview">{m.preview}</p>}
+          {latest.preview && <p className="cx-inbox-preview">{latest.preview}</p>}
         </div>
-      ))}
+      )}
+      {st.messages.length > 1 && <small className="cx-inbox-note">Hanya kode terbaru yang ditampilkan. Kode lama otomatis hilang.</small>}
     </div>
   );
 }
@@ -2362,6 +2427,7 @@ function App() {
         </div>
       )}
 
+      <ConnectionToast />
       {notice && <div className={`cx-toast${noticeError ? " is-error" : ""}`}>{noticeError ? <span aria-hidden="true">⚠</span> : <Check size={14} />}{notice}</div>}
     </>
   );
