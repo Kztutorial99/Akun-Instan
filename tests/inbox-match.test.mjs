@@ -36,3 +36,14 @@ test("inbox difilter per akun, wajib ada kode, dan tidak menampilkan email sebel
   assert.deepEqual(out.map((m) => m.id), ["1"]);
   assert.equal(out[0].code, "085911");
 });
+
+test("hanya email akun yang dibeli, bukan alamat mirip", () => {
+  const msgs = [
+    { id: "1", subject: "Gunakan 111111 untuk login", text: "Akun test123@gmail.com", date: new Date().toISOString() },
+    { id: "2", subject: "Gunakan 222222 untuk login", text: "Akun mytest123@gmail.com", date: new Date().toISOString() },
+    { id: "3", subject: "Gunakan 333333 untuk login", text: "Akun test123@gmail.com.id", date: new Date().toISOString() },
+    { id: "4", subject: "Gunakan 444444 untuk login", text: "Akun lain@gmail.com", date: new Date().toISOString() },
+  ];
+  const out = filterInboxMessages(msgs, { account: "Test123@Gmail.com" });
+  assert.deepEqual(out.map((m) => m.code), ["111111"]);
+});

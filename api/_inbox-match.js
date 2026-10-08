@@ -20,7 +20,10 @@ function mentionsAccount(message, account) {
   const acct = normalizeEmail(account);
   if (!acct) return false;
   const hay = `${message.subject || ""}\n${message.text || ""}`.toLowerCase();
-  return hay.includes(acct);
+  /* Harus alamat utuh: "test123@gmail.com" tidak boleh cocok dengan "mytest123@gmail.com"
+     atau "test123@gmail.com.id". */
+  const esc = acct.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9._%+-])${esc}(?![a-z0-9.-]*[a-z0-9])`, "i").test(hay);
 }
 
 /* Hanya email kode yang relevan: disebut akunnya, ada kode 6 digit, dan datang setelah permintaan dibuat
