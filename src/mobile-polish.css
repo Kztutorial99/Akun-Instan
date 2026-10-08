@@ -255,3 +255,26 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .cx-orders-page .cx-order-item > * { width: 100%; max-width: 100%; box-sizing: border-box; }
 .cx-orders-page .cx-order-item-head { display: flex; width: 100%; }
 .cx-orders-page .cx-order-note { margin-top: 8px; }
+
+/* Monitor "Tunggu Inbox": kode verifikasi login yang masuk ke email pemulihan. */
+.cx-inbox { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--b1); border-radius: 12px; background: var(--s1); min-width: 0; }
+.cx-inbox-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cx-inbox-head strong { flex: 1; font-size: 12px; }
+.cx-inbox-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--indigo2); box-shadow: 0 0 0 0 color-mix(in srgb, var(--indigo2) 60%, transparent); animation: cx-inbox-pulse 1.6s infinite; flex: none; }
+.cx-inbox-dot.is-done { background: var(--green); animation: none; }
+@keyframes cx-inbox-pulse { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.cx-inbox-refresh { border: 1px solid var(--b1); background: transparent; color: var(--indigo2); border-radius: 999px; padding: 4px 10px; font-size: 10.5px; min-height: 28px; cursor: pointer; }
+.cx-inbox-for { color: var(--muted); font-size: 10.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.cx-inbox-empty { color: var(--muted); font-size: 11px; line-height: 1.5; padding: 10px; border-radius: 10px; border: 1px dashed var(--b1); text-align: center; }
+.cx-inbox-error { color: #f87171; font-size: 11px; }
+.cx-inbox-item { display: grid; gap: 5px; padding: 9px; border-radius: 10px; background: color-mix(in srgb, var(--indigo) 5%, transparent); border: 1px solid var(--b1); min-width: 0; }
+.cx-inbox-item.is-latest { border-color: color-mix(in srgb, var(--green) 55%, var(--b1)); }
+.cx-inbox-item-top { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--muted); }
+.cx-inbox-from { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cx-inbox-time { flex: none; }
+.cx-inbox-subject { font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.cx-inbox-code { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--indigo); background: color-mix(in srgb, var(--indigo) 14%, transparent); color: inherit; cursor: pointer; }
+.cx-inbox-code span { font-family: ui-monospace, Menlo, monospace; font-size: 22px; font-weight: 700; letter-spacing: 4px; }
+.cx-inbox-code small { font-size: 10.5px; color: var(--indigo2); }
+.cx-inbox-preview { margin: 0; font-size: 10px; line-height: 1.45; color: var(--faint, var(--muted)); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.cx-google-handover-actions .cx-btn.is-full { grid-column: 1 / -1; }

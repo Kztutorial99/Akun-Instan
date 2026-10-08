@@ -419,6 +419,22 @@ module.exports = async function handler(request, response) {
         }
         return { secured: !!(h && h.securedAt), securedAt: h ? h.securedAt : null, codeRequest };
       };
+      if (request.method === "GET" && String(request.query.inbox || "") === "1") {
+        /* Monitor inbox: email kode verifikasi yang masuk untuk akun pesanan ini (hanya setelah pembeli minta kode). */
+        const cur = await read();
+        const acct = String(body.accountEmail || "").trim();
+        if (!acct) return response.status(400).json({ error: "Email akun tidak diketahui" });
+        if (!cur.codeRequest) return response.status(200).json({ requested: false, messages: [] });
+        try {
+          const { readInbox } = require("./_inbox");
+          const messages = await readInbox({ account: acct, since: cur.codeRequest.createdAt });
+          return response.status(200).json({ requested: true, account: acct, checkedAt: new Date().toISOString(), messages });
+        } catch (e) {
+          console.error("google-inbox", e && e.message);
+          if (e && e.message === "INBOX_NOT_CONFIGURED") return response.status(503).json({ error: "Monitor inbox belum aktif di server" });
+          return response.status(502).json({ error: "Inbox belum bisa dibaca, coba lagi sebentar" });
+        }
+      }
       if (request.method === "GET") return response.status(200).json(await read());
       const action = String(body.action || "");
       if (action === "done") {
