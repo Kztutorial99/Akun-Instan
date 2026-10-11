@@ -632,6 +632,53 @@ function prettyTitle(value) {
     .toLowerCase()
     .replace(/(^|\s|\()([a-z0-9])/g, (m, a, b) => a + b.toUpperCase());
 }
+function InboxMonitor({ qs, account }) {
+  const [st, setSt] = useState({ loading: true, messages: [], error: "", checkedAt: "" });
+  const [copied, setCopied] = useState("");
+  const load = () => jsonRequest(`/api/data?resource=google-handover&inbox=1&${qs}`)
+    .then((r) => setSt({ loading: false, messages: r.messages || [], error: "", checkedAt: r.checkedAt || "" }))
+    .catch((e) => setSt((cur) => ({ ...cur, loading: false, error: e.message || "Gagal membaca inbox" })));
+  useEffect(() => {
+    load();
+    const t = setInterval(() => { if (document.visibilityState === "visible") load(); }, 8000);
+    return () => clearInterval(t);
+  }, [qs]);
+  const copy = async (code) => {
+    try { await navigator.clipboard.writeText(code); setCopied(code); setTimeout(() => setCopied(""), 1600); } catch (_) {}
+  };
+  const time = (v) => { try { return new Date(v).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }); } catch (_) { return ""; } };
+  const latest = st.messages[0];
+  return (
+    <div className="cx-inbox">
+      <div className="cx-inbox-head">
+        <span className={`cx-inbox-dot${latest ? " is-done" : ""}`} />
+        <strong>{latest ? "Kode masuk" : "Tunggu Inbox"}</strong>
+        <button type="button" className="cx-inbox-refresh" onClick={load} aria-label="Muat ulang inbox">Muat ulang</button>
+      </div>
+      <small className="cx-inbox-for">Untuk akun <b>{account || "-"}</b>{st.checkedAt ? ` · dicek ${time(st.checkedAt)}` : ""}</small>
+      {st.error && <div className="cx-inbox-error">{st.error}</div>}
+      {!st.messages.length && !st.error && (
+        <div className="cx-inbox-empty">{st.loading ? "Membuka inbox..." : "Belum ada kode masuk. Kirim kode dari halaman Google, inbox dicek otomatis tiap 8 detik."}</div>
+      )}
+      {latest && (
+        <div className="cx-inbox-item is-latest" key={latest.id || latest.date}>
+          <div className="cx-inbox-item-top">
+            <span className="cx-inbox-from">{(latest.from || "Google").replace(/<.*>/, "").trim() || "Google"}</span>
+            <span className="cx-inbox-time">{time(latest.date)}</span>
+          </div>
+          <div className="cx-inbox-subject">{latest.subject}</div>
+          {latest.code && (
+            <button type="button" className="cx-inbox-code" onClick={() => copy(latest.code)}>
+              <span>{latest.code}</span><small>{copied === latest.code ? "Tersalin" : "Salin"}</small>
+            </button>
+          )}
+          {latest.preview && <p className="cx-inbox-preview">{latest.preview}</p>}
+        </div>
+      )}
+      {st.messages.length > 1 && <small className="cx-inbox-note">Hanya kode terbaru yang ditampilkan. Kode lama otomatis hilang.</small>}
+    </div>
+  );
+}
 function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
   const [st, setSt] = useState(null);
   const [busy, setBusy] = useState("");
@@ -643,18 +690,21 @@ function GoogleHandover({ orderId, product, accountEmail, onNotice }) {
     setBusy(action);
     try {
       const r = await jsonRequest("/api/data?resource=google-handover", { method: "POST", body: JSON.stringify({ orderId, product, accountEmail, action }) });
-      setSt(r); if (onNotice) onNotice("Akun dinyatakan aman");
+      setSt(r); if (onNotice) onNotice(action === "done" ? "Akun dinyatakan aman" : "Monitor inbox aktif");
     } catch (e) { if (onNotice) onNotice(e.message || "Gagal"); }
     setBusy("");
   };
   if (!orderId) return null;
   if (st && st.secured) return <div className="cx-panel cx-google-handover is-secured"><ShieldCheck size={13} /> Akun sudah kamu nyatakan aman.</div>;
+  const cr = st && st.codeRequest;
   return (
     <div className="cx-panel cx-google-handover">
       <strong className="cx-google-handover-title">Serah terima akun Google</strong>
-      <small className="cx-google-handover-copy">Setelah berhasil login, segera amankan akun <b>{accountEmail || "ini"}</b>: ganti password, email & nomor pemulihan, lalu keluarkan perangkat lain.</small>
+      <small className="cx-google-handover-copy">Diminta verifikasi saat login? Di halaman Google klik <b>Coba cara lain</b>, pilih kirim kode ke email pemulihan, lalu tekan <b>Kode login</b> di bawah. Kode untuk <b>{accountEmail || "akun ini"}</b> langsung tampil di sini.</small>
+      {cr && <InboxMonitor qs={qs} account={accountEmail} />}
       <div className="cx-google-handover-actions">
-        <button type="button" className="cx-btn cx-btn-primary cx-btn-sm is-full" disabled={!!busy} onClick={() => act("done")}>{busy === "done" ? "Menyimpan..." : "Selesai, akun aman"}</button>
+        {!cr && <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={!!busy} onClick={() => act("request-code")}>{busy === "request-code" ? "Membuka..." : "Kode login"}</button>}
+        <button type="button" className={`cx-btn cx-btn-primary cx-btn-sm${cr ? " is-full" : ""}`} disabled={!!busy} onClick={() => act("done")}>{busy === "done" ? "Menyimpan..." : "Selesai, akun aman"}</button>
       </div>
       <small className="cx-google-handover-note">Wajib klik <b>Selesai</b> setelah semua langkah pengamanan beres.</small>
     </div>
@@ -683,6 +733,7 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
   const [prep, setPrep] = useState(false);
   const [state, setState] = useState({ loading: false, answer: "", error: "" });
   const [esc, setEsc] = useState({ loading: false, ticket: "", error: "" });
+  const [code, setCode] = useState({ sending: false, sent: false, error: "" });
   // Gambar dikecilkan di HP (maks 1280px, JPEG) lalu dikirim langsung — tanpa upload terpisah.
   const pick = async (e) => {
     const list = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/")).slice(0, 3 - images.length);
@@ -714,6 +765,13 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
       setEsc({ loading: false, ticket: r.ticket, error: "", existing: r.existing });
     } catch (e) { setEsc({ loading: false, ticket: "", error: e.message || "Gagal meneruskan" }); }
   };
+  const sendCode = async () => {
+    setCode({ sending: true, sent: false, error: "" });
+    try {
+      await jsonRequest("/api/data?resource=google-handover", { method: "POST", body: JSON.stringify({ orderId, product, accountEmail, action: "request-code" }) });
+      setCode({ sending: false, sent: true, error: "" });
+    } catch (e) { setCode({ sending: false, sent: false, error: e.message || "Gagal meminta kode" }); }
+  };
   if (!open) return <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm cx-google-help-trigger" onClick={() => setOpen(true)}><ShieldCheck size={11} /> Ada kendala akun Google? Tanya AI</button>;
   const busy = state.loading || esc.loading;
   return (
@@ -744,8 +802,12 @@ function GoogleHelpBox({ orderId, product, accountEmail }) {
         <div style={{ display: "grid", gap: 6, borderTop: "1px solid var(--line)", paddingTop: 8 }}>
           <small style={{ fontSize: 11, color: "var(--muted)" }}>Masih belum beres?</small>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {code.sent
+              ? <span style={{ fontSize: 11, color: "#22c55e", lineHeight: 1.5 }}>Monitor inbox aktif — kodenya muncul di kotak "Tunggu Inbox" di atas.</span>
+              : <button type="button" className="cx-btn cx-btn-primary cx-btn-sm" disabled={busy || code.sending} onClick={sendCode}>{code.sending ? "Membuka..." : "Kode login"}</button>}
             <button type="button" className="cx-btn cx-btn-secondary cx-btn-sm" disabled={busy} onClick={escalate}>{esc.loading ? "Mengirim..." : "Teruskan ke admin"}</button>
           </div>
+          {code.error && <div style={{ color: "#ef4444", fontSize: 11 }}>{code.error}</div>}
           {esc.error && <div style={{ color: "#ef4444", fontSize: 12 }}>{esc.error}</div>}
         </div>
       )}
