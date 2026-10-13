@@ -54,7 +54,9 @@ async function aiReply(jid, history) {
 
 async function onMessage(message) {
   if (!shouldReply(message, state)) return;
-  const jid = message.key.remoteJid;
+  const k = message.key;
+  // Chat @lid: balas ke nomor asli (PN) kalau tersedia, supaya pesan benar-benar sampai
+  const jid = (String(k.remoteJid).endsWith("@lid") && (k.senderPn || k.remoteJidAlt)) || k.remoteJid;
   const text = textOf(message);
   const name = message.pushName || jid.split("@")[0];
   log("in", text, { from: name });
@@ -63,7 +65,8 @@ async function onMessage(message) {
     await sock.sendPresenceUpdate("composing", jid);
     const reply = await aiReply(jid, history);
     if (!reply) return;
-    await sock.sendMessage(jid, { text: reply }, { quoted: message });
+    const sent = await sock.sendMessage(jid, { text: reply });
+    if (sent && sent.key && sent.key.id) { sentStore.set(sent.key.id, sent.message); if (sentStore.size > 500) sentStore.delete(sentStore.keys().next().value); }
     pushHistory(histories, jid, "assistant", reply);
     state.replied += 1;
     log("out", reply, { to: name });
@@ -73,6 +76,11 @@ async function onMessage(message) {
     sock && sock.sendPresenceUpdate("paused", jid).catch(() => {});
   }
 }
+
+// Simpan pesan terkirim: WhatsApp minta ulang pesan saat HP penerima gagal dekripsi.
+// Kalau tidak ada, balasan muncul "Menunggu pesan ini" / tidak pernah sampai.
+const sentStore = new Map();
+let lastActivity = Date.now();
 
 let starting = false;
 let retryTimer = null;
@@ -108,7 +116,7 @@ async function start() {
       connectTimeoutMs: 60_000,
       defaultQueryTimeoutMs: 60_000,
       generateHighQualityLinkPreview: false,
-      getMessage: async () => undefined,
+      getMessage: async (key) => sentStore.get(key.id) || undefined,
     });
     sock = s;
     s.ev.on("creds.update", async () => { try { await saveCreds(); } catch (e) { log("error", "Gagal simpan sesi: " + e.message); } });
@@ -160,6 +168,7 @@ async function start() {
     });
     s.ev.on("messages.upsert", ({ messages, type }) => {
       if (type !== "notify") return;
+      lastActivity = Date.now();
       for (const m of messages) onMessage(m);
     });
   } finally {
@@ -224,3 +233,14 @@ process.on("unhandledRejection", (e) => log("error", String(e && e.message || e)
 process.on("uncaughtException", (e) => log("error", String(e && e.message || e)));
 // Railway mematikan container lama saat deploy: tutup koneksi rapi tanpa logout
 process.on("SIGTERM", () => { try { sock && sock.ws && sock.ws.close(); } catch {} setTimeout(() => process.exit(0), 1500); });
+
+// Watchdog: kalau status nyangkut "connecting" > 3 menit, paksa sambung ulang.
+let stuckSince = 0;
+setInterval(() => {
+  if (state.status === "connecting") {
+    stuckSince = stuckSince || Date.now();
+    if (Date.now() - stuckSince > 180000) { stuckSince = 0; log("system", "Watchdog: sambung ulang paksa"); scheduleStart(500); }
+  } else stuckSince = 0;
+}, 30000).unref();
+process.on("unhandledRejection", (e) => log("error", "unhandled: " + (e && e.message)));
+process.on("uncaughtException", (e) => log("error", "uncaught: " + (e && e.message)));
