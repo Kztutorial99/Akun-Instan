@@ -11,6 +11,7 @@ import GoogleChecker from "./google-checker.jsx";
 import ReportsPage from "./reports-page.jsx";
 import AdminNotifyPage from "./admin-notify-page.jsx";
 import AdminCheckinPage from "./admin-checkin-page.jsx";
+import AdminWabotPage from "./admin-wabot-page.jsx";
 import "./admin-ui.css";
 
 /* Ringkasan status serah terima akun Google per pesanan untuk menu Pesanan admin:
@@ -827,6 +828,7 @@ function AdminPage({ onBack, onNotice }) {
     { label: "Data Laporan", shortcut: "⌘L", icon: ClipboardList, dot: true },
     { label: "Send Chat & Notifikasi", shortcut: "⌘N", icon: Send },
     { label: "Check-in Point", shortcut: "⌘K", icon: Gift },
+    { label: "Bot WhatsApp", shortcut: "⌘W", icon: Send },
     { label: "Assisten",    shortcut: "⌘I", icon: Sparkles,       dot: !(aiCfg && aiCfg.enabled && aiCfg.hasKey) },
     { label: "Ulasan & Rating", shortcut: "⌘R", icon: Star },
     { label: "Inject Data",  shortcut: "⌘J", icon: Plus },
@@ -984,6 +986,8 @@ function AdminPage({ onBack, onNotice }) {
             <GoogleChecker onNotice={onNotice} />
           ) : activeNav === "Visitor Traffic" ? (
             <VisitorTraffic onNotice={onNotice} />
+          ) : activeNav === "Bot WhatsApp" ? (
+            <AdminWabotPage onNotice={onNotice} />
           ) : activeNav === "Check-in Point" ? (
             <AdminCheckinPage onNotice={onNotice} />
           ) : activeNav === "Send Chat & Notifikasi" ? (

@@ -289,3 +289,20 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .cx-net-offline { color: #f87171; }
 @keyframes cx-net-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) { .cx-net, .cx-net-dot { animation: none; } }
+
+/* Bot WhatsApp (admin) */
+.cx-wabot-card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:16px;margin-bottom:14px}
+.cx-wabot-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cx-wabot-dot{width:9px;height:9px;border-radius:50%}
+.cx-wabot-muted{color:var(--muted);font-size:13px;margin:6px 0 0}
+.cx-wabot-pair{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.cx-wabot-pair input{flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1px solid var(--b1);background:transparent;color:inherit;font-size:15px}
+.cx-wabot-code{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cx-wabot-code span{font:700 26px/1 ui-monospace,monospace;letter-spacing:3px;color:var(--indigo)}
+.cx-wabot-code p{flex-basis:100%}
+.cx-wabot-logs{display:flex;flex-direction:column;gap:8px;margin-top:10px;max-height:420px;overflow:auto}
+.cx-wabot-log{padding:8px 10px;border-radius:10px;border:1px solid var(--b1);font-size:13px;word-break:break-word}
+.cx-wabot-log small{color:var(--faint)}
+.cx-wabot-log.is-out{border-color:var(--green)}
+.cx-wabot-log.is-error{border-color:#e5484d}
+@media (max-width:640px){.cx-wabot-pair .cx-btn{flex:1;justify-content:center}.cx-wabot-code span{font-size:22px}}

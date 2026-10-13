@@ -15,6 +15,7 @@ const { readAgedConfig, writeAgedConfig, DEFAULT_AGED_CONFIG } = require("../_ag
 const { visitStats } = require("../_visits");
 const { readCustomEmailFee, writeCustomEmailFee } = require("../_custom-email-fee");
 const GC = require("../_google-checker");
+const WA = require("../_wabot");
 
 const page = (response, status, title, message) =>
   response.status(status).setHeader("Content-Type", "text/html; charset=utf-8").send(
@@ -44,7 +45,31 @@ module.exports = async function handler(request, response) {
     return response.status(200).json({ ok: true, checked });
   }
 
+  /* Bot WhatsApp minta balasan AI. Dilindungi WA_BOT_TOKEN (bukan cookie admin). */
+  if (resource === "wabot-reply") {
+    const token = (process.env.WA_BOT_TOKEN || "").trim();
+    if (!token || request.headers.authorization !== `Bearer ${token}`) return response.status(401).json({ error: "Unauthorized" });
+    try {
+      const reply = await WA.reply(db(), bodyOf(request), assistantConfig);
+      return response.status(200).json({ reply });
+    } catch (error) {
+      return response.status(error.status || 500).json({ error: error.message || "AI gagal" });
+    }
+  }
+
   if (!isAdmin(request)) return response.status(401).json({ error: "Sesi admin tidak valid" });
+
+  /* Panel admin → bot WhatsApp di Railway (token tetap di server). */
+  if (resource === "wabot") {
+    response.setHeader("Cache-Control", "no-store");
+    try {
+      const body = request.method === "GET" ? null : bodyOf(request);
+      const result = await WA.proxy(request.method, (request.query && request.query.op) || "status", body);
+      return response.status(result.status).json(result.data);
+    } catch (error) {
+      return response.status(502).json({ error: error.message || "Bot tidak bisa dihubungi" });
+    }
+  }
 
   try {
     const sql = db();
