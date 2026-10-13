@@ -12,7 +12,7 @@ const fs = require("fs");
 const http = require("http");
 const pino = require("pino");
 const {
-  default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers,
+  default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers, makeCacheableSignalKeyStore,
 } = require("@whiskeysockets/baileys");
 const { normalizePhone, textOf, shouldReply, pushHistory } = require("./rules");
 
@@ -74,46 +74,100 @@ async function onMessage(message) {
   }
 }
 
-async function start() {
-  const { state: auth, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-  const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: undefined }));
-  state.status = "connecting";
-  sock = makeWASocket({
-    version,
-    auth,
-    logger: pino({ level: "silent" }),
-    printQRInTerminal: false,
-    browser: Browsers.ubuntu("Chrome"),
-    markOnlineOnConnect: false,
-  });
-  sock.ev.on("creds.update", saveCreds);
-  sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
-    if (connection === "open") {
-      state.status = "online";
-      state.pairingCode = "";
-      state.number = (sock.user && sock.user.id || "").split(":")[0].split("@")[0];
-      log("system", `Tersambung sebagai ${state.number}`);
-    }
-    if (connection === "close") {
-      const code = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output && lastDisconnect.error.output.statusCode;
-      if (code === DisconnectReason.loggedOut) {
-        state.status = "offline";
-        state.number = "";
-        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-        log("system", "Keluar dari WhatsApp. Minta pairing code baru untuk menyambung.");
-        setTimeout(start, 1500);
-      } else {
-        state.status = "connecting";
-        log("system", `Koneksi terputus (${code || "?"}), menyambung ulang...`);
-        setTimeout(start, 3000);
-      }
-    }
-  });
-  sock.ev.on("messages.upsert", ({ messages, type }) => {
-    if (type !== "notify") return;
-    for (const m of messages) onMessage(m);
-  });
+let starting = false;
+let retryTimer = null;
+let retries = 0;
+const silent = pino({ level: "silent" });
+
+function scheduleStart(ms) {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => start().catch((e) => { log("error", e.message); scheduleStart(10000); }), ms);
 }
+
+async function start() {
+  if (starting) return;
+  starting = true;
+  try {
+    // Matikan socket lama dulu supaya tidak ada 2 koneksi bareng (penyebab WA memaksa logout)
+    if (sock) {
+      try { sock.ev.removeAllListeners(); sock.ws && sock.ws.close(); } catch {}
+      sock = null;
+    }
+    const { state: auth, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+    const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: undefined }));
+    state.status = auth.creds.registered ? "connecting" : "offline";
+    const s = makeWASocket({
+      version,
+      auth: { creds: auth.creds, keys: makeCacheableSignalKeyStore(auth.keys, silent) },
+      logger: silent,
+      printQRInTerminal: false,
+      browser: Browsers.macOS("Chrome"),
+      markOnlineOnConnect: false,
+      syncFullHistory: false,
+      keepAliveIntervalMs: 25_000,
+      connectTimeoutMs: 60_000,
+      defaultQueryTimeoutMs: 60_000,
+      generateHighQualityLinkPreview: false,
+      getMessage: async () => undefined,
+    });
+    sock = s;
+    s.ev.on("creds.update", async () => { try { await saveCreds(); } catch (e) { log("error", "Gagal simpan sesi: " + e.message); } });
+    s.ev.on("connection.update", ({ connection, lastDisconnect }) => {
+      if (s !== sock) return; // event dari socket lama, abaikan
+      if (connection === "open") {
+        retries = 0;
+        state.status = "online";
+        state.pairingCode = "";
+        state.number = (s.user && s.user.id || "").split(":")[0].split("@")[0];
+        log("system", `Tersambung sebagai ${state.number}`);
+      }
+      if (connection === "close") {
+        const code = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output && lastDisconnect.error.output.statusCode;
+        if (code === DisconnectReason.loggedOut && s.authState.creds.registered && manualLogout) {
+          manualLogout = false;
+          state.status = "offline";
+          state.number = "";
+          fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+          log("system", "Bot diputuskan. Minta pairing code baru untuk menyambung.");
+          scheduleStart(1500);
+        } else if (code === DisconnectReason.loggedOut && s.authState.creds.registered) {
+          // Logout dari HP / WA. Coba sambung ulang beberapa kali dulu sebelum hapus sesi.
+          retries += 1;
+          if (retries <= 3) {
+            state.status = "connecting";
+            log("system", `WhatsApp menolak sesi (401), coba lagi ${retries}/3...`);
+            scheduleStart(5000 * retries);
+          } else {
+            retries = 0;
+            state.status = "offline";
+            state.number = "";
+            fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            log("system", "Keluar dari WhatsApp. Minta pairing code baru untuk menyambung.");
+            scheduleStart(1500);
+          }
+        } else if (code === DisconnectReason.connectionReplaced) {
+          state.status = "connecting";
+          log("system", "Ada koneksi lain memakai sesi ini, tunggu 30 detik...");
+          scheduleStart(30000);
+        } else {
+          state.status = s.authState.creds.registered ? "connecting" : "offline";
+          const wait = code === DisconnectReason.restartRequired ? 500 : Math.min(30000, 3000 * (retries + 1));
+          if (code !== DisconnectReason.restartRequired) retries += 1;
+          log("system", `Koneksi terputus (${code || "?"}), menyambung ulang...`);
+          scheduleStart(wait);
+        }
+      }
+    });
+    s.ev.on("messages.upsert", ({ messages, type }) => {
+      if (type !== "notify") return;
+      for (const m of messages) onMessage(m);
+    });
+  } finally {
+    starting = false;
+  }
+}
+
+let manualLogout = false;
 
 async function requestPairing(phone) {
   const number = normalizePhone(phone);
@@ -155,6 +209,7 @@ http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, enabled: state.enabled });
     }
     if (req.method === "POST" && url.pathname === "/logout") {
+      manualLogout = true;
       await sock.logout().catch(() => {});
       return send(res, 200, { ok: true });
     }
@@ -164,4 +219,8 @@ http.createServer(async (req, res) => {
   }
 }).listen(PORT, () => console.log(`Bot API jalan di port ${PORT}`));
 
-start().catch((e) => { log("error", e.message); process.exit(1); });
+start().catch((e) => { log("error", e.message); scheduleStart(10000); });
+process.on("unhandledRejection", (e) => log("error", String(e && e.message || e)));
+process.on("uncaughtException", (e) => log("error", String(e && e.message || e)));
+// Railway mematikan container lama saat deploy: tutup koneksi rapi tanpa logout
+process.on("SIGTERM", () => { try { sock && sock.ws && sock.ws.close(); } catch {} setTimeout(() => process.exit(0), 1500); });
