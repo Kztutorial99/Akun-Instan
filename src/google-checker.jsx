@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2, Loader2, PackagePlus, Plus, RefreshCw, ShieldAlert, Tag, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, PackagePlus, Plus, RefreshCw, ShieldAlert, Tag, Trash2 } from "lucide-react";
 import { jsonRequest } from "./main.jsx";
 
 const api = (resource, options = {}) => jsonRequest(`/api/admin/settings?resource=${resource}`, options);
@@ -9,6 +9,20 @@ const STATUS = {
   SUSPENDED: { label: "SUSPENDED", color: "#ef4444", bg: "rgba(239,68,68,.14)" },
   SOLD: { label: "TERJUAL", color: "#94a3b8", bg: "rgba(148,163,184,.14)" },
 };
+
+const WAIT = { label: "MASA TUNGGU", color: "#f59e0b", bg: "rgba(245,158,11,.14)" };
+const READY = { label: "SIAP", color: "#38bdf8", bg: "rgba(56,189,248,.14)" };
+const LIVE_MS = 60 * 1000;
+// Tahap akun: WAIT (belum 7 hari), READY (lolos, belum di stok), atau null.
+function stageOf(a, now) {
+  if (a.status !== "ACTIVE" || a.listingId || !a.waitUntil) return null;
+  return new Date(a.waitUntil).getTime() > now ? "WAIT" : "READY";
+}
+function left(iso, now) {
+  const ms = Math.max(0, new Date(iso).getTime() - now);
+  const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  return d ? `${d}h ${h}j lagi` : h ? `${h}j ${m}m lagi` : `${m}m lagi`;
+}
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" }) : "-");
 
@@ -20,6 +34,10 @@ export default function GoogleChecker({ onNotice }) {
   const [stockFor, setStockFor] = useState(null);
   const [form, setForm] = useState({ password: "", listingId: "", price: "", newTitle: "" });
   const autoOpened = useRef(false);
+  const [live, setLive] = useState(true);
+  const [now, setNow] = useState(Date.now());
+  const busyRef = useRef("");
+  busyRef.current = busy;
 
   const notify = useCallback((msg) => onNotice && onNotice(msg), [onNotice]);
 
@@ -31,6 +49,20 @@ export default function GoogleChecker({ onNotice }) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Cek real-time: selama menu terbuka, semua akun dicek ulang tiap 60 detik.
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 30000);
+    if (!live) return () => clearInterval(tick);
+    const poll = setInterval(async () => {
+      if (busyRef.current || document.hidden) return;
+      try {
+        const res = await api("gchecker-check", { method: "POST", body: JSON.stringify({}) });
+        setData((d) => ({ ...d, accounts: res.accounts }));
+      } catch (_) { /* diam */ }
+    }, LIVE_MS);
+    return () => { clearInterval(tick); clearInterval(poll); };
+  }, [live]);
+
   const openStock = useCallback((a, listings) => {
     const first = (listings || data.listings || [])[0];
     setForm({ password: "", listingId: first ? first.id : "__new__", price: first ? String(first.price) : "", newTitle: "Akun Google (Gmail) Fresh \u2014 Siap Pakai" });
@@ -40,7 +72,7 @@ export default function GoogleChecker({ onNotice }) {
   // Akun yang baru saja dihubungkan (10 menit terakhir) dan belum masuk stok → langsung tawarkan form.
   useEffect(() => {
     if (autoOpened.current || loading) return;
-    const fresh = (data.accounts || []).find((a) => a.status === "ACTIVE" && !a.listingId && Date.now() - new Date(a.createdAt).getTime() < 10 * 60 * 1000);
+    const fresh = (data.accounts || []).find((a) => a.status === "ACTIVE" && !a.listingId && !a.waitUntil && Date.now() - new Date(a.createdAt).getTime() < 10 * 60 * 1000);
     if (fresh) { autoOpened.current = true; openStock(fresh, data.listings); }
   }, [data, loading, openStock]);
 
@@ -83,7 +115,8 @@ export default function GoogleChecker({ onNotice }) {
 
   const accounts = data.accounts || [];
   const count = (s) => accounts.filter((a) => a.status === s).length;
-  const shown = filter === "ALL" ? accounts : accounts.filter((a) => a.status === filter);
+  const countStage = (st) => accounts.filter((a) => stageOf(a, now) === st).length;
+  const shown = filter === "WAIT" || filter === "READY" ? accounts.filter((a) => stageOf(a, now) === filter) : filter === "ALL" ? accounts : accounts.filter((a) => a.status === filter);
 
   return (
     <>
@@ -95,6 +128,9 @@ export default function GoogleChecker({ onNotice }) {
         <div className="cx-admin-actions" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => checkAll()} disabled={!!busy || !accounts.length}>
             {busy === "check" ? <Loader2 size={11} className="spin" /> : <RefreshCw size={11} />} Cek semua
+          </button>
+          <button className={`cx-btn cx-btn-sm ${live ? "cx-btn-primary" : "cx-btn-secondary"}`} onClick={() => setLive((v) => !v)} title="Cek otomatis tiap 60 detik">
+            <span style={{ width: 7, height: 7, borderRadius: 99, background: live ? "#22c55e" : "#64748b", display: "inline-block" }} /> Live {live ? "ON" : "OFF"}
           </button>
           <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={connect} disabled={!!busy || !data.configured}>
             <Plus size={11} /> Hubungkan Gmail
@@ -109,7 +145,7 @@ export default function GoogleChecker({ onNotice }) {
       )}
 
       <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 12, paddingBottom: 2, scrollbarWidth: "none" }}>
-        {[["ALL", `Semua (${accounts.length})`], ["ACTIVE", `Active (${count("ACTIVE")})`], ["SUSPENDED", `Suspended (${count("SUSPENDED")})`], ["SOLD", `Terjual (${count("SOLD")})`]].map(([k, l]) => (
+        {[["ALL", `Semua (${accounts.length})`], ["ACTIVE", `Active (${count("ACTIVE")})`], ["WAIT", `Masa tunggu (${countStage("WAIT")})`], ["READY", `Siap (${countStage("READY")})`], ["SUSPENDED", `Suspended (${count("SUSPENDED")})`], ["SOLD", `Terjual (${count("SOLD")})`]].map(([k, l]) => (
           <button key={k} className={`cx-btn cx-btn-sm ${filter === k ? "cx-btn-primary" : "cx-btn-secondary"}`} onClick={() => setFilter(k)} style={{ flex: "none", borderRadius: 999 }}>{l}</button>
         ))}
       </div>
@@ -120,7 +156,8 @@ export default function GoogleChecker({ onNotice }) {
         ) : !shown.length ? (
           <div style={{ padding: 24, textAlign: "center", color: "var(--faint)", fontSize: 12 }}>Belum ada akun. Ketuk "Hubungkan Gmail" lalu login ke akun yang mau dijual.</div>
         ) : shown.map((a, i) => {
-          const s = STATUS[a.status] || STATUS.ACTIVE;
+          const stage = stageOf(a, now);
+          const s = stage === "WAIT" ? WAIT : stage === "READY" ? READY : STATUS[a.status] || STATUS.ACTIVE;
           return (
             <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderTop: i ? "1px solid var(--line, rgba(255,255,255,.08))" : "none" }}>
               <span style={{ width: 8, height: 8, borderRadius: 99, background: s.color, flex: "none", boxShadow: `0 0 0 3px ${s.bg}` }} />
@@ -128,13 +165,16 @@ export default function GoogleChecker({ onNotice }) {
                 <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</div>
                 <div style={{ fontSize: 10, color: "var(--faint)", display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
                   <span style={{ color: s.color, fontWeight: 700 }}>{s.label}</span>
+                  {stage && <span style={{ color: (STATUS[a.status] || STATUS.ACTIVE).color }}>{a.status}</span>}
+                  {stage === "WAIT" && <span style={{ color: WAIT.color }}><Clock size={9} /> {left(a.waitUntil, now)}</span>}
                   <span>{a.status === "SOLD" ? `Terjual ${when(a.soldAt)}` : `Dicek ${when(a.lastChecked)}`}</span>
                   {a.listingTitle && a.status !== "SOLD" && <span style={{ color: "#22c55e" }}>Di stok</span>}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 4, flex: "none" }}>
                 {a.status !== "SOLD" && <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Cek" aria-label="Cek" onClick={() => checkAll(a.id)} disabled={!!busy}>{busy === `check-${a.id}` ? <Loader2 size={12} className="spin" /> : <RefreshCw size={12} />}</button>}
-                {a.status === "ACTIVE" && !a.listingId && <button className="cx-btn cx-btn-primary cx-btn-sm" title="Masukkan ke stok" aria-label="Masukkan ke stok" onClick={() => openStock(a)} disabled={!!busy}><PackagePlus size={12} /></button>}
+                {stage === "READY" && <button className="cx-btn cx-btn-primary cx-btn-sm" title="Selesai, jadikan stok" onClick={() => openStock(a)} disabled={!!busy}><CheckCircle2 size={12} /> Selesai</button>}
+                {a.status === "ACTIVE" && !a.listingId && !stage && <button className="cx-btn cx-btn-primary cx-btn-sm" title="Masukkan ke stok" aria-label="Masukkan ke stok" onClick={() => openStock(a)} disabled={!!busy}><PackagePlus size={12} /></button>}
                 {a.status !== "SOLD" && <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Tandai terjual" aria-label="Tandai terjual" onClick={() => sold(a)} disabled={!!busy}><Tag size={12} /></button>}
                 <button className="cx-btn cx-btn-secondary cx-btn-sm" title="Hapus" aria-label="Hapus" onClick={() => remove(a)} disabled={!!busy}><Trash2 size={12} /></button>
               </div>
@@ -142,7 +182,7 @@ export default function GoogleChecker({ onNotice }) {
           );
         })}
       </div>
-      <p style={{ color: "var(--faint)", fontSize: 11, marginTop: 10 }}>Semua akun dicek otomatis setiap hari pukul 09.00 WIB. Akun SUSPENDED otomatis ditarik dari stok, akun yang dibeli otomatis jadi TERJUAL.</p>
+      <p style={{ color: "var(--faint)", fontSize: 11, marginTop: 10 }}>Akun baru wajib lewat masa tunggu 7 hari dulu. Setelah statusnya SIAP, ketuk "Selesai" untuk memasukkannya ke stok (dicek ulang saat itu juga). Saat Live ON, semua akun dicek tiap 60 detik selama menu ini terbuka. Semua akun juga dicek otomatis setiap hari pukul 09.00 WIB. Akun SUSPENDED otomatis ditarik dari stok, akun yang dibeli otomatis jadi TERJUAL.</p>
 
       {stockFor && (
         <div onClick={() => setStockFor(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "grid", placeItems: "center", zIndex: 100, padding: 16 }}>

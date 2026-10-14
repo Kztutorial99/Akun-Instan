@@ -21,6 +21,7 @@ const ensureTable = once(async (sql) => {
     sold_at TIMESTAMPTZ
   )`;
   await sql`ALTER TABLE google_account_checks ADD COLUMN IF NOT EXISTS listing_id TEXT`;
+  await sql`ALTER TABLE google_account_checks ADD COLUMN IF NOT EXISTS wait_until TIMESTAMPTZ`;
 });
 
 /* ── enkripsi stok (format sama dengan api/admin/products.js) ── */
@@ -47,6 +48,7 @@ async function googleListings(sql) {
 }
 
 /* Masukkan akun checker ke stok listing (compare-and-swap supaya aman dari checkout bersamaan). */
+const WAIT_DAYS = 7;
 const NEW_DESC = "Tentang Produk:\nAkun Google (Gmail) Fresh \u2014 Siap Pakai. Detail paket dan masa aktif mengikuti judul produk.\n\nYang Didapat:\n- Data login lengkap\n- Akses sesuai paket yang dipilih\n- Panduan pengamanan akun\n\nCatatan penting:\n- Ganti password setelah login pertama.\n- Aktifkan verifikasi dua langkah jika tersedia.\n- Garansi login 1x24 jam sejak pembelian.";
 const NEW_DELIVERY = "CARA MENGAMANKAN AKUN GOOGLE (WAJIB SEGERA):\n1. Login memakai email & password yang diterima.\n2. Ganti password di https://myaccount.google.com/signinoptions/password\n3. Ganti email & nomor pemulihan menjadi milikmu sendiri.\n4. Keluarkan semua perangkat lain di https://myaccount.google.com/device-activity\n5. Cek akses aplikasi pihak ketiga di https://myaccount.google.com/permissions\n6. Aktifkan verifikasi dua langkah.\n\nCATATAN: simpan data login dengan aman dan jangan dibagikan kepada siapa pun.";
 /* Cek seluruh produk: email yang sama tidak boleh ada dua kali di stok. */
@@ -61,8 +63,11 @@ async function emailInAnyStock(sql, email) {
 }
 async function addToStock(sql, { id, password, listingId, price, newTitle }) {
   await ensureTable(sql);
+  const [acc0] = await sql`SELECT id, email, listing_id, refresh_token, wait_until FROM google_account_checks WHERE id = ${id}`;
+  if (!acc0) throw new Error("Akun tidak ditemukan");
+  if (acc0.wait_until && new Date(acc0.wait_until).getTime() > Date.now()) throw new Error("Akun masih dalam masa tunggu 7 hari");
+  await checkRow(sql, acc0); // cek real-time tepat sebelum masuk stok
   const [acc] = await sql`SELECT email, status, listing_id FROM google_account_checks WHERE id = ${id}`;
-  if (!acc) throw new Error("Akun tidak ditemukan");
   if (acc.status !== "ACTIVE") throw new Error("Hanya akun ACTIVE yang bisa dimasukkan ke stok");
   if (acc.listing_id) throw new Error("Akun ini sudah ada di stok produk");
   const pass = String(password || "").trim().slice(0, 200);
@@ -196,8 +201,9 @@ async function handleCallback(sql, request) {
   } catch (_) { /* ignore */ }
   if (!email) throw new Error("Email akun tidak terbaca");
   await ensureTable(sql);
-  await sql`INSERT INTO google_account_checks (id, email, refresh_token, status, last_checked, last_error)
-    VALUES (${crypto.randomUUID()}, ${email.toLowerCase()}, ${packToken(tok.refresh_token)}, 'ACTIVE', NOW(), '')
+  await sql`INSERT INTO google_account_checks (id, email, refresh_token, status, last_checked, last_error, wait_until)
+    VALUES (${crypto.randomUUID()}, ${email.toLowerCase()}, ${packToken(tok.refresh_token)}, 'ACTIVE', NOW(), '',
+      NOW() + make_interval(days => ${WAIT_DAYS}))
     ON CONFLICT (email) DO UPDATE SET refresh_token = EXCLUDED.refresh_token, status = 'ACTIVE',
       last_checked = NOW(), last_error = '', sold_at = NULL`;
   return email;
@@ -244,7 +250,7 @@ async function checkAll(sql, onlyId) {
 async function list(sql) {
   await ensureTable(sql);
   return sql`SELECT c.id, c.email, c.status, c.last_checked AS "lastChecked", c.last_error AS "lastError",
-    c.created_at AS "createdAt", c.sold_at AS "soldAt", c.listing_id AS "listingId", l.title AS "listingTitle"
+    c.created_at AS "createdAt", c.sold_at AS "soldAt", c.listing_id AS "listingId", c.wait_until AS "waitUntil", l.title AS "listingTitle"
     FROM google_account_checks c LEFT JOIN codexa_account_listings l ON l.id = c.listing_id ORDER BY c.status, c.email`;
 }
 
@@ -266,4 +272,4 @@ async function remove(sql, id) {
   await sql`DELETE FROM google_account_checks WHERE id = ${id}`;
 }
 
-module.exports = { emailInAnyStock, googleListings, addToStock, markSoldByEmails, authUrl, handleCallback, checkAll, list, markSold, remove, creds };
+module.exports = { WAIT_DAYS, emailInAnyStock, googleListings, addToStock, markSoldByEmails, authUrl, handleCallback, checkAll, list, markSold, remove, creds };
