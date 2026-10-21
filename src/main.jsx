@@ -1305,6 +1305,22 @@ function PublicLanding({ navigate, onLogin, onRegister, totalAccounts, totalSold
           </button>
         </section>
 
+        <section className="cx-container cx-app-dl" id="download-aplikasi" aria-label="Download aplikasi Android">
+          <div className="cx-app-dl-text">
+            <span className="cx-app-dl-tag">Aplikasi Android</span>
+            <h2>Belanja lebih cepat lewat aplikasi Akun Instan</h2>
+            <p>Katalog, top up QRIS, riwayat pesanan, dan bantuan AI langsung dari HP kamu. Gratis, tanpa Play Store.</p>
+            <a className="cx-btn cx-btn-primary cx-app-dl-btn" href="https://github.com/Kztutorial99/Akun-Instan/releases/latest/download/akun-instan.apk" rel="noopener">
+              <Download size={15} /> Download APK
+            </a>
+            <ol className="cx-app-dl-steps">
+              <li>Download file APK di atas.</li>
+              <li>Buka file, izinkan &quot;Instal dari sumber ini&quot; bila diminta.</li>
+              <li>Masuk memakai email &amp; password akun Akun Instan kamu.</li>
+            </ol>
+          </div>
+        </section>
+
       </main>
 
       <footer className="cx-footer">
