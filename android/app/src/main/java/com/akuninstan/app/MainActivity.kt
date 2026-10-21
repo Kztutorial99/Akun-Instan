@@ -193,11 +193,12 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
     Scaffold(
         containerColor = Bg,
         bottomBar = {
-            if (detail == null) NavigationBar(
+            if (detail == null) Column {
+              HorizontalDivider(color = Border)
+              NavigationBar(
                 containerColor = White,
                 tonalElevation = 0.dp,
-            ) {
-                HorizontalDivider(color = Border)
+              ) {
                 Tab.entries.forEach { t ->
                     NavigationBarItem(
                         selected = tab == t, onClick = { tab = t },
@@ -209,6 +210,7 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
                         icon = { Icon(t.icon, null) }, label = { Text(t.label, maxLines = 1) },
                     )
                 }
+              }
             }
         },
     ) { pad ->

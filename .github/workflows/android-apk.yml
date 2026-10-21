@@ -97,8 +97,6 @@ jobs:
       - name: Ganti nama APK
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk \
-             "dist/akun-instan-${{ steps.version.outputs.name }}.apk"
           cp android/app/build/outputs/apk/release/app-release.apk dist/akun-instan.apk
 
       - name: Upload artifact
