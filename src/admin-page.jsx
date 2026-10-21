@@ -1178,13 +1178,13 @@ function AdminPage({ onBack, onNotice }) {
               </div>
             </>
           ) : activeNav === "Assisten" ? (
-            <>
-              <div className="cx-admin-top">
+            <div className="cx-ai">
+              <div className="cx-admin-top cx-ai-top">
                 <div>
                   <div className="cx-admin-date">Konfigurasi AI</div>
                   <h1>Assisten</h1>
                 </div>
-                <div className="cx-admin-actions">
+                <div className="cx-admin-actions cx-ai-actions">
                   <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={loadSettings}><RefreshCw size={11} /> Refresh</button>
                   <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={testAssistant} disabled={testingAi || !aiCfg?.hasKey}>
                     <Sparkles size={11} /> {testingAi ? "Menguji..." : "Tes Koneksi"}
@@ -1192,17 +1192,17 @@ function AdminPage({ onBack, onNotice }) {
                 </div>
               </div>
 
-              <div className="cx-stat-grid">
+              <div className="cx-ai-stats">
                 {[
                   { label: "Status", value: aiCfg ? (aiCfg.enabled ? (aiCfg.hasKey ? "Aktif" : "Belum ada key") : "Dimatikan") : "—", delta: aiCfg?.hasKey ? "siap dipakai" : "isi API key dulu", up: Boolean(aiCfg?.enabled && aiCfg?.hasKey) },
                   { label: "API Key", value: aiCfg?.keyPreview || "kosong", delta: aiCfg?.keySource === "panel" ? "dari admin panel" : aiCfg?.keySource === "env" ? "dari env Vercel" : "belum diatur", up: Boolean(aiCfg?.hasKey) },
-                  { label: "Model Admin", value: aiCfg?.modelAdmin || "—", delta: "akses penuh", up: true },
-                  { label: "Model User", value: aiCfg?.modelUser || "—", delta: "data sendiri saja", up: true },
-                ].map(({ label, value, delta, up }) => (
-                  <div key={label} className="cx-stat-card">
-                    <span className="cx-stat-label">{label}</span>
-                    <strong className="cx-stat-value" style={{ fontSize: 15, wordBreak: "break-all" }}>{value}</strong>
-                    <span className="cx-stat-delta" style={{ color: up ? "var(--green)" : "var(--amber)" }}>{delta}</span>
+                  { label: "Model Admin", value: aiCfg?.modelAdmin || "—", delta: "akses penuh", up: true, wide: true },
+                  { label: "Model User", value: aiCfg?.modelUser || "—", delta: "data sendiri saja", up: true, wide: true },
+                ].map(({ label, value, delta, up, wide }) => (
+                  <div key={label} className={`cx-ai-stat${wide ? " is-wide" : ""}`}>
+                    <span className="cx-ai-stat-label">{label}</span>
+                    <strong className="cx-ai-stat-value" title={value}>{value}</strong>
+                    <span className={`cx-ai-stat-delta ${up ? "is-up" : "is-warn"}`}>{delta}</span>
                   </div>
                 ))}
               </div>
@@ -1214,13 +1214,13 @@ function AdminPage({ onBack, onNotice }) {
                     {aiCfg?.updatedAt ? `terakhir diubah ${formatDate(aiCfg.updatedAt)}` : "tersimpan di database, tanpa redeploy"}
                   </span>
                 </div>
-                <div style={{ padding: 14 }}>
+                <div className="cx-ai-body">
                   {!aiForm ? (
                     <p style={{ color: "var(--faint)", fontSize: 11 }}>Memuat pengaturan...</p>
                   ) : (
                     <>
-                      <div className="cx-form-grid">
-                        <div className="cx-full-span">
+                      <div className="cx-ai-form">
+                        <div className="cx-ai-span">
                           <Field label="OpenRouter API Key" hint={aiCfg?.hasKey ? `Tersimpan: ${aiCfg.keyPreview} (${aiCfg.keySource === "panel" ? "panel" : "env Vercel"}). Kosongkan bila tidak diubah.` : "Belum ada key. Buat gratis di openrouter.ai/keys lalu tempel di sini."}>
                             <InputWrap icon={LockKeyhole}>
                               <input
@@ -1233,50 +1233,51 @@ function AdminPage({ onBack, onNotice }) {
                             </InputWrap>
                           </Field>
                         </div>
-                        <div className="cx-full-span" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 11, color: "var(--muted)" }}>
+                        <div className="cx-ai-span cx-ai-models-info">
                           <span>
-                            {aiModelsLoading ? "Memuat model gratis OpenRouter..." : aiModelsError ? `Daftar model gagal dimuat: ${aiModelsError}` : `${aiModels.length} model gratis OpenRouter tersedia. Pilih yang ber-label "tools" agar Assisten bisa menjalankan aksi.`}
+                            {aiModelsLoading ? "Memuat model gratis OpenRouter..." : aiModelsError ? `Daftar model gagal dimuat: ${aiModelsError}` : <><strong>{aiModels.length} model gratis</strong> tersedia. Pilih yang ber-label "tools" agar Assisten bisa menjalankan aksi.</>}
                           </span>
                           <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => loadAiModels(true)} disabled={aiModelsLoading}>
                             <RefreshCw size={11} className={aiModelsLoading ? "cx-spin" : ""} /> Muat ulang model
                           </button>
                         </div>
-                        <div className="cx-full-span">
+                        <div className="cx-ai-span">
                           <Field label="Model untuk Admin" hint="Dipakai Assisten admin & draft komentar YouTube">
                             <InputWrap><AiModelSelect value={aiForm.modelAdmin} onChange={(v) => updateAiForm("modelAdmin", v)} models={aiModels} /></InputWrap>
                           </Field>
                         </div>
-                        <div className="cx-full-span">
+                        <div className="cx-ai-span">
                           <Field label="Model untuk User" hint="Dipakai Assisten user & bot WhatsApp">
                             <InputWrap><AiModelSelect value={aiForm.modelUser} onChange={(v) => updateAiForm("modelUser", v)} models={aiModels} /></InputWrap>
                           </Field>
                         </div>
-                        <div className="cx-full-span">
+                        <div className="cx-ai-span">
                           <Field label="Base URL OpenRouter" hint="Kosongkan untuk memakai https://openrouter.ai/api/v1">
                             <InputWrap><input value={aiForm.baseUrl} onChange={(e) => updateAiForm("baseUrl", e.target.value)} placeholder="https://openrouter.ai/api/v1" /></InputWrap>
                           </Field>
                         </div>
                         <Field label="Maks. Langkah Tool" hint="1 - 10, default 6">
-                          <InputWrap><input type="number" min="1" max="30" value={aiForm.maxSteps} onChange={(e) => updateAiForm("maxSteps", e.target.value)} /></InputWrap>
+                          <InputWrap><input type="number" inputMode="numeric" min="1" max="30" value={aiForm.maxSteps} onChange={(e) => updateAiForm("maxSteps", e.target.value)} /></InputWrap>
                         </Field>
                         <Field label="Temperature" hint="0 = presisi, 1 = kreatif">
-                          <InputWrap><input type="number" step="0.1" min="0" max="2" value={aiForm.temperature} onChange={(e) => updateAiForm("temperature", e.target.value)} /></InputWrap>
+                          <InputWrap><input type="number" inputMode="decimal" step="0.1" min="0" max="2" value={aiForm.temperature} onChange={(e) => updateAiForm("temperature", e.target.value)} /></InputWrap>
                         </Field>
-                        <div className="cx-full-span">
+                        <div className="cx-ai-span">
                           <Field label="Instruksi Tambahan" hint="Ditambahkan ke system prompt Assisten (opsional)">
                             <InputWrap><textarea value={aiForm.extraPrompt} onChange={(e) => updateAiForm("extraPrompt", e.target.value)} placeholder="Contoh: Selalu tawarkan promo top up mingguan." /></InputWrap>
                           </Field>
                         </div>
-                        <div className="cx-full-span">
-                          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 11, color: "var(--ink2)" }}>
-                            <input type="checkbox" checked={aiForm.enabled} onChange={(e) => updateAiForm("enabled", e.target.checked)} />
-                            Assisten aktif untuk user & admin
-                          </label>
-                        </div>
+                        <label className="cx-ai-span cx-ai-toggle">
+                          <span>
+                            <strong>Assisten aktif</strong>
+                            <small>Bisa dipakai user & admin</small>
+                          </span>
+                          <input type="checkbox" checked={aiForm.enabled} onChange={(e) => updateAiForm("enabled", e.target.checked)} />
+                        </label>
                       </div>
                       {aiError && <p className="cx-form-error">{aiError}</p>}
                       {aiNotice && <p style={{ color: "var(--green)", fontSize: 11, marginTop: 8 }}>{aiNotice}</p>}
-                      <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                      <div className="cx-ai-save">
                         <button className="cx-btn cx-btn-primary cx-btn-sm" onClick={saveSettings} disabled={savingAi}>
                           {savingAi ? <><RefreshCw size={11} /> Menyimpan...</> : <><Check size={11} /> Simpan Pengaturan</>}
                         </button>
@@ -1291,18 +1292,18 @@ function AdminPage({ onBack, onNotice }) {
                 </div>
               </div>
 
-              <div className="cx-panel" style={{ marginTop: 18 }}>
+              <div className="cx-panel">
                 <div className="cx-panel-header">
                   <h3>Hak Akses Assisten</h3>
                   <span className="cx-panel-sub">role menentukan tool yang boleh dipakai</span>
                 </div>
-                <div style={{ padding: 14, fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
-                  <p><strong style={{ color: "var(--ink2)" }}>Admin</strong> — bisa membaca & mengubah data semua user, saldo, status akun, top up, dan produk.</p>
-                  <p><strong style={{ color: "var(--ink2)" }}>User biasa</strong> — hanya data akunnya sendiri, dan bisa eskalasi masalah ke admin.</p>
-                  <p>Atur role tiap akun di panel <strong style={{ color: "var(--ink2)" }}>Pengguna</strong> (ikon perisai) atau lewat form edit user.</p>
+                <div className="cx-ai-body cx-ai-access">
+                  <p><strong>Admin</strong> — bisa membaca & mengubah data semua user, saldo, status akun, top up, dan produk.</p>
+                  <p><strong>User biasa</strong> — hanya data akunnya sendiri, dan bisa eskalasi masalah ke admin.</p>
+                  <p>Atur role tiap akun di panel <strong>Pengguna</strong> (ikon perisai) atau lewat form edit user.</p>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
           <>
           <div className="cx-admin-top">

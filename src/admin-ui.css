@@ -922,3 +922,53 @@
 .cx-yta-side button{background:none;border:0;color:inherit;opacity:.6;cursor:pointer}
 .cx-yta-badge{font-size:10px;padding:2px 7px;border:1px solid;border-radius:999px;white-space:nowrap}
 @media(max-width:560px){.cx-yta-item img,.cx-yta-q img{width:72px}.cx-yta-stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ── ASSISTEN (pengaturan AI) ────────────────── */
+.cx-ai { min-width: 0; }
+.cx-ai-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: var(--ad-gap); }
+.cx-ai-stat { min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 11px 12px; border: 1px solid var(--ad-border); border-radius: var(--ad-radius); background: var(--s1); }
+.cx-ai-stat-label { font: 500 9.5px ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.cx-ai-stat-value { font: 650 14px ui-monospace, monospace; color: var(--ink); letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-ai-stat-delta { font-size: 10px; }
+.cx-ai-stat-delta.is-up { color: var(--green); }
+.cx-ai-stat-delta.is-warn { color: var(--amber); }
+.cx-admin-shell .cx-ai .cx-panel { padding: 0; }
+.cx-ai .cx-panel + .cx-panel { margin-top: var(--ad-gap); }
+.cx-ai-body { padding: var(--ad-pad); min-width: 0; }
+.cx-ai-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
+.cx-ai-form > * { min-width: 0; }
+.cx-ai-span { grid-column: 1 / -1; }
+.cx-ai-form .cx-field { margin-bottom: 12px; min-width: 0; }
+.cx-ai-form .cx-field small { font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
+.cx-ai-form .cx-input-wrap { min-width: 0; border-radius: 9px; min-height: 40px; }
+.cx-ai-form .cx-input-wrap > svg { flex-shrink: 0; }
+.cx-ai-form .cx-input-wrap input, .cx-ai-form .cx-input-wrap textarea, .cx-ai-form .cx-input-wrap select { min-width: 0; width: 100%; }
+.cx-ai-form .cx-input-wrap select { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.cx-ai-models-info { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; margin-bottom: 12px; border: 1px dashed var(--ad-border); border-radius: 9px; background: var(--s2); font-size: 11px; line-height: 1.5; color: var(--muted); }
+.cx-ai-models-info strong { color: var(--ink2); }
+.cx-ai-models-info .cx-btn { flex-shrink: 0; }
+.cx-ai-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--ad-border); border-radius: 9px; background: var(--s2); cursor: pointer; }
+.cx-ai-toggle > span { display: grid; gap: 2px; min-width: 0; }
+.cx-ai-toggle strong { font-size: 12px; color: var(--ink); }
+.cx-ai-toggle small { font-size: 10px; color: var(--faint); }
+.cx-ai-toggle input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--indigo); }
+.cx-ai-save { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.cx-ai-access { font-size: 11px; line-height: 1.65; color: var(--muted); }
+.cx-ai-access p { margin: 0 0 6px; }
+.cx-ai-access p:last-child { margin-bottom: 0; }
+.cx-ai-access strong { color: var(--ink2); }
+@media (max-width: 860px) { .cx-ai-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .cx-admin-shell .cx-ai-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .cx-admin-shell .cx-ai-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; width: 100%; }
+  .cx-ai-actions .cx-btn { width: 100%; height: 38px; justify-content: center; }
+  .cx-ai-stat.is-wide { grid-column: 1 / -1; }
+  .cx-ai-stat { padding: 10px 11px; }
+  .cx-ai-stat-value { font-size: 13px; }
+  .cx-ai-body { padding: 12px; }
+  .cx-admin-shell .cx-ai .cx-panel-header { padding: 10px 12px; row-gap: 2px; }
+  .cx-ai-models-info { flex-direction: column; align-items: stretch; gap: 8px; }
+  .cx-ai-models-info .cx-btn { justify-content: center; height: 34px; }
+  .cx-ai-form .cx-input-wrap { min-height: 44px; }
+  .cx-ai-save .cx-btn { flex: 1 1 0; min-width: 0; height: 42px; justify-content: center; }
+}
