@@ -11,6 +11,7 @@ import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -335,9 +336,7 @@ fun ProductCard(p: Product, onClick: () -> Unit) {
                         containerColor = if (p.soldOut) Color(0xFFFEF2F2) else Color(0xFFECFDF5),
                         labelColor = if (p.soldOut) Danger else Success,
                     ),
-                    border = AssistChipDefaults.assistChipBorder(
-                        borderColor = if (p.soldOut) Color(0xFFFECACA) else Color(0xFFBBF7D0),
-                    ),
+                    border = BorderStroke(1.dp, if (p.soldOut) Color(0xFFFECACA) else Color(0xFFBBF7D0)),
                 )
             }
             if (p.description.isNotBlank()) Text(p.description, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
@@ -362,7 +361,7 @@ fun ProductDetail(p: Product, user: User, onBack: () -> Unit, onBought: (Int) ->
         Header(p.title, p.loginType, onBack)
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (p.description.isNotBlank()) item {
-                Text(p.description, color = Muted, Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp))
+                Text(p.description, Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp), color = Muted)
             }
             item { Text("Pilih akun", fontWeight = FontWeight.SemiBold, color = Ink) }
             items(p.accounts, key = { it.index }) { a ->
@@ -592,7 +591,7 @@ fun ChatScreen() {
 }
 
 @Composable
-fun ProfileRow(icon: ImageVector, label: String, onClick: () -> Unit, danger: Boolean = false) {
+fun ProfileRow(icon: ImageVector, label: String, danger: Boolean = false, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).border(1.dp, Border, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 14.dp),
