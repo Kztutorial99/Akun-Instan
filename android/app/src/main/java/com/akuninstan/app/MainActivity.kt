@@ -684,7 +684,6 @@ fun CopyRow(label: String, value: String, ctx: Context) = Row(verticalAlignment 
 
 // ═══════════════ TOP UP ═══════════════
 
-private val TOPUP_PRESETS = listOf(10000, 20000, 50000, 100000, 200000, 500000)
 
 private val TOPUP_PRESETS = listOf(10000, 20000, 50000, 100000, 200000, 500000)
 private val EWALLETS = listOf("DANA", "OVO", "GoPay", "ShopeePay", "LinkAja", "M-Banking")
