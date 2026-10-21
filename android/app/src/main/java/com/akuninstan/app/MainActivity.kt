@@ -171,8 +171,9 @@ fun BentoTile(icon: ImageVector, title: String, sub: String, onClick: () -> Unit
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-            Text(sub, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            Text(sub, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        Icon(Icons.Filled.ChevronRight, null, tint = Muted, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -185,15 +186,16 @@ fun GridProductCard(p: Product, modifier: Modifier = Modifier, onClick: () -> Un
             Spacer(Modifier.weight(1f))
             val (lbl, fg, bg) = when {
                 p.soldOut -> Triple("Habis", Danger, DangerSoft)
-                p.soldCount >= 10 -> Triple("Terlaris", Warning, WarningSoft)
-                else -> Triple("Stok ${p.stock}", Success, SuccessSoft)
+                p.soldCount >= 10 -> Triple("🔥 Terlaris", Danger, DangerSoft)
+                p.soldCount > 0 -> Triple("★ Populer", BrandDark, BrandSoft)
+                else -> Triple("✦ Baru", Color(0xFF0E7490), Color(0xFFE0F7FA))
             }
             Box(Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp)) {
                 Text(lbl, color = fg, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
-        Spacer(Modifier.height(12.dp))
-        Text(p.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.heightIn(min = 40.dp))
+        Spacer(Modifier.height(10.dp))
+        Text(p.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
         Text(p.loginType.ifBlank { " " }, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -270,7 +272,7 @@ fun UserAvatar(user: User, size: Int, onDark: Boolean = false) {
 }
 
 enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Beranda", Icons.Filled.Storefront), Orders("Pesanan", Icons.Filled.ReceiptLong),
+    Home("Beranda", Icons.Filled.Home), Orders("Pesanan", Icons.Filled.ReceiptLong),
     Topup("Top Up", Icons.Filled.AccountBalanceWallet), Help("Bantuan", Icons.Filled.SupportAgent), Profile("Profil", Icons.Filled.Person)
 }
 
@@ -533,101 +535,150 @@ fun SectionTitle(text: String, trailing: (@Composable () -> Unit)? = null) {
 
 // ═══════════════ BERANDA ═══════════════
 
+private val CATEGORIES = listOf(
+    Triple("Semua", Icons.Filled.GridView, emptyList<String>()),
+    Triple("Gaming", Icons.Filled.SportsEsports, listOf("game", "steam", "mobile legend", "ml ", "ff", "free fire", "pubg", "valorant", "roblox", "genshin", "discord")),
+    Triple("Streaming", Icons.Filled.PlayCircleOutline, listOf("netflix", "spotify", "youtube", "disney", "vidio", "viu", "wetv", "iqiyi", "prime", "hbo", "mola", "genflix", "tiktok", "instagram")),
+    Triple("Produktivitas", Icons.Filled.WorkOutline, listOf("canva", "chatgpt", "gpt", "openai", "capcut", "office", "microsoft", "zoom", "grammarly", "notion", "figma", "adobe", "gemini", "claude", "copilot", "gmail", "google")),
+    Triple("Lainnya", Icons.Filled.MoreHoriz, emptyList()),
+)
+private fun inCat(p: Product, i: Int): Boolean {
+    if (i == 0) return true
+    val t = (p.title + " " + p.loginType).lowercase() + " "
+    if (i == 4) return (1..3).none { c -> CATEGORIES[c].third.any { t.contains(it) } }
+    return CATEGORIES[i].third.any { t.contains(it) }
+}
+
 @Composable
 fun HomeScreen(user: User, onTopup: () -> Unit, onOrders: () -> Unit = {}, onHelp: () -> Unit = {}, onProfile: () -> Unit = {}, open: (Product) -> Unit) {
     val products = AppCache.products
     var error by remember { mutableStateOf("") }
     var query by rememberSaveable { mutableStateOf("") }
+    var searching by rememberSaveable { mutableStateOf(false) }
+    var cat by rememberSaveable { mutableIntStateOf(0) }
     var reload by remember { mutableIntStateOf(0) }
     LaunchedEffect(reload) { error = ""; runCatching { Api.products() }.onSuccess { AppCache.products = it }.onFailure { error = it.message ?: "Gagal memuat" } }
-    Column(Modifier.fillMaxSize()) {
-        // Sapaan + avatar
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            UserAvatar(user, 46)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text("Halo, ${user.name.ifBlank { "Pelanggan" }}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("Mau beli akun apa hari ini?", color = Muted, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        // Bento: kartu saldo + Top Up + Pesanan
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Column(Modifier.weight(1.15f).fillMaxHeight().clip(CardShape).background(White.copy(alpha = 0.85f)).border(1.dp, Border, CardShape)
-                .pressable(onClick = onTopup).padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Navy2, Navy))), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.AccountBalanceWallet, null, tint = White, modifier = Modifier.size(22.dp))
+    val list = products
+    LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Row {
+                        Text("Akun ", color = Ink, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("Instan", color = Brand, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                    }
+                    Text("Akses dunia digital, lebih mudah.", color = Muted, style = MaterialTheme.typography.bodySmall)
                 }
-                Spacer(Modifier.height(14.dp))
-                Text("Saldo kamu", color = Muted, style = MaterialTheme.typography.labelMedium)
-                Text(rupiah(user.balance), color = Ink, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                BentoTile(Icons.Filled.Add, "Top Up", "Isi saldo", onTopup)
-                BentoTile(Icons.Filled.ReceiptLong, "Pesanan", "Lihat riwayat", onOrders)
+                RoundIcon(Icons.Filled.Search) { searching = !searching; if (!searching) query = "" }
+                Spacer(Modifier.width(10.dp))
+                RoundIcon(Icons.Filled.NotificationsNone, dot = true, onClick = onOrders)
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            QuickAction(Icons.Filled.SupportAgent, "Bantuan", Modifier.weight(1f), onHelp)
-            QuickAction(Icons.Filled.Person, "Profil", Modifier.weight(1f), onProfile)
+        if (searching) item {
+            OutlinedTextField(
+                query, { query = it }, placeholder = { Text("Cari produk...") }, leadingIcon = { Icon(Icons.Filled.Search, null, tint = Muted) },
+                singleLine = true, shape = FieldShape,
+                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = White, unfocusedContainerColor = White,
+                    focusedBorderColor = Brand, unfocusedBorderColor = Border, cursorColor = Brand),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
-        Spacer(Modifier.height(14.dp))
-        // Pencarian
-        OutlinedTextField(
-            query, { query = it }, placeholder = { Text("Cari produk...") }, leadingIcon = { Icon(Icons.Filled.Search, null, tint = Muted) },
-            singleLine = true, shape = FieldShape,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = White, unfocusedContainerColor = White,
-                focusedBorderColor = Brand, unfocusedBorderColor = Border, cursorColor = Brand,
-            ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        )
-        Spacer(Modifier.height(14.dp))
-        val list = products
+        item {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.weight(1.15f).fillMaxHeight().clip(CardShape).background(White.copy(alpha = 0.85f)).border(1.dp, Border, CardShape)
+                    .pressable(onClick = onTopup).padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Navy2, Navy))), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Filled.AccountBalanceWallet, null, tint = White, modifier = Modifier.size(22.dp))
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Saldo Kamu", color = Muted, style = MaterialTheme.typography.labelSmall)
+                            Text(rupiah(user.balance), color = Ink, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Icon(Icons.Filled.ChevronRight, null, tint = Muted, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(BrandSoft).padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.WorkspacePremium, null, tint = Brand, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text("Akun instan, hidup lebih produktif.", color = BrandDark, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BentoTile(Icons.Filled.Add, "Top Up", "Isi saldo sekarang", onTopup)
+                    BentoTile(Icons.Filled.ReceiptLong, "Pesanan", "Lihat riwayat", onOrders)
+                }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CATEGORIES.forEachIndexed { i, c ->
+                    val on = cat == i
+                    Column(Modifier.weight(1f).clip(RoundedCornerShape(18.dp))
+                        .background(if (on) Brush.linearGradient(listOf(Navy2, Navy)) else Brush.linearGradient(listOf(White, White)))
+                        .border(1.dp, if (on) Color.Transparent else Border, RoundedCornerShape(18.dp))
+                        .pressable { cat = i }.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(c.second, null, tint = if (on) White else Ink, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.height(6.dp))
+                        Text(c.first, color = if (on) White else Muted, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Clip)
+                    }
+                }
+            }
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Produk Populer", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ink)
+                Row(Modifier.clip(RoundedCornerShape(8.dp)).clickable { cat = 0; query = ""; searching = false }.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Lihat Semua", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    Icon(Icons.Filled.ChevronRight, null, tint = Muted, modifier = Modifier.size(16.dp))
+                }
+            }
+        }
         when {
-            error.isNotBlank() && list == null -> ErrorBox(error) { reload++ }
-            list == null -> Loading()
+            error.isNotBlank() && list == null -> item { ErrorBox(error) { reload++ } }
+            list == null -> item { Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Brand) } }
             else -> {
-                val shown = list.filter { query.isBlank() || it.title.contains(query, true) || it.loginType.contains(query, true) }
-                    .sortedBy { it.soldOut }
-                LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    item {
-                        SectionTitle("Katalog produk") {
-                            Box(Modifier.clip(RoundedCornerShape(8.dp)).background(BrandSoft).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                Text("${shown.size} produk", color = BrandDark, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
+                val shown = list.filter { inCat(it, cat) && (query.isBlank() || it.title.contains(query, true) || it.loginType.contains(query, true)) }
+                    .sortedWith(compareBy<Product> { it.soldOut }.thenByDescending { it.soldCount })
+                if (shown.isEmpty()) item { Text("Produk tidak ditemukan", color = Muted) }
+                items(shown.chunked(2), key = { r -> r.joinToString { it.id } }) { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        row.forEach { p -> GridProductCard(p, Modifier.weight(1f)) { if (!p.soldOut) open(p) } }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
-                    val top = list.filter { !it.soldOut && it.soldCount > 0 }.sortedByDescending { it.soldCount }.take(6)
-                    if (query.isBlank() && top.size >= 2) {
-                        item { SectionTitle("Terlaris") }
-                        item {
-                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                top.forEach { p ->
-                                    Column(Modifier.width(150.dp).clip(CardShape).background(White).border(1.dp, Border, CardShape).pressable { open(p) }.padding(14.dp)) {
-                                        ProductLogo(p, 40)
-                                        Spacer(Modifier.height(10.dp))
-                                        Text(p.title, color = Ink, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.heightIn(min = 40.dp))
-                                        Text(rupiah(p.price), color = Brand, fontWeight = FontWeight.Bold)
-                                        Text("${p.soldCount} terjual", color = Muted, style = MaterialTheme.typography.labelSmall)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (shown.isEmpty()) item { Text("Produk tidak ditemukan", color = Muted, modifier = Modifier.padding(top = 8.dp)) }
-                    items(shown.chunked(2), key = { r -> r.joinToString { it.id } }) { row ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            row.forEach { p -> GridProductCard(p, Modifier.weight(1f)) { if (!p.soldOut) open(p) } }
-                            if (row.size == 1) Spacer(Modifier.weight(1f))
-                        }
-                    }
-                    item { Spacer(Modifier.height(8.dp)) }
                 }
             }
+        }
+        item { PromoBanner() }
+        item { Spacer(Modifier.height(90.dp)) }
+    }
+}
+
+@Composable
+fun RoundIcon(icon: ImageVector, dot: Boolean = false, onClick: () -> Unit) {
+    Box(Modifier.size(46.dp).clip(RoundedCornerShape(16.dp)).background(White.copy(alpha = 0.85f)).border(1.dp, Border, RoundedCornerShape(16.dp))
+        .pressable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, null, tint = Ink, modifier = Modifier.size(22.dp))
+        if (dot) Box(Modifier.align(Alignment.TopEnd).padding(10.dp).size(8.dp).clip(CircleShape).background(Brand))
+    }
+}
+
+@Composable
+fun PromoBanner() {
+    Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF4C1D95), Navy, Navy2))).padding(18.dp)) {
+        Box(Modifier.align(Alignment.CenterEnd).size(110.dp).clip(RoundedCornerShape(28.dp)).background(White.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Bolt, null, tint = White.copy(alpha = 0.85f), modifier = Modifier.size(52.dp))
+        }
+        Column(Modifier.fillMaxWidth(0.68f)) {
+            Text("Lebih banyak kemungkinan dengan", color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text("Akun Instan", color = Color(0xFFC4B5FD), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Spacer(Modifier.height(6.dp))
+            Text("Cepat • Aman • Terpercaya", color = White.copy(alpha = 0.8f), fontSize = 11.sp)
         }
     }
 }
+
 
 @Composable
 fun ProductCard(p: Product, onClick: () -> Unit) {
