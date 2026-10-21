@@ -76,6 +76,8 @@ object Api {
     suspend fun me(): User? = call("GET", "/api/auth").optJSONObject("user")?.let(User::from)
     suspend fun login(email: String, password: String): User =
         User.from(call("POST", "/api/auth", JSONObject().put("action", "login").put("email", email).put("password", password)).getJSONObject("user"))
+    suspend fun loginGoogle(accessToken: String): User =
+        User.from(call("POST", "/api/auth", JSONObject().put("action", "google").put("accessToken", accessToken)).getJSONObject("user"))
     suspend fun logout() { runCatching { call("DELETE", "/api/auth") }; jar.clear() }
 
     // ── Katalog ──
