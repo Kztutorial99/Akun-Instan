@@ -230,11 +230,11 @@ fun LoginScreen(googleToken: String?, onTokenConsumed: () -> Unit, onLogin: (Use
         Spacer(Modifier.height(20.dp))
 
         SmoothField(email, { email = it.trim() }, "Email", Modifier.fillMaxWidth(),
-            leading = { Icon(Icons.Filled.MailOutline, null, tint = Muted, modifier = Modifier.size(20.dp)) },
+            leading = { Icon(Icons.Filled.Email, null, tint = Muted, modifier = Modifier.size(20.dp)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email))
         Spacer(Modifier.height(14.dp))
         SmoothField(pass, { pass = it }, "Password", Modifier.fillMaxWidth(),
-            leading = { Icon(Icons.Filled.LockOutline, null, tint = Muted, modifier = Modifier.size(20.dp)) },
+            leading = { Icon(Icons.Filled.Lock, null, tint = Muted, modifier = Modifier.size(20.dp)) },
             visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
         if (error.isNotBlank()) { Spacer(Modifier.height(10.dp)); Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
         Spacer(Modifier.height(22.dp))
