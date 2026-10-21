@@ -78,6 +78,14 @@ object Api {
         User.from(call("POST", "/api/auth", JSONObject().put("action", "login").put("email", email).put("password", password)).getJSONObject("user"))
     suspend fun loginGoogle(accessToken: String): User =
         User.from(call("POST", "/api/auth", JSONObject().put("action", "google").put("accessToken", accessToken)).getJSONObject("user"))
+    suspend fun updateProfile(name: String, phone: String, avatar: String?): User {
+        val b = JSONObject().put("name", name).put("phone", phone)
+        if (avatar != null) b.put("avatar", avatar)
+        return User.from(call("PATCH", "/api/auth", b).getJSONObject("user"))
+    }
+    suspend fun changePassword(current: String, newPass: String): String =
+        call("POST", "/api/auth", JSONObject().put("action", "change-password").put("currentPassword", current).put("password", newPass))
+            .optString("message").ifBlank { "Password berhasil diganti" }
     suspend fun logout() { runCatching { call("DELETE", "/api/auth") }; jar.clear() }
 
     // ── Katalog ──

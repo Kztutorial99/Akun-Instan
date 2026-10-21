@@ -49,6 +49,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.Bitmap
+import androidx.compose.ui.layout.ContentScale
+import java.io.ByteArrayOutputStream
+import org.json.JSONObject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -111,6 +117,70 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Cache di memori: pindah menu langsung tampil, update berjalan di belakang. */
+object AppCache {
+    var products by mutableStateOf<List<Product>?>(null)
+    var orders by mutableStateOf<List<Order>?>(null)
+    var topup by mutableStateOf<TopupInfo?>(null)
+    suspend fun refreshProducts() { runCatching { Api.products() }.onSuccess { products = it } }
+    suspend fun refreshOrders() { runCatching { Api.orders() }.onSuccess { orders = it.first } }
+    suspend fun refreshTopup() { runCatching { Api.topupInfo() }.onSuccess { topup = it } }
+    suspend fun prefetch() = kotlinx.coroutines.coroutineScope {
+        launch { refreshProducts() }; launch { refreshOrders() }; launch { refreshTopup() }
+    }
+    fun clear() { products = null; orders = null; topup = null }
+}
+
+/** Logo asli brand berdasarkan nama produk. */
+private val BRAND_DOMAINS = listOf(
+    "netflix" to "netflix.com", "spotify" to "spotify.com", "youtube" to "youtube.com", "yt " to "youtube.com",
+    "canva" to "canva.com", "chatgpt" to "openai.com", "openai" to "openai.com", "gpt" to "openai.com",
+    "capcut" to "capcut.com", "disney" to "disneyplus.com", "hotstar" to "disneyplus.com", "vidio" to "vidio.com",
+    "viu" to "viu.com", "wetv" to "wetv.vip", "iqiyi" to "iq.com", "prime" to "primevideo.com", "amazon" to "amazon.com",
+    "gemini" to "gemini.google.com", "claude" to "claude.ai", "perplexity" to "perplexity.ai", "grok" to "x.ai",
+    "copilot" to "copilot.microsoft.com", "microsoft" to "microsoft.com", "office" to "office.com", "zoom" to "zoom.us",
+    "grammarly" to "grammarly.com", "duolingo" to "duolingo.com", "picsart" to "picsart.com", "alight" to "alightmotion.com",
+    "apple" to "apple.com", "icloud" to "icloud.com", "instagram" to "instagram.com", "tiktok" to "tiktok.com",
+    "facebook" to "facebook.com", "telegram" to "telegram.org", "whatsapp" to "whatsapp.com", "discord" to "discord.com",
+    "gmail" to "gmail.com", "google" to "google.com", "vpn" to "nordvpn.com", "express" to "expressvpn.com",
+    "hbo" to "max.com", "mola" to "mola.tv", "genflix" to "genflix.co.id", "scribd" to "scribd.com", "linkedin" to "linkedin.com",
+    "adobe" to "adobe.com", "figma" to "figma.com", "notion" to "notion.so", "steam" to "steampowered.com",
+)
+fun brandLogo(p: Product): String? {
+    val t = (p.title + " " + p.loginType).lowercase() + " "
+    val d = BRAND_DOMAINS.firstOrNull { t.contains(it.first) }?.second ?: return null
+    return "https://www.google.com/s2/favicons?domain=$d&sz=128"
+}
+
+@Composable
+fun ProductLogo(p: Product, size: Int = 44) {
+    val logo = brandLogo(p)
+    Box(Modifier.size(size.dp).clip(RoundedCornerShape((size / 3).dp)).background(if (logo != null) White else BrandSoft)
+        .border(1.dp, Border, RoundedCornerShape((size / 3).dp)), contentAlignment = Alignment.Center) {
+        if (logo != null) AsyncImage(model = logo, contentDescription = p.title, modifier = Modifier.size((size * 0.62f).dp).clip(RoundedCornerShape(6.dp)))
+        else Icon(Icons.Filled.ShoppingBag, null, tint = Brand, modifier = Modifier.size((size / 2).dp))
+    }
+}
+
+/** Foto profil: foto Google / upload sendiri / huruf awal. */
+@Composable
+fun UserAvatar(user: User, size: Int, onDark: Boolean = false) {
+    val a = user.avatar
+    val bmp = remember(a) {
+        if (a.startsWith("data:image")) runCatching {
+            val bytes = Base64.decode(a.substringAfter(","), Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        }.getOrNull() else null
+    }
+    Box(Modifier.size(size.dp).clip(CircleShape).background(if (onDark) Color(0x33FFFFFF) else BrandSoft), contentAlignment = Alignment.Center) {
+        when {
+            bmp != null -> Image(bmp, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            a.startsWith("http") -> AsyncImage(model = a, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            else -> Text((user.name.ifBlank { "P" }).take(1).uppercase(), color = if (onDark) White else BrandDark, fontWeight = FontWeight.Bold, fontSize = (size * 0.4f).sp)
+        }
+    }
+}
+
 enum class Tab(val label: String, val icon: ImageVector) {
     Home("Beranda", Icons.Filled.Storefront), Orders("Pesanan", Icons.Filled.ReceiptLong),
     Topup("Top Up", Icons.Filled.AccountBalanceWallet), Help("Bantuan", Icons.Filled.SupportAgent), Profile("Profil", Icons.Filled.Person)
@@ -120,9 +190,23 @@ fun openWeb(ctx: Context, path: String) = ctx.startActivity(Intent(Intent.ACTION
 
 @Composable
 fun App(googleToken: String?, onTokenConsumed: () -> Unit) {
-    var booting by remember { mutableStateOf(true) }
-    var user by remember { mutableStateOf<User?>(null) }
-    LaunchedEffect(Unit) { user = runCatching { Api.me() }.getOrNull(); booting = false }
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences("cache", Context.MODE_PRIVATE) }
+    val cached = remember { prefs.getString("user", null)?.let { runCatching { User.from(JSONObject(it)) }.getOrNull() } }
+    var booting by remember { mutableStateOf(cached == null) }
+    var user by remember { mutableStateOf(cached) }
+    LaunchedEffect(Unit) {
+        // Tampilkan data tersimpan langsung, lalu sinkron diam-diam di belakang.
+        val r = runCatching { Api.me() }
+        r.onSuccess { user = it }
+        booting = false
+        AppCache.prefetch()
+    }
+    LaunchedEffect(user) {
+        val u = user
+        if (u == null) { prefs.edit().remove("user").apply(); AppCache.clear() }
+        else prefs.edit().putString("user", u.toJson().toString()).apply()
+    }
     when {
         booting -> Splash()
         user == null -> LoginScreen(googleToken, onTokenConsumed) { user = it }
@@ -261,10 +345,13 @@ fun LoginScreen(googleToken: String?, onTokenConsumed: () -> Unit, onLogin: (Use
 @Composable
 fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.Home) }
+    val scope = rememberCoroutineScope()
     var detail by remember { mutableStateOf<Product?>(null) }
     var legal by remember { mutableStateOf<String?>(null) }
-    BackHandler(legal != null || detail != null || tab != Tab.Home) {
+    var sub by remember { mutableStateOf<String?>(null) }
+    BackHandler(sub != null || legal != null || detail != null || tab != Tab.Home) {
         when {
+            sub != null -> sub = null
             legal != null -> legal = null
             detail != null -> detail = null
             else -> tab = Tab.Home
@@ -273,7 +360,7 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
     Scaffold(
         containerColor = Bg,
         bottomBar = {
-            if (detail == null && legal == null) Column {
+            if (detail == null && legal == null && sub == null) Column {
               HorizontalDivider(color = Border)
               NavigationBar(containerColor = White, tonalElevation = 0.dp) {
                 Tab.entries.forEach { t ->
@@ -295,9 +382,12 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
             val legalKind = legal
             val product = detail
             when {
+                sub == "edit" -> EditProfileScreen(user, onBack = { sub = null }) { onUser(it); sub = null }
+                sub == "password" -> ChangePasswordScreen(onBack = { sub = null })
                 legalKind != null -> LegalScreen(legalKind, onBack = { legal = null }, onSwitch = { legal = it })
                 product != null -> ProductDetail(product, user, onBack = { detail = null }) { newBalance ->
                     onUser(user.copy(balance = newBalance)); detail = null; tab = Tab.Orders
+                    scope.launch { AppCache.refreshOrders(); AppCache.refreshProducts() }
                 }
                 else -> when (tab) {
                     Tab.Home -> HomeScreen(user, onTopup = { tab = Tab.Topup }) { detail = it }
@@ -309,6 +399,8 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
                         onOpenHelp = { tab = Tab.Help },
                         onOpenLegal = { legal = it },
                         onLogout = onLogout,
+                        onEdit = { sub = "edit" },
+                        onPassword = { sub = "password" },
                     )
                 }
             }
@@ -349,17 +441,15 @@ fun SectionTitle(text: String, trailing: (@Composable () -> Unit)? = null) {
 
 @Composable
 fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
-    var products by remember { mutableStateOf<List<Product>?>(null) }
+    val products = AppCache.products
     var error by remember { mutableStateOf("") }
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var reload by remember { mutableIntStateOf(0) }
-    LaunchedEffect(reload) { error = ""; runCatching { Api.products() }.onSuccess { products = it }.onFailure { error = it.message ?: "Gagal memuat" } }
+    LaunchedEffect(reload) { error = ""; runCatching { Api.products() }.onSuccess { AppCache.products = it }.onFailure { error = it.message ?: "Gagal memuat" } }
     Column(Modifier.fillMaxSize()) {
         // Sapaan + avatar
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(46.dp).clip(CircleShape).background(BrandSoft), contentAlignment = Alignment.Center) {
-                Text((user.name.ifBlank { "P" }).take(1).uppercase(), color = BrandDark, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            }
+            UserAvatar(user, 46)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Halo, ${user.name.ifBlank { "Pelanggan" }}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -431,9 +521,7 @@ fun ProductCard(p: Product, onClick: () -> Unit) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(BrandSoft), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.ShoppingBag, null, tint = Brand, modifier = Modifier.size(22.dp))
-                }
+                ProductLogo(p)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(p.title, fontWeight = FontWeight.SemiBold, color = Ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -544,11 +632,11 @@ fun ProductDetail(p: Product, user: User, onBack: () -> Unit, onBought: (Int) ->
 fun OrdersScreen() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    var orders by remember { mutableStateOf<List<Order>?>(null) }
+    val orders = AppCache.orders
     var error by remember { mutableStateOf("") }
     var reload by remember { mutableIntStateOf(0) }
     val revealed = remember { mutableStateMapOf<String, String>() }
-    LaunchedEffect(reload) { error = ""; runCatching { Api.orders() }.onSuccess { orders = it.first }.onFailure { error = it.message ?: "Gagal memuat" } }
+    LaunchedEffect(reload) { error = ""; runCatching { Api.orders() }.onSuccess { AppCache.orders = it.first }.onFailure { error = it.message ?: "Gagal memuat" } }
     Column(Modifier.fillMaxSize()) {
         Header("Pesanan saya", "Detail akun yang sudah kamu beli")
         val list = orders
@@ -598,80 +686,202 @@ fun CopyRow(label: String, value: String, ctx: Context) = Row(verticalAlignment 
 
 private val TOPUP_PRESETS = listOf(10000, 20000, 50000, 100000, 200000, 500000)
 
+private val TOPUP_PRESETS = listOf(10000, 20000, 50000, 100000, 200000, 500000)
+private val EWALLETS = listOf("DANA", "OVO", "GoPay", "ShopeePay", "LinkAja", "M-Banking")
+
 @Composable
 fun TopupScreen(onBalance: (Int) -> Unit) {
     val scope = rememberCoroutineScope()
-    var info by remember { mutableStateOf<TopupInfo?>(null) }
-    var amount by remember { mutableStateOf("") }
+    val ctx = LocalContext.current
+    val info = AppCache.topup
+    var amount by rememberSaveable { mutableStateOf("") }
     var payment by remember { mutableStateOf<Payment?>(null) }
     var status by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { runCatching { Api.topupInfo() }.onSuccess { info = it; onBalance(it.balance) }.onFailure { error = it.message ?: "" } }
+    LaunchedEffect(Unit) {
+        info?.let { onBalance(it.balance) }
+        runCatching { Api.topupInfo() }.onSuccess { AppCache.topup = it; onBalance(it.balance) }.onFailure { if (info == null) error = it.message ?: "" }
+    }
     val pay = payment
     LaunchedEffect(pay?.refId) {
         if (pay == null) return@LaunchedEffect
         while (status != "paid" && status != "expired") {
-            delay(5000)
-            runCatching { Api.topupStatus(pay.refId) }.onSuccess { (s, bal) -> status = s; if (s == "paid") onBalance(bal) }
+            delay(4000)
+            runCatching { Api.topupStatus(pay.refId) }.onSuccess { (s, bal) ->
+                status = s
+                if (s == "paid") { onBalance(bal); AppCache.topup = AppCache.topup?.copy(balance = bal) }
+            }
         }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Header("Top up saldo", info?.let { "Saldo sekarang ${rupiah(it.balance)}" })
-        Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            if (pay == null) {
-                val min = info?.minTopup ?: 10000
-                Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp)) {
-                    SectionTitle("Pilih nominal cepat")
-                    Spacer(Modifier.height(10.dp))
-                    TOPUP_PRESETS.chunked(3).forEach { row ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            row.forEach { preset ->
-                                val on = amount == preset.toString()
-                                Box(
-                                    Modifier.weight(1f).clip(ChipShape)
-                                        .background(if (on) BrandSoft else Field)
-                                        .border(1.dp, if (on) Brand else Border, ChipShape)
-                                        .clickable { amount = preset.toString() }
-                                        .padding(vertical = 12.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) { Text("${preset / 1000}rb", color = if (on) BrandDark else Ink, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium) }
+    val min = info?.minTopup ?: 10000
+    val value = amount.toIntOrNull() ?: 0
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Header("Top Up", "Isi saldo instan via QRIS")
+            Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                // Kartu saldo
+                Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
+                    Box(Modifier.size(160.dp).align(Alignment.TopEnd).offset(x = 50.dp, y = (-60).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
+                    Box(Modifier.size(100.dp).align(Alignment.BottomStart).offset(x = (-30).dp, y = 40.dp).clip(CircleShape).background(Color(0x14FFFFFF)))
+                    Column(Modifier.padding(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.AccountBalanceWallet, null, tint = White, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text("Saldo Akun Instan", color = Color(0xDDFFFFFF), style = MaterialTheme.typography.labelLarge)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(if (info != null) rupiah(info.balance) else "Rp•••", color = White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+                        if ((info?.pendingCount ?: 0) > 0) {
+                            Spacer(Modifier.height(6.dp))
+                            Text("${info!!.pendingCount} pembayaran menunggu", color = Color(0xDDFFFFFF), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+
+                if (pay == null) {
+                    // Nominal besar
+                    Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(18.dp)) {
+                        Text("Masukkan nominal", color = Muted, style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Rp", color = Ink, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(8.dp))
+                            androidx.compose.foundation.text.BasicTextField(
+                                value = if (value > 0) java.text.NumberFormat.getInstance(java.util.Locale("in", "ID")).format(value) else "",
+                                onValueChange = { amount = it.filter(Char::isDigit).take(9).trimStart('0') },
+                                textStyle = androidx.compose.ui.text.TextStyle(color = Ink, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                cursorBrush = androidx.compose.ui.graphics.SolidColor(Brand),
+                                modifier = Modifier.weight(1f),
+                                decorationBox = { inner -> Box { if (value == 0) Text("0", color = Color(0xFFCBD5E1), fontSize = 30.sp, fontWeight = FontWeight.ExtraBold); inner() } },
+                            )
+                        }
+                        HorizontalDivider(color = Border, modifier = Modifier.padding(vertical = 10.dp))
+                        Text("Minimal ${rupiah(min)}", color = if (value in 1 until min) Danger else Muted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(14.dp))
+                        TOPUP_PRESETS.chunked(3).forEach { row ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                row.forEach { preset ->
+                                    val on = value == preset
+                                    Column(
+                                        Modifier.weight(1f).clip(FieldShape)
+                                            .background(if (on) BrandSoft else Field)
+                                            .border(if (on) 1.5.dp else 1.dp, if (on) Brand else Border, FieldShape)
+                                            .clickable { amount = preset.toString() }
+                                            .padding(vertical = 14.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                    ) {
+                                        Text(rupiah(preset), color = if (on) BrandDark else Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                        if (preset >= 100000) Text("Populer", color = if (on) Brand else Muted, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(10.dp))
+                        }
+                    }
+                    // Metode pembayaran
+                    Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(18.dp)) {
+                        Text("Metode pembayaran", color = Ink, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(12.dp))
+                        Row(Modifier.fillMaxWidth().clip(FieldShape).background(BrandSoft).border(1.5.dp, Brand, FieldShape).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(White), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.QrCode2, null, tint = Brand)
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("QRIS", fontWeight = FontWeight.Bold, color = Ink)
+                                Text("Otomatis masuk dalam hitungan detik", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Filled.CheckCircle, null, tint = Brand)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            EWALLETS.forEach {
+                                Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Field).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                    Text(it, color = Muted, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                }
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
                     }
-                    Spacer(Modifier.height(4.dp))
-                    SmoothField(amount, { amount = it.filter(Char::isDigit).take(9) }, "Nominal lain (min ${rupiah(min)})", Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                    if (error.isNotBlank()) { Spacer(Modifier.height(8.dp)); Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Spacer(Modifier.height(16.dp))
+                    if (error.isNotBlank()) Text(error, color = Danger, style = MaterialTheme.typography.bodySmall)
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
+                        Icon(Icons.Filled.Shield, null, tint = Success, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Pembayaran aman & terverifikasi otomatis", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                } else {
+                    // Halaman bayar
+                    Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        val (label, fg, bg) = when (status) {
+                            "paid" -> Triple("Berhasil", Success, SuccessSoft)
+                            "expired" -> Triple("Kedaluwarsa", Danger, DangerSoft)
+                            else -> Triple("Menunggu pembayaran", Warning, WarningSoft)
+                        }
+                        Box(Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 12.dp, vertical = 5.dp)) {
+                            Text(label, color = fg, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text("Total bayar", color = Muted, style = MaterialTheme.typography.bodySmall)
+                        Text(rupiah(pay.total), fontSize = 30.sp, color = Ink, fontWeight = FontWeight.ExtraBold)
+                        Spacer(Modifier.height(16.dp))
+                        if (status == "paid") {
+                            Box(Modifier.size(120.dp).clip(CircleShape).background(SuccessSoft), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Filled.CheckCircle, null, tint = Success, modifier = Modifier.size(64.dp))
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            Text("Saldo sudah bertambah 🎉", color = Ink, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Box(Modifier.size(260.dp).clip(RoundedCornerShape(20.dp)).background(White).border(1.dp, Border, RoundedCornerShape(20.dp)).padding(12.dp), contentAlignment = Alignment.Center) { QrImage(pay.qrImage) }
+                            Spacer(Modifier.height(12.dp))
+                            Text("Scan pakai e-wallet atau m-banking apa saja", color = Muted, style = MaterialTheme.typography.bodySmall)
+                            if (pay.expired.isNotBlank()) Text("Berlaku sampai ${pay.expired}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Spacer(Modifier.height(14.dp))
+                        HorizontalDivider(color = Border)
+                        Spacer(Modifier.height(10.dp))
+                        CopyRow("ID transaksi", pay.refId, ctx)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
+        // Tombol bawah menempel
+        Column(Modifier.fillMaxWidth().background(White)) {
+            HorizontalDivider(color = Border)
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (pay == null) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Total", color = Muted, style = MaterialTheme.typography.labelSmall)
+                        Text(rupiah(value), color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    }
                     Button(
-                        enabled = !busy && (amount.toIntOrNull() ?: 0) >= min,
-                        modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+                        enabled = !busy && value >= min,
+                        modifier = Modifier.height(52.dp), shape = FieldShape,
                         colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White),
+                        contentPadding = PaddingValues(horizontal = 28.dp),
                         onClick = {
                             busy = true; error = ""
                             scope.launch {
-                                runCatching { Api.createTopup(amount.toInt()) }
+                                runCatching { Api.createTopup(value) }
                                     .onSuccess { payment = it; status = "pending" }
                                     .onFailure { error = it.message ?: "Gagal membuat QRIS" }
                                 busy = false
                             }
                         },
-                    ) { if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = White) else Text("Buat QRIS", fontWeight = FontWeight.SemiBold) }
+                    ) { if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = White) else Text("Bayar sekarang", fontWeight = FontWeight.SemiBold) }
+                } else {
+                    Button(
+                        { payment = null; status = ""; amount = "" },
+                        modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+                        colors = if (status == "paid") ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White)
+                        else ButtonDefaults.buttonColors(containerColor = Field, contentColor = Ink),
+                    ) { Text(if (status == "paid") "Selesai" else "Ganti nominal", fontWeight = FontWeight.SemiBold) }
                 }
-            } else {
-                Text("Scan QRIS untuk membayar", fontWeight = FontWeight.SemiBold, color = Ink)
-                Text(rupiah(pay.total), style = MaterialTheme.typography.headlineMedium, color = Brand, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
-                Box(Modifier.size(260.dp).clip(RoundedCornerShape(20.dp)).background(White).border(1.dp, Border, RoundedCornerShape(20.dp)).padding(12.dp), contentAlignment = Alignment.Center) { QrImage(pay.qrImage) }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    when (status) { "paid" -> "Pembayaran berhasil! Saldo sudah bertambah."; "expired" -> "QRIS kedaluwarsa."; else -> "Menunggu pembayaran... status dicek otomatis." },
-                    color = if (status == "paid") Success else if (status == "expired") Danger else Muted,
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton({ payment = null; status = ""; amount = "" }, shape = FieldShape) { Text(if (status == "paid") "Selesai" else "Buat nominal lain") }
             }
         }
     }
@@ -772,26 +982,28 @@ fun ProfileGroupLabel(text: String) =
     Text(text, color = Muted, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 4.dp, top = 6.dp))
 
 @Composable
-fun ProfileScreen(user: User, onOpenHelp: () -> Unit, onOpenLegal: (String) -> Unit, onLogout: () -> Unit) {
+fun ProfileScreen(
+    user: User, onOpenHelp: () -> Unit, onOpenLegal: (String) -> Unit, onLogout: () -> Unit,
+    onEdit: () -> Unit, onPassword: () -> Unit,
+) {
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("Profil", "Kelola akun dan saldo kamu")
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Kartu profil utama
             Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
                 Box(Modifier.size(120.dp).align(Alignment.TopEnd).offset(x = 30.dp, y = (-40).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(54.dp).clip(CircleShape).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
-                        Text((user.name.ifBlank { "P" }).take(1).uppercase(), color = White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    }
+                    UserAvatar(user, 60, onDark = true)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(user.name, color = White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(user.email, color = Color(0xCCFFFFFF), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (user.phone.isNotBlank()) Text(user.phone, color = Color(0xCCFFFFFF), style = MaterialTheme.typography.bodySmall)
+                        if (user.isGoogle) Text("Masuk dengan Google", color = Color(0xCCFFFFFF), style = MaterialTheme.typography.labelSmall)
                     }
+                    IconButton(onEdit) { Icon(Icons.Filled.Edit, "Edit profil", tint = White) }
                 }
             }
-            // Kartu saldo
             ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(BrandSoft), contentAlignment = Alignment.Center) {
@@ -804,6 +1016,9 @@ fun ProfileScreen(user: User, onOpenHelp: () -> Unit, onOpenLegal: (String) -> U
                     }
                 }
             }
+            ProfileGroupLabel("Akun")
+            ProfileRow(Icons.Filled.Person, "Edit profil") { onEdit() }
+            if (!user.isGoogle) ProfileRow(Icons.Filled.Lock, "Ganti password") { onPassword() }
             ProfileGroupLabel("Bantuan")
             ProfileRow(Icons.Filled.SupportAgent, "Chat bantuan AI") { onOpenHelp() }
             ProfileGroupLabel("Legal")
@@ -811,9 +1026,117 @@ fun ProfileScreen(user: User, onOpenHelp: () -> Unit, onOpenLegal: (String) -> U
             ProfileRow(Icons.Filled.Shield, "Kebijakan Privasi") { onOpenLegal("privacy") }
             ProfileRow(Icons.Filled.CurrencyExchange, "Kebijakan Refund") { onOpenLegal("refund") }
             ProfileRow(Icons.Filled.Info, "Disclaimer") { onOpenLegal("disclaimer") }
-            ProfileGroupLabel("Akun")
+            Spacer(Modifier.height(4.dp))
             ProfileRow(Icons.Filled.Logout, "Keluar", danger = true) { scope.launch { Api.logout(); onLogout() } }
             Text("Versi ${BuildConfig.VERSION_NAME}", color = Muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp, start = 4.dp))
+        }
+    }
+}
+
+/** Ubah foto dari galeri jadi JPEG kecil (data URL) supaya ringan dikirim. */
+fun imageToDataUrl(ctx: Context, uri: Uri): String? = runCatching {
+    val src = ctx.contentResolver.openInputStream(uri)!!.use { BitmapFactory.decodeStream(it) }
+    val side = minOf(src.width, src.height)
+    val square = Bitmap.createBitmap(src, (src.width - side) / 2, (src.height - side) / 2, side, side)
+    val small = Bitmap.createScaledBitmap(square, 320, 320, true)
+    val out = ByteArrayOutputStream()
+    small.compress(Bitmap.CompressFormat.JPEG, 82, out)
+    "data:image/jpeg;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+}.getOrNull()
+
+@Composable
+fun EditProfileScreen(user: User, onBack: () -> Unit, onSaved: (User) -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf(user.name) }
+    var phone by remember { mutableStateOf(user.phone) }
+    var avatar by remember { mutableStateOf<String?>(null) } // null = tidak diubah
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) imageToDataUrl(ctx, uri)?.let { avatar = it } ?: run { error = "Foto tidak bisa dibaca" }
+    }
+    val preview = user.copy(name = name, avatar = avatar ?: user.avatar)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Edit profil", "Foto, nama, dan nomor WhatsApp", onBack)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box {
+                    UserAvatar(preview, 96)
+                    Box(Modifier.align(Alignment.BottomEnd).size(32.dp).clip(CircleShape).background(Brand).clickable { picker.launch("image/*") }, contentAlignment = Alignment.Center) {
+                        Icon(Icons.Filled.PhotoCamera, "Ganti foto", tint = White, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton({ picker.launch("image/*") }) { Text("Ganti foto", color = Brand, fontWeight = FontWeight.SemiBold) }
+                    if (preview.avatar.isNotBlank()) TextButton({ avatar = "" }) { Text("Hapus foto", color = Danger) }
+                }
+                if (user.isGoogle) Text("Foto dari akun Google dipakai otomatis", color = Muted, style = MaterialTheme.typography.bodySmall)
+            }
+            Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SmoothField(name, { name = it.take(80) }, "Nama lengkap", Modifier.fillMaxWidth(), leading = { Icon(Icons.Filled.Person, null, tint = Muted) })
+                SmoothField(phone, { phone = it.filter { c -> c.isDigit() || c in "+-() " }.take(25) }, "No. WhatsApp", Modifier.fillMaxWidth(),
+                    leading = { Icon(Icons.Filled.Phone, null, tint = Muted) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone))
+                SmoothField(user.email, {}, "Email (tidak bisa diubah)", Modifier.fillMaxWidth(), leading = { Icon(Icons.Filled.Email, null, tint = Muted) })
+            }
+            if (error.isNotBlank()) Text(error, color = Danger, style = MaterialTheme.typography.bodySmall)
+            Button(
+                enabled = !busy && name.trim().length >= 2,
+                modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White),
+                onClick = {
+                    busy = true; error = ""
+                    scope.launch {
+                        runCatching { Api.updateProfile(name.trim(), phone.trim(), avatar) }
+                            .onSuccess { onSaved(it.copy(balance = user.balance)) }
+                            .onFailure { error = it.message ?: "Gagal menyimpan" }
+                        busy = false
+                    }
+                },
+            ) { if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = White) else Text("Simpan perubahan", fontWeight = FontWeight.SemiBold) }
+        }
+    }
+}
+
+@Composable
+fun ChangePasswordScreen(onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var current by remember { mutableStateOf("") }
+    var next by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+    var done by remember { mutableStateOf("") }
+    val pw = PasswordVisualTransformation()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Ganti password", "Minimal 6 karakter", onBack)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SmoothField(current, { current = it }, "Password saat ini", Modifier.fillMaxWidth(), leading = { Icon(Icons.Filled.Lock, null, tint = Muted) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), visualTransformation = pw)
+                SmoothField(next, { next = it }, "Password baru", Modifier.fillMaxWidth(), leading = { Icon(Icons.Filled.Key, null, tint = Muted) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), visualTransformation = pw)
+                SmoothField(confirm, { confirm = it }, "Ulangi password baru", Modifier.fillMaxWidth(), leading = { Icon(Icons.Filled.Key, null, tint = Muted) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), visualTransformation = pw)
+            }
+            if (confirm.isNotEmpty() && confirm != next) Text("Password baru tidak sama", color = Danger, style = MaterialTheme.typography.bodySmall)
+            if (error.isNotBlank()) Text(error, color = Danger, style = MaterialTheme.typography.bodySmall)
+            if (done.isNotBlank()) Text(done, color = Success, fontWeight = FontWeight.SemiBold)
+            Button(
+                enabled = !busy && current.isNotBlank() && next.length >= 6 && next == confirm,
+                modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White),
+                onClick = {
+                    busy = true; error = ""; done = ""
+                    scope.launch {
+                        runCatching { Api.changePassword(current, next) }
+                            .onSuccess { done = it; current = ""; next = ""; confirm = "" }
+                            .onFailure { error = it.message ?: "Gagal mengganti password" }
+                        busy = false
+                    }
+                },
+            ) { if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = White) else Text("Simpan password", fontWeight = FontWeight.SemiBold) }
         }
     }
 }

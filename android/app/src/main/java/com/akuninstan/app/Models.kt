@@ -6,9 +6,18 @@ import java.util.Locale
 
 fun rupiah(n: Int): String = "Rp" + NumberFormat.getInstance(Locale("in", "ID")).format(n)
 
-data class User(val id: String, val name: String, val email: String, val balance: Int) {
+data class User(
+    val id: String, val name: String, val email: String, val balance: Int,
+    val phone: String = "", val avatar: String = "", val provider: String = "email",
+) {
+    val isGoogle get() = provider == "google"
+    fun toJson(): JSONObject = JSONObject().put("id", id).put("name", name).put("email", email).put("balance", balance)
+        .put("phone", phone).put("avatar", avatar).put("provider", provider)
     companion object {
-        fun from(j: JSONObject) = User(j.optString("id"), j.optString("name"), j.optString("email"), j.optInt("balance"))
+        fun from(j: JSONObject) = User(
+            j.optString("id"), j.optString("name"), j.optString("email"), j.optInt("balance"),
+            j.optString("phone"), j.optString("avatar"), j.optString("provider").ifBlank { "email" },
+        )
     }
 }
 
