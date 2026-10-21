@@ -27,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,20 +50,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ---- Light "smooth white SaaS" palette ----
-private val Brand = Color(0xFF2563EB)
-private val BrandDark = Color(0xFF1D4ED8)
-private val BrandSoft = Color(0xFFEFF6FF)
-private val Bg = Color(0xFFF8FAFC)
+private val Brand = Color(0xFF3B6EF6)
+private val BrandDark = Color(0xFF2F5BE0)
+private val BrandSoft = Color(0xFFF0F4FF)
+private val Bg = Color(0xFFF7F8FB)
 private val White = Color.White
 private val Ink = Color(0xFF0F172A)
 private val Muted = Color(0xFF64748B)
-private val Border = Color(0xFFE2E8F0)
-private val Field = Color(0xFFF1F5F9)
+private val Border = Color(0xFFECEEF3)
+private val Field = Color(0xFFF4F6FA)
 private val Success = Color(0xFF16A34A)
 private val Danger = Color(0xFFDC2626)
 
-private val CardShape = RoundedCornerShape(18.dp)
-private val FieldShape = RoundedCornerShape(14.dp)
+private val CardShape = RoundedCornerShape(24.dp)
+private val FieldShape = RoundedCornerShape(16.dp)
 
 private val AppColors = lightColorScheme(
     primary = Brand, onPrimary = White, background = Bg, onBackground = Ink,
@@ -167,7 +169,7 @@ fun LoginScreen(onLogin: (User) -> Unit) {
         Spacer(Modifier.height(22.dp))
         Button(
             enabled = !loading && email.isNotBlank() && pass.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+            modifier = Modifier.fillMaxWidth().height(54.dp), shape = FieldShape,
             colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White),
             onClick = {
                 loading = true; error = ""
@@ -270,7 +272,7 @@ fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
         }
         // Balance card
         Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(min = 92.dp).clip(CardShape)
-            .background(Brush.horizontalGradient(listOf(Brand, BrandDark)))) {
+            .background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Saldo kamu", color = Color(0xCCFFFFFF), style = MaterialTheme.typography.labelMedium)
@@ -319,7 +321,7 @@ fun ProductCard(p: Product, onClick: () -> Unit) {
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = CardShape,
         colors = CardDefaults.elevatedCardColors(containerColor = White),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp),
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -369,8 +371,8 @@ fun ProductDetail(p: Product, user: User, onBack: () -> Unit, onBought: (Int) ->
             items(p.accounts, key = { it.index }) { a ->
                 val on = a.index in picked
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-                        .background(if (on) BrandSoft else White).border(1.dp, if (on) Brand else Border, RoundedCornerShape(14.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
+                        .background(if (on) BrandSoft else White).border(1.dp, if (on) Brand else Border, RoundedCornerShape(18.dp))
                         .clickable { if (on) picked.remove(a.index) else picked.add(a.index) }.padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -428,7 +430,7 @@ fun OrdersScreen() {
             list.isEmpty() -> ErrorBox("Belum ada pesanan") { reload++ }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(list, key = { it.id }) { o ->
-                    ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)) {
+                    ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp)) {
                         Column(Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(o.titles.joinToString(", "), Modifier.weight(1f), fontWeight = FontWeight.SemiBold, color = Ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -507,7 +509,7 @@ fun TopupScreen(onBalance: (Int) -> Unit) {
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    enabled = !busy && (amount.toIntOrNull() ?: 0) >= min, modifier = Modifier.fillMaxWidth().height(52.dp), shape = FieldShape,
+                    enabled = !busy && (amount.toIntOrNull() ?: 0) >= min, modifier = Modifier.fillMaxWidth().height(54.dp), shape = FieldShape,
                     colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White),
                     onClick = {
                         busy = true; error = ""
@@ -595,7 +597,7 @@ fun ChatScreen() {
 @Composable
 fun ProfileRow(icon: ImageVector, label: String, danger: Boolean = false, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).border(1.dp, Border, RoundedCornerShape(14.dp))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(White).border(1.dp, Border, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -610,11 +612,18 @@ fun ProfileRow(icon: ImageVector, label: String, danger: Boolean = false, onClic
 fun ProfileScreen(user: User, onLogout: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    Column(Modifier.fillMaxSize()) {
-        Header("Profil")
+    var info by remember { mutableStateOf<Pair<String, String>?>(null) }
+    info?.let { (t, b) ->
+        AlertDialog(onDismissRequest = { info = null }, containerColor = White, shape = CardShape,
+            title = { Text(t, fontWeight = FontWeight.Bold, color = Ink) },
+            text = { Text(b, color = Muted) },
+            confirmButton = { TextButton({ info = null }) { Text("Mengerti", color = Brand, fontWeight = FontWeight.SemiBold) } })
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header("Profil", "Kelola akun dan saldo kamu")
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Hero profile card
-            Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.horizontalGradient(listOf(Brand, BrandDark)))) {
+            Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(52.dp).clip(CircleShape).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) {
                         Text((user.name.ifBlank { "P" }).take(1).uppercase(), color = White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
@@ -626,7 +635,7 @@ fun ProfileScreen(user: User, onLogout: () -> Unit) {
                     }
                 }
             }
-            ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp), modifier = Modifier.fillMaxWidth()) {
+            ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.AccountBalanceWallet, null, tint = Brand, modifier = Modifier.size(24.dp))
                     Spacer(Modifier.width(12.dp))
@@ -636,10 +645,10 @@ fun ProfileScreen(user: User, onLogout: () -> Unit) {
                     }
                 }
             }
-            ProfileRow(Icons.Filled.HelpOutline, "Pusat bantuan") { openWeb(ctx, "/help") }
-            ProfileRow(Icons.Filled.Description, "Syarat & ketentuan") { openWeb(ctx, "/terms") }
+            ProfileRow(Icons.Filled.HelpOutline, "Pusat bantuan") { info = "Pusat bantuan" to "Butuh bantuan? Buka tab Bantuan untuk chat dengan asisten AI kami 24 jam. Untuk kendala pembayaran, sertakan ID pesanan saat bertanya." }
+            ProfileRow(Icons.Filled.Description, "Syarat & ketentuan") { info = "Syarat & ketentuan" to "Akun yang dibeli hanya untuk penggunaan pribadi. Saldo yang sudah di-top up tidak dapat ditarik tunai. Garansi berlaku sesuai keterangan pada setiap produk." }
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).border(1.dp, Color(0xFFFECACA), RoundedCornerShape(14.dp))
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(White).border(1.dp, Color(0xFFFECACA), RoundedCornerShape(18.dp))
                     .clickable { scope.launch { Api.logout(); onLogout() } }.padding(horizontal = 14.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
