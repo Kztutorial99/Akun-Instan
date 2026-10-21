@@ -49,6 +49,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.Bitmap
@@ -59,14 +63,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ---- Tema putih smooth SaaS ----
-private val Brand = Color(0xFF3B6EF6)
-private val BrandDark = Color(0xFF2F5BE0)
-private val BrandSoft = Color(0xFFF0F4FF)
-private val Bg = Color(0xFFF7F8FB)
+private val Brand = Color(0xFF2563EB)
+private val BrandDark = Color(0xFF1D3FAE)
+private val Navy = Color(0xFF0B1B3F)
+private val Navy2 = Color(0xFF14295C)
+private val BrandSoft = Color(0xFFEEF3FF)
+private val Bg = Color(0xFFF6F7F9)
 private val White = Color.White
 private val Ink = Color(0xFF0F172A)
 private val Muted = Color(0xFF64748B)
-private val Border = Color(0xFFECEEF3)
+private val Border = Color(0xFFE6E8EE)
 private val Field = Color(0xFFF4F6FA)
 private val Success = Color(0xFF16A34A)
 private val SuccessSoft = Color(0xFFECFDF5)
@@ -75,7 +81,7 @@ private val DangerSoft = Color(0xFFFEF2F2)
 private val Warning = Color(0xFFEA580C)
 private val WarningSoft = Color(0xFFFFF7ED)
 
-private val CardShape = RoundedCornerShape(24.dp)
+private val CardShape = RoundedCornerShape(20.dp)
 private val FieldShape = RoundedCornerShape(16.dp)
 private val ChipShape = RoundedCornerShape(12.dp)
 
@@ -114,6 +120,42 @@ class MainActivity : ComponentActivity() {
             val token = d.getQueryParameter("token")
             if (!token.isNullOrBlank()) googleToken.value = token
         }
+    }
+}
+
+/** Efek tekan halus: kartu/tombol sedikit mengecil saat disentuh. */
+@Composable
+fun Modifier.pressable(enabled: Boolean = true, onClick: () -> Unit): Modifier {
+    val src = remember { MutableInteractionSource() }
+    val pressed by src.collectIsPressedAsState()
+    val s by animateFloatAsState(if (pressed) 0.97f else 1f, label = "press")
+    return this.graphicsLayer { scaleX = s; scaleY = s }.clickable(interactionSource = src, indication = null, enabled = enabled, onClick = onClick)
+}
+
+@Composable
+fun QuickAction(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(modifier.clip(RoundedCornerShape(16.dp)).background(White).border(1.dp, Border, RoundedCornerShape(16.dp))
+        .pressable(onClick = onClick).padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(BrandSoft), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = Brand, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(label, color = Ink, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
+    }
+}
+
+fun statusInfo(s: String): Triple<String, Color, Color> = when (s.lowercase()) {
+    "paid", "success", "completed", "done" -> Triple("Berhasil", Success, SuccessSoft)
+    "pending", "waiting", "processing" -> Triple("Diproses", Warning, WarningSoft)
+    "failed", "cancelled", "canceled", "expired", "refunded" -> Triple(if (s == "refunded") "Refund" else "Gagal", Danger, DangerSoft)
+    else -> Triple(s.replaceFirstChar { it.uppercase() }, Muted, Field)
+}
+
+@Composable
+fun StatusBadge(s: String) {
+    val (l, fg, bg) = statusInfo(s)
+    Box(Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp)) {
+        Text(l, color = fg, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -218,7 +260,7 @@ fun App(googleToken: String?, onTokenConsumed: () -> Unit) {
 fun Splash() = Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            Modifier.size(76.dp).clip(RoundedCornerShape(24.dp))
+            Modifier.size(76.dp).clip(RoundedCornerShape(20.dp))
                 .background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), BrandDark))),
             contentAlignment = Alignment.Center,
         ) { Icon(Icons.Filled.Storefront, null, tint = White, modifier = Modifier.size(38.dp)) }
@@ -390,8 +432,8 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
                     scope.launch { AppCache.refreshOrders(); AppCache.refreshProducts() }
                 }
                 else -> when (tab) {
-                    Tab.Home -> HomeScreen(user, onTopup = { tab = Tab.Topup }) { detail = it }
-                    Tab.Orders -> OrdersScreen()
+                    Tab.Home -> HomeScreen(user, onTopup = { tab = Tab.Topup }, onOrders = { tab = Tab.Orders }, onHelp = { tab = Tab.Help }, onProfile = { tab = Tab.Profile }) { detail = it }
+                    Tab.Orders -> OrdersScreen(onExplore = { tab = Tab.Home })
                     Tab.Topup -> TopupScreen { onUser(user.copy(balance = it)) }
                     Tab.Help -> ChatScreen()
                     Tab.Profile -> ProfileScreen(
@@ -440,7 +482,7 @@ fun SectionTitle(text: String, trailing: (@Composable () -> Unit)? = null) {
 // ═══════════════ BERANDA ═══════════════
 
 @Composable
-fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
+fun HomeScreen(user: User, onTopup: () -> Unit, onOrders: () -> Unit = {}, onHelp: () -> Unit = {}, onProfile: () -> Unit = {}, open: (Product) -> Unit) {
     val products = AppCache.products
     var error by remember { mutableStateOf("") }
     var query by rememberSaveable { mutableStateOf("") }
@@ -458,7 +500,7 @@ fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
         }
         // Kartu saldo dengan dekorasi lingkaran
         Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(min = 96.dp).clip(CardShape)
-            .background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
+            .background(Brush.linearGradient(listOf(Navy, Navy2)))) {
             Box(Modifier.size(140.dp).align(Alignment.TopEnd).offset(x = 40.dp, y = (-50).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
             Box(Modifier.size(90.dp).align(Alignment.BottomStart).offset(x = (-30).dp, y = 30.dp).clip(CircleShape).background(Color(0x14FFFFFF)))
             Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -474,6 +516,13 @@ fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
                     Icon(Icons.Filled.Add, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Top Up", fontWeight = FontWeight.SemiBold)
                 }
             }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            QuickAction(Icons.Filled.AccountBalanceWallet, "Top Up", Modifier.weight(1f), onTopup)
+            QuickAction(Icons.Filled.ReceiptLong, "Riwayat", Modifier.weight(1f), onOrders)
+            QuickAction(Icons.Filled.SupportAgent, "Bantuan", Modifier.weight(1f), onHelp)
+            QuickAction(Icons.Filled.Person, "Profil", Modifier.weight(1f), onProfile)
         }
         Spacer(Modifier.height(14.dp))
         // Pencarian
@@ -502,6 +551,23 @@ fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
                             }
                         }
                     }
+                    val top = list.filter { !it.soldOut && it.soldCount > 0 }.sortedByDescending { it.soldCount }.take(6)
+                    if (query.isBlank() && top.size >= 2) {
+                        item { SectionTitle("Terlaris") }
+                        item {
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                top.forEach { p ->
+                                    Column(Modifier.width(150.dp).clip(CardShape).background(White).border(1.dp, Border, CardShape).pressable { open(p) }.padding(14.dp)) {
+                                        ProductLogo(p, 40)
+                                        Spacer(Modifier.height(10.dp))
+                                        Text(p.title, color = Ink, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.heightIn(min = 40.dp))
+                                        Text(rupiah(p.price), color = Brand, fontWeight = FontWeight.Bold)
+                                        Text("${p.soldCount} terjual", color = Muted, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (shown.isEmpty()) item { Text("Produk tidak ditemukan", color = Muted, modifier = Modifier.padding(top = 8.dp)) }
                     items(shown, key = { it.id }) { p -> ProductCard(p) { if (!p.soldOut) open(p) } }
                     item { Spacer(Modifier.height(8.dp)) }
@@ -514,7 +580,7 @@ fun HomeScreen(user: User, onTopup: () -> Unit, open: (Product) -> Unit) {
 @Composable
 fun ProductCard(p: Product, onClick: () -> Unit) {
     ElevatedCard(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        Modifier.fillMaxWidth().pressable(onClick = onClick),
         shape = CardShape,
         colors = CardDefaults.elevatedCardColors(containerColor = White),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp),
@@ -629,41 +695,72 @@ fun ProductDetail(p: Product, user: User, onBack: () -> Unit, onBought: (Int) ->
 // ═══════════════ PESANAN ═══════════════
 
 @Composable
-fun OrdersScreen() {
+fun OrdersScreen(onExplore: () -> Unit = {}) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val orders = AppCache.orders
     var error by remember { mutableStateOf("") }
     var reload by remember { mutableIntStateOf(0) }
+    var filter by rememberSaveable { mutableStateOf("all") }
     val revealed = remember { mutableStateMapOf<String, String>() }
     LaunchedEffect(reload) { error = ""; runCatching { Api.orders() }.onSuccess { AppCache.orders = it.first }.onFailure { error = it.message ?: "Gagal memuat" } }
     Column(Modifier.fillMaxSize()) {
-        Header("Pesanan saya", "Detail akun yang sudah kamu beli")
+        Header("Pesanan", "Riwayat transaksi dan detail akun")
         val list = orders
         when {
             error.isNotBlank() && list == null -> ErrorBox(error) { reload++ }
             list == null -> Loading()
-            list.isEmpty() -> ErrorBox("Belum ada pesanan") { reload++ }
-            else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(list, key = { it.id }) { o ->
-                    ElevatedCard(shape = CardShape, colors = CardDefaults.elevatedCardColors(containerColor = White), elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.5.dp)) {
-                        Column(Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(o.titles.joinToString(", "), Modifier.weight(1f), fontWeight = FontWeight.SemiBold, color = Ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                Box(Modifier.clip(RoundedCornerShape(8.dp)).background(if (o.status == "paid") SuccessSoft else WarningSoft).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                    Text(o.status.uppercase(), color = if (o.status == "paid") Success else Warning, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+            list.isEmpty() -> Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(72.dp).clip(CircleShape).background(BrandSoft), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.ReceiptLong, null, tint = Brand, modifier = Modifier.size(32.dp))
+                }
+                Spacer(Modifier.height(14.dp))
+                Text("Belum ada pesanan", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("Akun yang kamu beli akan muncul di sini.", color = Muted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(16.dp))
+                Button(onExplore, shape = FieldShape, colors = ButtonDefaults.buttonColors(containerColor = Brand, contentColor = White)) { Text("Lihat produk", fontWeight = FontWeight.SemiBold) }
+            }
+            else -> {
+                val statuses = list.map { it.status.lowercase() }.distinct()
+                val shown = if (filter == "all") list else list.filter { it.status.lowercase() == filter }
+                LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (statuses.size > 1) item {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            (listOf("all") + statuses).forEach { s ->
+                                val on = filter == s
+                                Box(Modifier.clip(RoundedCornerShape(50)).background(if (on) Navy else White).border(1.dp, if (on) Navy else Border, RoundedCornerShape(50))
+                                    .pressable { filter = s }.padding(horizontal = 14.dp, vertical = 7.dp)) {
+                                    Text(if (s == "all") "Semua" else statusInfo(s).first, color = if (on) White else Ink, style = MaterialTheme.typography.labelLarge)
                                 }
                             }
-                            Text("${o.createdAt} · ${rupiah(o.total)}", color = Muted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    items(shown, key = { it.id }) { o ->
+                        Column(Modifier.fillMaxWidth().clip(CardShape).background(White).border(1.dp, Border, CardShape).padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(o.titles.joinToString(", "), fontWeight = FontWeight.SemiBold, color = Ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text("#${o.id.takeLast(8).uppercase()} · ${o.createdAt}", color = Muted, style = MaterialTheme.typography.labelSmall)
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                StatusBadge(o.status)
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Total", color = Muted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                                Text(rupiah(o.total), color = Ink, fontWeight = FontWeight.Bold)
+                            }
                             o.accounts.forEach { a ->
                                 val key = "${o.id}:${a.itemIndex}:${a.accountIndex}"
                                 val pw = revealed[key]
                                 HorizontalDivider(Modifier.padding(vertical = 10.dp), color = Border)
-                                CopyRow("Email", a.email, ctx)
-                                if (pw != null) CopyRow("Password", pw, ctx)
-                                else Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Password  ${a.maskedPassword}", Modifier.weight(1f), color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    TextButton({ scope.launch { runCatching { Api.revealPassword(o.id, a.itemIndex, a.accountIndex) }.onSuccess { revealed[key] = it } } }) { Text("Lihat", color = Brand, fontWeight = FontWeight.SemiBold) }
+                                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Field).padding(horizontal = 12.dp, vertical = 8.dp)) {
+                                    CopyRow("Email", a.email, ctx)
+                                    if (pw != null) CopyRow("Password", pw, ctx)
+                                    else Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Password  ${a.maskedPassword}", Modifier.weight(1f), color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        TextButton({ scope.launch { runCatching { Api.revealPassword(o.id, a.itemIndex, a.accountIndex) }.onSuccess { revealed[key] = it } } }) { Text("Lihat", color = Brand, fontWeight = FontWeight.SemiBold) }
+                                    }
                                 }
                             }
                         }
@@ -720,7 +817,7 @@ fun TopupScreen(onBalance: (Int) -> Unit) {
             Header("Top Up", "Isi saldo instan via QRIS")
             Column(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 // Kartu saldo
-                Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
+                Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Navy, Navy2)))) {
                     Box(Modifier.size(160.dp).align(Alignment.TopEnd).offset(x = 50.dp, y = (-60).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
                     Box(Modifier.size(100.dp).align(Alignment.BottomStart).offset(x = (-30).dp, y = 40.dp).clip(CircleShape).background(Color(0x14FFFFFF)))
                     Column(Modifier.padding(20.dp)) {
@@ -907,6 +1004,15 @@ fun ChatScreen() {
     LaunchedEffect(msgs.size) { if (msgs.size > 0) listState.animateScrollToItem(msgs.size - 1) }
     Column(Modifier.fillMaxSize().imePadding()) {
         Header("Bantuan AI", "Tanya apa saja seputar Akun Instan")
+        if (msgs.size == 1 && !busy) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Cara top up saldo", "Cek status pesanan", "Masalah pembayaran", "Bantuan akun").forEach { q ->
+                    Box(Modifier.clip(RoundedCornerShape(50)).background(White).border(1.dp, Border, RoundedCornerShape(50)).pressable { input = q }.padding(horizontal = 14.dp, vertical = 8.dp)) {
+                        Text(q, color = Ink, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+        }
         LazyColumn(Modifier.weight(1f), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(msgs) { m ->
                 val mine = m.role == "user"
@@ -927,7 +1033,17 @@ fun ChatScreen() {
                     )
                 }
             }
-            if (busy) item { Text("Asisten sedang mengetik...", color = Muted, style = MaterialTheme.typography.bodySmall) }
+            if (busy) item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(30.dp).clip(CircleShape).background(BrandSoft), contentAlignment = Alignment.Center) { Icon(Icons.Filled.SupportAgent, null, tint = Brand, modifier = Modifier.size(16.dp)) }
+                    Spacer(Modifier.width(6.dp))
+                    Row(Modifier.clip(RoundedCornerShape(16.dp)).background(White).border(1.dp, Border, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = Brand)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Asisten sedang mengetik", color = Muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
         }
         HorizontalDivider(color = Border)
         Row(Modifier.fillMaxWidth().background(White).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -989,7 +1105,7 @@ fun ProfileScreen(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Header("Profil", "Kelola akun dan saldo kamu")
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Color(0xFF5B8CFF), Brand, BrandDark)))) {
+            Box(Modifier.fillMaxWidth().clip(CardShape).background(Brush.linearGradient(listOf(Navy, Navy2)))) {
                 Box(Modifier.size(120.dp).align(Alignment.TopEnd).offset(x = 30.dp, y = (-40).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
                 Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     UserAvatar(user, 60, onDark = true)
@@ -1017,6 +1133,7 @@ fun ProfileScreen(
             }
             ProfileGroupLabel("Akun")
             ProfileRow(Icons.Filled.Person, "Edit profil") { onEdit() }
+            if (!user.isGoogle) ProfileGroupLabel("Keamanan")
             if (!user.isGoogle) ProfileRow(Icons.Filled.Lock, "Ganti password") { onPassword() }
             ProfileGroupLabel("Bantuan")
             ProfileRow(Icons.Filled.SupportAgent, "Chat bantuan AI") { onOpenHelp() }
