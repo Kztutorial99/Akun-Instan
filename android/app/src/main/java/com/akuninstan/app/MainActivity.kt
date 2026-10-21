@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.compose.ui.draw.shadow
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -63,17 +65,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ---- Tema putih smooth SaaS ----
-private val Brand = Color(0xFF2563EB)
-private val BrandDark = Color(0xFF1D3FAE)
-private val Navy = Color(0xFF0B1B3F)
-private val Navy2 = Color(0xFF14295C)
-private val BrandSoft = Color(0xFFEEF3FF)
-private val Bg = Color(0xFFF6F7F9)
+private val Brand = Color(0xFF5B4CF5)
+private val BrandDark = Color(0xFF4338CA)
+private val Navy = Color(0xFF4F46E5)
+private val Navy2 = Color(0xFF8B7CFF)
+private val BrandSoft = Color(0xFFEEEDFF)
+private val Bg = Color(0xFFF4F3FB)
 private val White = Color.White
 private val Ink = Color(0xFF0F172A)
 private val Muted = Color(0xFF64748B)
-private val Border = Color(0xFFE6E8EE)
-private val Field = Color(0xFFF4F6FA)
+private val Border = Color(0xFFE7E5F4)
+private val Field = Color(0xFFF3F2FA)
 private val Success = Color(0xFF16A34A)
 private val SuccessSoft = Color(0xFFECFDF5)
 private val Danger = Color(0xFFDC2626)
@@ -156,6 +158,50 @@ fun StatusBadge(s: String) {
     val (l, fg, bg) = statusInfo(s)
     Box(Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp)) {
         Text(l, color = fg, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun BentoTile(icon: ImageVector, title: String, sub: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clip(CardShape).background(White.copy(alpha = 0.85f)).border(1.dp, Border, CardShape)
+        .pressable(onClick = onClick).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(34.dp).clip(CircleShape).background(Brush.linearGradient(listOf(Navy2, Navy))), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = White, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+            Text(sub, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+fun GridProductCard(p: Product, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(modifier.clip(CardShape).background(White.copy(alpha = 0.9f)).border(1.dp, Border, CardShape)
+        .pressable(enabled = !p.soldOut, onClick = onClick).padding(14.dp)) {
+        Row(verticalAlignment = Alignment.Top) {
+            ProductLogo(p, 48)
+            Spacer(Modifier.weight(1f))
+            val (lbl, fg, bg) = when {
+                p.soldOut -> Triple("Habis", Danger, DangerSoft)
+                p.soldCount >= 10 -> Triple("Terlaris", Warning, WarningSoft)
+                else -> Triple("Stok ${p.stock}", Success, SuccessSoft)
+            }
+            Box(Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp)) {
+                Text(lbl, color = fg, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(p.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.heightIn(min = 40.dp))
+        Text(p.loginType.ifBlank { " " }, color = Muted, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(rupiah(p.price), color = Ink, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f), maxLines = 1)
+            Box(Modifier.size(30.dp).clip(CircleShape).background(BrandSoft), contentAlignment = Alignment.Center) {
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Brand, modifier = Modifier.size(16.dp))
+            }
+        }
     }
 }
 
@@ -402,21 +448,27 @@ fun MainShell(user: User, onUser: (User) -> Unit, onLogout: () -> Unit) {
     Scaffold(
         containerColor = Bg,
         bottomBar = {
-            if (detail == null && legal == null && sub == null) Column {
-              HorizontalDivider(color = Border)
-              NavigationBar(containerColor = White, tonalElevation = 0.dp) {
-                Tab.entries.forEach { t ->
-                    NavigationBarItem(
-                        selected = tab == t, onClick = { tab = t },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Brand, selectedTextColor = Brand,
-                            unselectedIconColor = Muted, unselectedTextColor = Muted,
-                            indicatorColor = BrandSoft,
-                        ),
-                        icon = { Icon(t.icon, null) }, label = { Text(t.label, maxLines = 1, style = MaterialTheme.typography.labelSmall) },
-                    )
+            if (detail == null && legal == null && sub == null) {
+                Row(
+                    Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp)
+                        .shadow(12.dp, RoundedCornerShape(28.dp), ambientColor = Navy.copy(alpha = 0.15f), spotColor = Navy.copy(alpha = 0.15f))
+                        .clip(RoundedCornerShape(28.dp)).background(White).border(1.dp, Border, RoundedCornerShape(28.dp))
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Tab.entries.forEach { t ->
+                        val on = tab == t
+                        val bg by androidx.compose.animation.animateColorAsState(if (on) BrandSoft else White, label = "nav")
+                        Column(
+                            Modifier.weight(1f).clip(RoundedCornerShape(22.dp)).background(bg).pressable { tab = t }.padding(vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Icon(t.icon, t.label, tint = if (on) Brand else Muted, modifier = Modifier.size(22.dp))
+                            Text(t.label, color = if (on) Brand else Muted, style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (on) FontWeight.Bold else FontWeight.Medium, maxLines = 1)
+                        }
+                    }
                 }
-              }
             }
         },
     ) { pad ->
@@ -498,29 +550,24 @@ fun HomeScreen(user: User, onTopup: () -> Unit, onOrders: () -> Unit = {}, onHel
                 Text("Mau beli akun apa hari ini?", color = Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
-        // Kartu saldo dengan dekorasi lingkaran
-        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(min = 96.dp).clip(CardShape)
-            .background(Brush.linearGradient(listOf(Navy, Navy2)))) {
-            Box(Modifier.size(140.dp).align(Alignment.TopEnd).offset(x = 40.dp, y = (-50).dp).clip(CircleShape).background(Color(0x1AFFFFFF)))
-            Box(Modifier.size(90.dp).align(Alignment.BottomStart).offset(x = (-30).dp, y = 30.dp).clip(CircleShape).background(Color(0x14FFFFFF)))
-            Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Saldo kamu", color = Color(0xCCFFFFFF), style = MaterialTheme.typography.labelMedium)
-                    Text(rupiah(user.balance), color = White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        // Bento: kartu saldo + Top Up + Pesanan
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.weight(1.15f).fillMaxHeight().clip(CardShape).background(White.copy(alpha = 0.85f)).border(1.dp, Border, CardShape)
+                .pressable(onClick = onTopup).padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(Brush.linearGradient(listOf(Navy2, Navy))), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.AccountBalanceWallet, null, tint = White, modifier = Modifier.size(22.dp))
                 }
-                Button(
-                    onClick = onTopup, shape = ChipShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = White, contentColor = BrandDark),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Icon(Icons.Filled.Add, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("Top Up", fontWeight = FontWeight.SemiBold)
-                }
+                Spacer(Modifier.height(14.dp))
+                Text("Saldo kamu", color = Muted, style = MaterialTheme.typography.labelMedium)
+                Text(rupiah(user.balance), color = Ink, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                BentoTile(Icons.Filled.Add, "Top Up", "Isi saldo", onTopup)
+                BentoTile(Icons.Filled.ReceiptLong, "Pesanan", "Lihat riwayat", onOrders)
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            QuickAction(Icons.Filled.AccountBalanceWallet, "Top Up", Modifier.weight(1f), onTopup)
-            QuickAction(Icons.Filled.ReceiptLong, "Riwayat", Modifier.weight(1f), onOrders)
             QuickAction(Icons.Filled.SupportAgent, "Bantuan", Modifier.weight(1f), onHelp)
             QuickAction(Icons.Filled.Person, "Profil", Modifier.weight(1f), onProfile)
         }
@@ -569,7 +616,12 @@ fun HomeScreen(user: User, onTopup: () -> Unit, onOrders: () -> Unit = {}, onHel
                         }
                     }
                     if (shown.isEmpty()) item { Text("Produk tidak ditemukan", color = Muted, modifier = Modifier.padding(top = 8.dp)) }
-                    items(shown, key = { it.id }) { p -> ProductCard(p) { if (!p.soldOut) open(p) } }
+                    items(shown.chunked(2), key = { r -> r.joinToString { it.id } }) { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { p -> GridProductCard(p, Modifier.weight(1f)) { if (!p.soldOut) open(p) } }
+                            if (row.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
                     item { Spacer(Modifier.height(8.dp)) }
                 }
             }
