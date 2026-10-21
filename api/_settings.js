@@ -1,5 +1,7 @@
 /**
  * Pengaturan runtime yang bisa diubah admin dari panel (disimpan di database).
+ * Penyedia AI Assisten: OpenRouter (env cadangan: OPENROUTER_API_KEY,
+ * OPENROUTER_MODEL, OPENROUTER_MODEL_USER, OPENROUTER_BASE_URL).
  *
  * Kenapa di database: supaya admin bisa mengatur API key / model Assisten
  * langsung dari admin panel tanpa harus buka dashboard Vercel dan redeploy.
@@ -8,6 +10,7 @@
 
 const crypto = require("crypto");
 const { once } = require("./_schema");
+const { OPENROUTER_BASE, FREE_ROUTER } = require("./_openrouter");
 
 /* ── Enkripsi API key Assisten saat disimpan di database ─────────────
    Sebelumnya key tersimpan apa adanya, jadi siapa pun yang bisa membaca
@@ -44,13 +47,17 @@ function decryptSecret(enc) {
   }
 }
 
-const DEFAULT_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
-const DEFAULT_MODEL_ADMIN = "qwen3.8-max";
-const DEFAULT_MODEL_USER = "qwen3.7-flash";
+const DEFAULT_BASE = OPENROUTER_BASE;
+const DEFAULT_MODEL_ADMIN = FREE_ROUTER;
+const DEFAULT_MODEL_USER = FREE_ROUTER;
+/* Penanda format setting. Setting tanpa penanda ini berasal dari era Qwen/DashScope:
+   key, base URL dan nama model lamanya tidak berlaku di OpenRouter, jadi diabaikan. */
+const PROVIDER = "openrouter";
 
 const ASSISTANT_KEY = "assistant";
 
 const DEFAULTS = {
+  provider: PROVIDER,
   enabled: true,
   apiKey: "",
   apiKeyEnc: "",
@@ -78,12 +85,15 @@ async function readAssistantSettings(sql) {
   const rows = await sql`SELECT value, updated_at AS "updatedAt" FROM codexa_settings WHERE key = ${ASSISTANT_KEY} LIMIT 1`;
   const stored = (rows.length && rows[0].value) || {};
   const parsed = typeof stored === "string" ? safeParse(stored) : stored;
-  const merged = { ...DEFAULTS, ...parsed };
+  const legacy = Object.keys(parsed).length > 0 && parsed.provider !== PROVIDER;
+  const merged = legacy
+    ? { ...DEFAULTS, ...parsed, provider: PROVIDER, apiKey: "", apiKeyEnc: "", baseUrl: "", modelAdmin: "", modelUser: "" }
+    : { ...DEFAULTS, ...parsed };
   // apiKeyEnc (terenkripsi) diutamakan; apiKey plaintext hanya sisa data lama.
   const apiKey = merged.apiKeyEnc ? decryptSecret(merged.apiKeyEnc) : merged.apiKey || "";
   // Migrasi otomatis: kalau masih ada key plaintext dari versi lama,
   // langsung tulis ulang dalam bentuk terenkripsi lalu kosongkan plaintext.
-  if (!merged.apiKeyEnc && apiKey) {
+  if (!legacy && !merged.apiKeyEnc && apiKey) {
     try {
       const { plain, enc } = encryptSecret(apiKey);
       const stored = { ...merged, apiKey: plain, apiKeyEnc: enc };
@@ -104,7 +114,7 @@ async function readAssistantSettings(sql) {
 async function writeAssistantSettings(sql, patch) {
   const current = await readAssistantSettings(sql);
   const { updatedAt, ...base } = current;
-  const next = { ...base, ...patch };
+  const next = { ...base, ...patch, provider: PROVIDER };
   // Simpan API key dalam bentuk terenkripsi; jangan pernah tulis plaintext.
   const { plain, enc } = encryptSecret(trim(next.apiKey));
   const stored = { ...next, apiKey: plain, apiKeyEnc: enc };
@@ -127,17 +137,19 @@ async function assistantConfig(sql) {
   } catch (_) {
     // database belum siap → tetap jalan pakai env
   }
-  const apiKey = trim(saved.apiKey) || trim(process.env.QWEN_API_KEY);
+  const envKey = trim(process.env.OPENROUTER_API_KEY);
+  const apiKey = trim(saved.apiKey) || envKey;
   const maxSteps = clampInt(saved.maxSteps, 1, 30, 20);
   return {
+    provider: PROVIDER,
     enabled: saved.enabled !== false,
     apiKey,
     hasKey: Boolean(apiKey),
-    keySource: trim(saved.apiKey) ? "panel" : trim(process.env.QWEN_API_KEY) ? "env" : "none",
-    baseUrl: (trim(saved.baseUrl) || trim(process.env.QWEN_BASE_URL) || DEFAULT_BASE).replace(/\/+$/, ""),
-    modelAdmin: trim(saved.modelAdmin) || trim(process.env.QWEN_MODEL) || DEFAULT_MODEL_ADMIN,
+    keySource: trim(saved.apiKey) ? "panel" : envKey ? "env" : "none",
+    baseUrl: (trim(saved.baseUrl) || trim(process.env.OPENROUTER_BASE_URL) || DEFAULT_BASE).replace(/\/+$/, ""),
+    modelAdmin: trim(saved.modelAdmin) || trim(process.env.OPENROUTER_MODEL) || DEFAULT_MODEL_ADMIN,
     modelUser:
-      trim(saved.modelUser) || trim(process.env.QWEN_MODEL_USER) || trim(process.env.QWEN_MODEL) || DEFAULT_MODEL_USER,
+      trim(saved.modelUser) || trim(process.env.OPENROUTER_MODEL_USER) || trim(process.env.OPENROUTER_MODEL) || DEFAULT_MODEL_USER,
     maxSteps,
     temperature: clampNum(saved.temperature, 0, 2, 0.3),
     extraPrompt: trim(saved.extraPrompt).slice(0, 2000),
@@ -148,6 +160,7 @@ async function assistantConfig(sql) {
 /** Bentuk aman untuk dikirim ke browser: key tidak pernah dikirim utuh. */
 function publicAssistantConfig(cfg) {
   return {
+    provider: cfg.provider || PROVIDER,
     enabled: cfg.enabled,
     hasKey: cfg.hasKey,
     keySource: cfg.keySource,

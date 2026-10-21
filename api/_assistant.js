@@ -9,11 +9,12 @@
  *  - Tool milik user selalu dikunci ke id sesi (ctx.user.id), tidak pernah
  *    mengambil user_id dari argumen model.
  *
- * Env:
- *  - QWEN_API_KEY        API key DashScope (region International)
- *  - QWEN_MODEL          opsional, default qwen3.8-max
- *  - QWEN_MODEL_USER     opsional, model murah untuk user biasa
- *  - QWEN_BASE_URL       opsional, default endpoint international
+ * Penyedia AI: OpenRouter (model gratis). Konfigurasi diatur di Admin Panel → Assisten.
+ * Env cadangan:
+ *  - OPENROUTER_API_KEY     API key OpenRouter (sk-or-...)
+ *  - OPENROUTER_MODEL       opsional, default openrouter/free
+ *  - OPENROUTER_MODEL_USER  opsional, model untuk user biasa
+ *  - OPENROUTER_BASE_URL    opsional, default https://openrouter.ai/api/v1
  */
 
 const crypto = require("crypto");
@@ -21,10 +22,11 @@ const { hashPassword, text } = require("./_users");
 const { createNotification, broadcastNotification } = require("./_notifications");
 const { extraUserTools, extraAdminTools } = require("./_assistant_extra");
 const { escapeHtml, rupiah, waktuWib } = require("./_format");
+const { OPENROUTER_BASE, FREE_ROUTER, aiHeaders } = require("./_openrouter");
 
 /* Batas laporan per user supaya tidak spam. */
 
-const DEFAULT_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+const DEFAULT_BASE = OPENROUTER_BASE;
 const MAX_STEPS = 6;
 const STATUSES = ["active", "suspended", "banned"];
 const REPORT_STATUSES = ["open", "in_progress", "resolved", "closed"];
@@ -33,10 +35,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Konfigurasi efektif: dari admin panel (database) dulu, baru env var.
 const envConfig = () => ({
   enabled: true,
-  apiKey: (process.env.QWEN_API_KEY || "").trim(),
-  baseUrl: (process.env.QWEN_BASE_URL || DEFAULT_BASE).replace(/\/+$/, ""),
-  modelAdmin: (process.env.QWEN_MODEL || "qwen3.8-max").trim(),
-  modelUser: (process.env.QWEN_MODEL_USER || process.env.QWEN_MODEL || "qwen3.7-flash").trim(),
+  apiKey: (process.env.OPENROUTER_API_KEY || "").trim(),
+  baseUrl: (process.env.OPENROUTER_BASE_URL || DEFAULT_BASE).replace(/\/+$/, ""),
+  modelAdmin: (process.env.OPENROUTER_MODEL || FREE_ROUTER).trim(),
+  modelUser: (process.env.OPENROUTER_MODEL_USER || process.env.OPENROUTER_MODEL || FREE_ROUTER).trim(),
   maxSteps: MAX_STEPS,
   temperature: 0.3,
   extraPrompt: "",
@@ -1319,20 +1321,20 @@ function systemPrompt(ctx) {
 }
 
 /* ═══════════════════════════════════════════════════
-   LOOP TOOL-CALLING KE QWEN
+   LOOP TOOL-CALLING KE OPENROUTER
 ════════════════════════════════════════════════════ */
 
-async function callQwen(payload, cfg) {
+async function callAi(payload, cfg) {
   const c = configOf(cfg);
   const key = c.apiKey;
-  if (!key) throw new Error("QWEN_API_KEY belum dikonfigurasi");
+  if (!key) throw new Error("OPENROUTER_API_KEY belum dikonfigurasi");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45000);
   let res;
   try {
     res = await fetch(`${baseUrl(c)}/chat/completions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      headers: aiHeaders(c),
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -1453,17 +1455,23 @@ async function runAssistant({ ctx, history, onEvent }) {
   for (let step = 0; step < steps; step += 1) {
     let data;
     try {
-      data = await callQwen(
+      data = await callAi(
         { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
         cfg,
       );
     } catch (error) {
-      // Model tidak mendukung gambar/video → ulangi dengan teks saja.
-      if (!(error && error.status === 400 && stripMedia(messages))) throw error;
-      data = await callQwen(
-        { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
-        cfg,
-      );
+      if (error && error.status === 404 && /tool/i.test(error.message || "")) {
+        // Model gratis ini tidak mendukung tool calling → kirim tanpa daftar tool;
+        // pemanggilan tool berbentuk teks tetap ditangkap parseTextToolCalls.
+        data = await callAi({ model, messages, temperature: cfg.temperature }, cfg);
+      } else {
+        // Model tidak mendukung gambar/video → ulangi dengan teks saja.
+        if (!(error && error.status === 400 && stripMedia(messages))) throw error;
+        data = await callAi(
+          { model, messages, tools, tool_choice: "auto", parallel_tool_calls: true, temperature: cfg.temperature },
+          cfg,
+        );
+      }
     }
     if (data.usage) {
       usage = {
@@ -1561,7 +1569,7 @@ async function runAssistant({ ctx, history, onEvent }) {
   let finalReply = "";
   try {
     messages.push({ role: "user", content: "Batas langkah tercapai. Jangan panggil tool lagi. Simpulkan jawaban terbaik dari data yang sudah kamu dapat, sebutkan apa yang sudah dikerjakan dan apa yang belum (jika ada)." });
-    const data = await callQwen({ model, messages, temperature: cfg.temperature }, cfg);
+    const data = await callAi({ model, messages, temperature: cfg.temperature }, cfg);
     const m = (data.choices && data.choices[0] && data.choices[0].message) || {};
     finalReply = cleanReply(m.content);
     if (data.usage) {

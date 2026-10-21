@@ -12,6 +12,7 @@ import ReportsPage from "./reports-page.jsx";
 import AdminNotifyPage from "./admin-notify-page.jsx";
 import AdminCheckinPage from "./admin-checkin-page.jsx";
 import AdminWabotPage from "./admin-wabot-page.jsx";
+import AiModelSelect from "./ai-model-select.jsx";
 import "./admin-ui.css";
 
 /* Ringkasan status serah terima akun Google per pesanan untuk menu Pesanan admin:
@@ -60,6 +61,9 @@ function AdminPage({ onBack, onNotice }) {
   const [aiNotice, setAiNotice]           = useState("");
   const [aiError, setAiError]             = useState("");
   const [testingAi, setTestingAi]         = useState(false);
+  const [aiModels, setAiModels]           = useState([]);
+  const [aiModelsLoading, setAiModelsLoading] = useState(false);
+  const [aiModelsError, setAiModelsError] = useState("");
   const [reviews, setReviews]             = useState([]);
   const [reviewSummary, setReviewSummary] = useState({ total: 0, user: 0, injected: 0, ratingAvg: 0 });
   const [reviewsLoading, setReviewsLoading] = useState(false);
@@ -289,6 +293,20 @@ function AdminPage({ onBack, onNotice }) {
       .catch((e) => setAiError(e.message));
 
   const updateAiForm = (key, val) => setAiForm((f) => ({ ...f, [key]: val }));
+
+  /* Daftar model gratis OpenRouter untuk dropdown model. */
+  const loadAiModels = async (fresh = false) => {
+    setAiModelsLoading(true); setAiModelsError("");
+    try {
+      const p = await jsonRequest(`/api/admin/settings?resource=ai-models${fresh ? "&fresh=1" : ""}`, { method: "GET" });
+      setAiModels(Array.isArray(p.models) ? p.models : []);
+    } catch (e) { setAiModelsError(e.message); }
+    finally { setAiModelsLoading(false); }
+  };
+  useEffect(() => {
+    if (activeNav === "Assisten" && !aiModels.length && !aiModelsLoading) loadAiModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNav]);
 
   const saveSettings = async () => {
     setSavingAi(true); setAiError(""); setAiNotice("");
@@ -1203,27 +1221,39 @@ function AdminPage({ onBack, onNotice }) {
                     <>
                       <div className="cx-form-grid">
                         <div className="cx-full-span">
-                          <Field label="QWEN_API_KEY" hint={aiCfg?.hasKey ? `Tersimpan: ${aiCfg.keyPreview} (${aiCfg.keySource === "panel" ? "panel" : "env Vercel"}). Kosongkan bila tidak diubah.` : "Belum ada key. Assisten tidak bisa dipakai sampai key diisi."}>
+                          <Field label="OpenRouter API Key" hint={aiCfg?.hasKey ? `Tersimpan: ${aiCfg.keyPreview} (${aiCfg.keySource === "panel" ? "panel" : "env Vercel"}). Kosongkan bila tidak diubah.` : "Belum ada key. Buat gratis di openrouter.ai/keys lalu tempel di sini."}>
                             <InputWrap icon={LockKeyhole}>
                               <input
                                 type="text"
                                 value={aiForm.apiKey}
                                 onChange={(e) => updateAiForm("apiKey", e.target.value)}
-                                placeholder="sk-... / API key DashScope"
+                                placeholder="sk-or-v1-..."
                                 autoComplete="off"
                               />
                             </InputWrap>
                           </Field>
                         </div>
-                        <Field label="Model untuk Admin">
-                          <InputWrap><input value={aiForm.modelAdmin} onChange={(e) => updateAiForm("modelAdmin", e.target.value)} placeholder="qwen3.8-max" /></InputWrap>
-                        </Field>
-                        <Field label="Model untuk User">
-                          <InputWrap><input value={aiForm.modelUser} onChange={(e) => updateAiForm("modelUser", e.target.value)} placeholder="qwen3.7-flash" /></InputWrap>
-                        </Field>
+                        <div className="cx-full-span" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 11, color: "var(--muted)" }}>
+                          <span>
+                            {aiModelsLoading ? "Memuat model gratis OpenRouter..." : aiModelsError ? `Daftar model gagal dimuat: ${aiModelsError}` : `${aiModels.length} model gratis OpenRouter tersedia. Pilih yang ber-label "tools" agar Assisten bisa menjalankan aksi.`}
+                          </span>
+                          <button type="button" className="cx-btn cx-btn-ghost cx-btn-sm" onClick={() => loadAiModels(true)} disabled={aiModelsLoading}>
+                            <RefreshCw size={11} className={aiModelsLoading ? "cx-spin" : ""} /> Muat ulang model
+                          </button>
+                        </div>
                         <div className="cx-full-span">
-                          <Field label="Base URL Penyedia AI" hint="Kosongkan untuk memakai endpoint DashScope International">
-                            <InputWrap><input value={aiForm.baseUrl} onChange={(e) => updateAiForm("baseUrl", e.target.value)} placeholder="https://dashscope-intl.aliyuncs.com/compatible-mode/v1" /></InputWrap>
+                          <Field label="Model untuk Admin" hint="Dipakai Assisten admin & draft komentar YouTube">
+                            <InputWrap><AiModelSelect value={aiForm.modelAdmin} onChange={(v) => updateAiForm("modelAdmin", v)} models={aiModels} /></InputWrap>
+                          </Field>
+                        </div>
+                        <div className="cx-full-span">
+                          <Field label="Model untuk User" hint="Dipakai Assisten user & bot WhatsApp">
+                            <InputWrap><AiModelSelect value={aiForm.modelUser} onChange={(v) => updateAiForm("modelUser", v)} models={aiModels} /></InputWrap>
+                          </Field>
+                        </div>
+                        <div className="cx-full-span">
+                          <Field label="Base URL OpenRouter" hint="Kosongkan untuk memakai https://openrouter.ai/api/v1">
+                            <InputWrap><input value={aiForm.baseUrl} onChange={(e) => updateAiForm("baseUrl", e.target.value)} placeholder="https://openrouter.ai/api/v1" /></InputWrap>
                           </Field>
                         </div>
                         <Field label="Maks. Langkah Tool" hint="1 - 10, default 6">
@@ -2056,7 +2086,7 @@ function AdminPage({ onBack, onNotice }) {
                   </span>
                 </div>
                 <div className="cx-setting-row">
-                  <div><strong>Pengaturan asisten</strong><small>Atur kunci API dan perilaku asisten.</small></div>
+                  <div><strong>Pengaturan asisten</strong><small>Atur API key OpenRouter, model gratis, dan perilaku asisten.</small></div>
                   <button className="cx-btn cx-btn-secondary cx-btn-sm" onClick={() => goNav("Assisten")}><Sparkles size={11} /> Atur</button>
                 </div>
               </div>

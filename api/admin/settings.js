@@ -2,6 +2,7 @@
  * GET    /api/admin/settings          → konfigurasi Assisten (API key dimask)
  * PATCH  /api/admin/settings          → simpan konfigurasi Assisten
  * POST   /api/admin/settings?test=1   → tes koneksi ke penyedia AI pakai konfigurasi aktif
+ * GET    /api/admin/settings?resource=ai-models → daftar model GRATIS OpenRouter
  *
  * Hanya untuk sesi admin.
  */
@@ -15,6 +16,7 @@ const { readAgedConfig, writeAgedConfig, DEFAULT_AGED_CONFIG } = require("../_ag
 const { visitStats } = require("../_visits");
 const { readCustomEmailFee, writeCustomEmailFee } = require("../_custom-email-fee");
 const GC = require("../_google-checker");
+const { aiHeaders, listFreeModels, isFreeModel } = require("../_openrouter");
 const WA = require("../_wabot");
 
 const page = (response, status, title, message) =>
@@ -102,6 +104,17 @@ module.exports = async function handler(request, response) {
       return response.status(405).json({ error: "Method not allowed" });
     }
 
+    /* Daftar model gratis OpenRouter untuk dropdown Assisten. */
+    if (request.method === "GET" && resource === "ai-models") {
+      response.setHeader("Cache-Control", "no-store");
+      try {
+        const models = await listFreeModels({ fresh: request.query && request.query.fresh === "1" });
+        return response.status(200).json({ models });
+      } catch (error) {
+        return response.status(502).json({ error: (error && error.message) || "Gagal memuat model OpenRouter" });
+      }
+    }
+
     /* Visitor Traffic: ringkasan kunjungan website untuk menu admin. */
     if (request.method === "GET" && request.query && request.query.resource === "visits") {
       const stats = await visitStats(sql, { days: request.query.days });
@@ -120,7 +133,7 @@ module.exports = async function handler(request, response) {
       if (!cfg.apiKey) return response.status(400).json({ error: "API key Assisten belum diisi" });
       const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+        headers: aiHeaders(cfg),
         body: JSON.stringify({
           model: cfg.modelAdmin,
           messages: [{ role: "user", content: "ping" }],
@@ -132,7 +145,8 @@ module.exports = async function handler(request, response) {
         const message = (payload && payload.error && payload.error.message) || `HTTP ${res.status}`;
         return response.status(400).json({ error: `Tes gagal: ${message}` });
       }
-      return response.status(200).json({ ok: true, model: cfg.modelAdmin, message: "Koneksi ke penyedia AI berhasil" });
+      const used = (payload && payload.model) || cfg.modelAdmin;
+      return response.status(200).json({ ok: true, model: used, message: "Koneksi ke OpenRouter berhasil" });
     }
 
     if (request.method !== "PATCH") {
@@ -177,8 +191,15 @@ module.exports = async function handler(request, response) {
       patch.baseUrl = url;
     }
 
-    if (typeof body.modelAdmin === "string") patch.modelAdmin = text(body.modelAdmin, 80);
-    if (typeof body.modelUser === "string") patch.modelUser = text(body.modelUser, 80);
+    // Hanya model GRATIS OpenRouter yang boleh dipilih (kosong = default openrouter/free).
+    for (const field of ["modelAdmin", "modelUser"]) {
+      if (typeof body[field] !== "string") continue;
+      const model = text(body[field], 120);
+      if (model && !(await isFreeModel(model))) {
+        return response.status(400).json({ error: `Model "${model}" bukan model gratis OpenRouter` });
+      }
+      patch[field] = model;
+    }
     if (typeof body.extraPrompt === "string") patch.extraPrompt = text(body.extraPrompt, 2000);
     if (body.maxSteps !== undefined) patch.maxSteps = clampInt(body.maxSteps, 1, 30, 20);
     if (body.temperature !== undefined) patch.temperature = clampNum(body.temperature, 0, 2, 0.3);

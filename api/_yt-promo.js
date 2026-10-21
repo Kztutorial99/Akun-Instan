@@ -10,6 +10,7 @@
 const crypto = require("crypto");
 const { once } = require("./_schema");
 const { assistantConfig } = require("./_settings");
+const { aiHeaders } = require("./_openrouter");
 
 /* ── Enkripsi token OAuth (AES-256-GCM, kunci sama dengan kredensial akun) ── */
 function cryptoKey() {
@@ -480,7 +481,7 @@ function fallbackDraft(video) {
 }
 
 /**
- * Buat draft komentar memakai konfigurasi AI (Qwen) yang sudah ada.
+ * Buat draft komentar memakai konfigurasi AI (OpenRouter) yang sudah ada.
  * Fokus: terdengar seperti komentar penonton asli, bukan iklan.
  * Selalu mengembalikan teks; kalau AI gagal, pakai draft cadangan sederhana.
  */
@@ -520,7 +521,7 @@ async function generateDraft(sql, { video, keyword, category, profile }) {
   try {
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+      headers: aiHeaders(cfg),
       body: JSON.stringify({
         model: cfg.modelAdmin,
         temperature: 0.9,

@@ -1,5 +1,7 @@
 /* Jembatan website ↔ bot WhatsApp (Railway). */
 
+const { aiHeaders } = require("./_openrouter");
+
 const OPS = { status: ["GET", "/status"], pair: ["POST", "/pair"], settings: ["POST", "/settings"], logout: ["POST", "/logout"] };
 
 async function proxy(method, op, body) {
@@ -49,7 +51,7 @@ async function reply(sql, body, assistantConfig) {
 
   const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.apiKey}` },
+    headers: aiHeaders(cfg),
     body: JSON.stringify({ model: cfg.modelUser, temperature: cfg.temperature, messages: [{ role: "system", content: system }, ...history] }),
     signal: AbortSignal.timeout(45000),
   });

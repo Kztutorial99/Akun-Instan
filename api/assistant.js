@@ -8,7 +8,7 @@
  *   - tidak ada sesi                → 401
  *
  * Konfigurasi (API key, model, dll) diambil dari admin panel (database),
- * dengan fallback ke env var QWEN_*.
+ * dengan fallback ke env var OPENROUTER_*.
  *
  * Body: { messages: [{ role: "user"|"assistant", content: string }, ...], stream?: boolean }
  * Respons: { reply, role, model, actions, usage } — atau NDJSON progres kalau stream=true
@@ -118,7 +118,7 @@ async function handleMyReports(sql, user, response) {
 /** Pesan error yang aman ditampilkan ke user. */
 function errorMessage(error) {
   const message = (error && error.message) || "";
-  if (/QWEN_API_KEY/.test(message)) return "Assisten belum dikonfigurasi. Cek Admin Panel → Assisten.";
+  if (/OPENROUTER_API_KEY/.test(message)) return "Assisten belum dikonfigurasi. Cek Admin Panel → Assisten.";
   if (/DATABASE_URL/.test(message)) return "Database belum terhubung. Hubungi admin.";
   if (error && error.status === 504) return "AI terlalu lama merespons, coba kirim lagi.";
   if (error && error.status === 429) return "Assisten sedang sibuk, coba lagi beberapa saat.";
@@ -267,7 +267,7 @@ module.exports = async function handler(request, response) {
   } catch (error) {
     const message = (error && error.message) || "";
     console.error("Assistant failure", message);
-    if (/QWEN_API_KEY/.test(message)) {
+    if (/OPENROUTER_API_KEY/.test(message)) {
       return response.status(503).json({ error: "Assisten belum dikonfigurasi. Cek Admin Panel → Assisten." });
     }
     if (/DATABASE_URL/.test(message)) {
